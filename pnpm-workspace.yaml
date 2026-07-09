@@ -1,4 +1,5 @@
 packages:
+  - "apps/*"
   - "packages/*"
 
 # Supply-chain hardening — see https://pnpm.io/supply-chain-security
@@ -34,8 +35,11 @@ dangerouslyAllowAllBuilds: false
 #   esbuild — downloads the platform-native binary on install
 #   msw     — copies the service-worker shim into the workspace
 allowBuilds:
+  "@parcel/watcher": true
+  "@swc/core": true
   esbuild: true
   msw: true
+  sharp: true
 
 # overrides: force patched versions of transitive packages flagged by
 # security advisories. Dependabot cannot open these PRs itself — its
