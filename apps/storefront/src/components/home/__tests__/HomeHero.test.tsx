@@ -24,9 +24,11 @@ describe("HomeHero", () => {
       screen.getByRole("img", { name: "CenWatch watches" }),
     ).toHaveAttribute("src", "/cenwatch/hero-watches.png");
     expect(screen.getByRole("img", { name: "CenWatch watches" })).toHaveClass(
-      "max-h-[260px]",
-      "md:max-h-[300px]",
-      "lg:max-h-[340px]",
+      "max-h-[300px]",
+      "md:max-h-[380px]",
+      "lg:max-h-[430px]",
+      "md:translate-y-6",
+      "lg:translate-y-8",
     );
     expect(
       screen.getByRole("img", { name: "CenWatch watches" }).closest("section"),

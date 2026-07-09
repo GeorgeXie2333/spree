@@ -23,7 +23,7 @@ export async function HomeHero({ locale }: HomeHeroProps) {
           height={3456}
           priority
           sizes="(min-width: 768px) 50vw, 100vw"
-          className="mx-auto h-auto max-h-[260px] w-full object-contain md:max-h-[300px] lg:max-h-[340px]"
+          className="mx-auto h-auto max-h-[300px] w-full object-contain md:max-h-[380px] md:translate-y-6 lg:max-h-[430px] lg:translate-y-8"
         />
       </div>
     </section>
