@@ -41,11 +41,15 @@ assert_file "$DOCKERIGNORE"
 
 bash -n "$DEPLOY_SCRIPT"
 
-assert_contains "$ENV_EXAMPLE" "SPREE_API_URL=https://api-shop.cenwatch.com"
+assert_contains "$ENV_EXAMPLE" "SPREE_API_URL=http://web:3000"
 assert_contains "$ENV_EXAMPLE" "SITE_URL=https://shop.cenwatch.com"
 assert_contains "$COMPOSE_FILE" '"127.0.0.1:30000:3000"'
 assert_contains "$COMPOSE_FILE" '"127.0.0.1:30001:3001"'
 assert_contains "$DEPLOY_SCRIPT" "docker compose --project-name cenwatch"
+assert_contains "$DEPLOY_SCRIPT" 'public_api_url="https://api-shop.cenwatch.com"'
+assert_contains "$DEPLOY_SCRIPT" 'Internal API URL: $api_url'
+assert_contains "$DEPLOY_SCRIPT" 'Public API URL: $public_api_url'
+assert_contains "$DEPLOY_SCRIPT" 'Admin URL: $public_api_url/admin'
 
 grep -Fxq '**/.env*' "$DOCKERIGNORE" ||
   fail ".dockerignore does not exclude environment files repo-wide"
@@ -108,7 +112,7 @@ PATH="$fake_bin:$PATH" DEPLOY_ENV_FILE="$test_env" \
 [[ "$(grep '^ADMIN_PASSWORD=' "$test_env")" == "$first_admin_password" ]] ||
   fail "admin password changed on rerun"
 
-assert_contains "$test_env" "SPREE_API_URL=https://api-shop.cenwatch.com"
+assert_contains "$test_env" "SPREE_API_URL=http://web:3000"
 assert_contains "$test_env" "SITE_URL=https://shop.cenwatch.com"
 
 for mode in deploy prepare; do

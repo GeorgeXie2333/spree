@@ -24,15 +24,21 @@ administrator, creates a storefront publishable key, builds the storefront,
 and starts the complete stack. At completion it prints the generated admin
 credentials.
 
-The configured public URLs are:
+The storefront talks to Spree over the Docker network:
+
+```text
+SPREE_API_URL=http://web:3000
+```
+
+The configured public domains are:
 
 ```text
 https://api-shop.cenwatch.com
 https://shop.cenwatch.com
 ```
 
-Configure 1Panel to proxy them to `127.0.0.1:30000` and
-`127.0.0.1:30001`, respectively.
+Configure 1Panel to proxy `https://api-shop.cenwatch.com` to
+`127.0.0.1:30000` and `https://shop.cenwatch.com` to `127.0.0.1:30001`.
 
 Both application ports listen on loopback only. They cannot be reached
 directly from the public internet and must be published through 1Panel.

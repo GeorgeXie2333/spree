@@ -23,7 +23,7 @@ Copy `.env.local.example` to `.env.local` and set the Spree and Stripe values:
 ```env
 SITE_URL=https://shop.cenwatch.com
 NEXT_PUBLIC_SITE_URL=https://shop.cenwatch.com
-SPREE_API_URL=https://api-shop.cenwatch.com
+SPREE_API_URL=http://localhost:3000
 SPREE_PUBLISHABLE_KEY=pk_live_or_test_publishable_key
 SPREE_CHANNEL_CODE=shop
 SPREE_VALIDATE_MARKETS=false
@@ -92,13 +92,15 @@ pnpm --filter @cenwatch/storefront e2e:down
 
 ## Production
 
-Build and run the standalone Next.js image:
+Build and run the standalone Next.js image. The API URL must be reachable from
+inside the storefront container; in the `deploy/cenwatch` Compose stack this is
+the Docker-internal Spree service URL `http://web:3000`.
 
 ```bash
 docker build -f apps/storefront/Dockerfile \
   --build-arg SITE_URL=https://shop.cenwatch.com \
   --build-arg NEXT_PUBLIC_SITE_URL=https://shop.cenwatch.com \
-  --build-arg SPREE_API_URL=https://api-shop.cenwatch.com \
+  --build-arg SPREE_API_URL=http://web:3000 \
   --build-arg SPREE_PUBLISHABLE_KEY=pk_live_or_test_publishable_key \
   --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_or_test_key \
   -t cenwatch-storefront .

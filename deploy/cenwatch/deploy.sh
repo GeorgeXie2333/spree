@@ -261,6 +261,7 @@ compose up -d --wait
 admin_email="$(env_value ADMIN_EMAIL)"
 admin_password="$(env_value ADMIN_PASSWORD)"
 api_url="$(env_value SPREE_API_URL)"
+public_api_url="https://api-shop.cenwatch.com"
 site_url="$(env_value SITE_URL)"
 
 cat <<EOF
@@ -269,9 +270,10 @@ CenWatch is running.
 
   Spree API host port: 30000
   Storefront host port: 30001
-  API URL: $api_url
+  Internal API URL: $api_url
+  Public API URL: $public_api_url
   Storefront URL: $site_url
-  Admin URL: $api_url/admin
+  Admin URL: $public_api_url/admin
   Admin email: $admin_email
   Admin password: $admin_password
 
