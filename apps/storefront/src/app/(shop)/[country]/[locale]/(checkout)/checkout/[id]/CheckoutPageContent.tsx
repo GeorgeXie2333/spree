@@ -23,6 +23,7 @@ import {
 } from "@/components/checkout/PaymentSection";
 import { PolicyConsent } from "@/components/policy/PolicyConsent";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCheckout } from "@/contexts/CheckoutContext";
@@ -36,7 +37,6 @@ import {
   applyCode,
   getCheckoutOrder,
   removeDiscountCode,
-  removeGiftCard,
   selectDeliveryRate,
   updateOrderAddresses,
 } from "@/lib/data/checkout";
@@ -132,8 +132,7 @@ function CheckoutPageContentInner({
   tRef.current = t;
   const beginCheckoutFiredRef = useRef(false);
   const paymentRef = useRef<PaymentSectionHandle>(null);
-
-  // Handle code application (discount code or gift card — single input field)
+  // Handle discount-code application.
   const handleApplyCode = useCallback(async (code: string) => {
     const currentOrder = cartRef.current;
     if (!currentOrder)
@@ -158,18 +157,6 @@ function CheckoutPageContentInner({
     return result;
   }, []);
 
-  const handleRemoveGiftCard = useCallback(async (giftCardId: string) => {
-    const currentOrder = cartRef.current;
-    if (!currentOrder)
-      return { success: false, error: tRef.current("noOrder") };
-
-    const result = await removeGiftCard(currentOrder.id, giftCardId);
-    if (result.success && result.cart) {
-      setCart(result.cart);
-    }
-    return result;
-  }, []);
-
   // useLayoutEffect so the sidebar renders on the first paint (before the
   // browser paints the empty slot). Always re-publish when `cart` changes.
   useLayoutEffect(() => {
@@ -179,19 +166,12 @@ function CheckoutPageContentInner({
           cart={cart}
           onApplyCode={handleApplyCode}
           onRemoveDiscount={handleRemoveDiscount}
-          onRemoveGiftCard={handleRemoveGiftCard}
         />,
       );
     } else {
       setSummaryContent(null);
     }
-  }, [
-    cart,
-    setSummaryContent,
-    handleApplyCode,
-    handleRemoveDiscount,
-    handleRemoveGiftCard,
-  ]);
+  }, [cart, setSummaryContent, handleApplyCode, handleRemoveDiscount]);
 
   // Refresh cart data (used after coupon changes, express checkout, etc.)
   const loadOrder = useCallback(async () => {
@@ -610,12 +590,12 @@ function CheckoutPageContentInner({
   if (loading || (!initialData && authLoading)) {
     return (
       <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-1/3" />
-        <div className="h-4 bg-gray-200 rounded w-1/4" />
+        <div className="h-8 bg-card rounded-lg w-1/3" />
+        <div className="h-4 bg-card rounded-lg w-1/4" />
         <div className="space-y-4 mt-8">
-          <div className="h-12 bg-gray-200 rounded" />
-          <div className="h-12 bg-gray-200 rounded" />
-          <div className="h-12 bg-gray-200 rounded" />
+          <div className="h-12 bg-card rounded-xl" />
+          <div className="h-12 bg-card rounded-xl" />
+          <div className="h-12 bg-card rounded-xl" />
         </div>
       </div>
     );
@@ -625,16 +605,13 @@ function CheckoutPageContentInner({
   if (error && !cart) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-4">
           {t("checkoutError")}
         </h1>
-        <p className="text-gray-600 mb-6">{error}</p>
-        <Link
-          href={`${basePath}/cart`}
-          className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-700"
-        >
-          {t("returnToCart")}
-        </Link>
+        <p className="text-muted-foreground mb-6">{error}</p>
+        <Button asChild>
+          <Link href={`${basePath}/cart`}>{t("returnToCart")}</Link>
+        </Button>
       </div>
     );
   }
@@ -645,16 +622,15 @@ function CheckoutPageContentInner({
   if (!cart.items || cart.items.length === 0) {
     return (
       <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-4">
           {t("emptyCart")}
         </h1>
-        <p className="text-gray-600 mb-6">{t("emptyCartDescription")}</p>
-        <Link
-          href={`${basePath}/products`}
-          className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-xl hover:bg-primary-700"
-        >
-          {tc("continueShopping")}
-        </Link>
+        <p className="text-muted-foreground mb-6">
+          {t("emptyCartDescription")}
+        </p>
+        <Button asChild>
+          <Link href={`${basePath}/products`}>{tc("continueShopping")}</Link>
+        </Button>
       </div>
     );
   }
@@ -673,8 +649,8 @@ function CheckoutPageContentInner({
       {!isAuthenticated && parseFloat(cart.total) > 0 && (
         <div className={expressAvailable ? "mb-4" : ""}>
           {expressAvailable && (
-            <h2 className="text-lg font-bold text-gray-900 mb-3">
-              Express checkout
+            <h2 className="text-xl font-semibold tracking-tight text-foreground mb-3">
+              {t("expressCheckout")}
             </h2>
           )}
           <ExpressCheckoutButton
@@ -721,7 +697,10 @@ function CheckoutPageContentInner({
         </div>
 
         {/* Shipping method */}
-        <div id="checkout-section-shipping" className="mt-6">
+        <div
+          id="checkout-section-shipping"
+          className="mt-8 border-t border-border pt-8"
+        >
           <DeliveryMethodSection
             fulfillments={fulfillments}
             onDeliveryRateSelect={handleDeliveryRateSelect}
@@ -731,7 +710,10 @@ function CheckoutPageContentInner({
         </div>
 
         {/* Payment */}
-        <div id="checkout-section-payment" className="mt-6">
+        <div
+          id="checkout-section-payment"
+          className="mt-8 border-t border-border pt-8"
+        >
           <PaymentSection
             ref={paymentRef}
             cart={cart}
@@ -749,7 +731,7 @@ function CheckoutPageContentInner({
 
         {/* Policy consent — guests only, authenticated users accepted at registration */}
         {!isAuthenticated && (
-          <div className="mt-6">
+          <div className="mt-8">
             <PolicyConsent
               checked={policyConsent}
               onCheckedChange={(checked) => {
@@ -766,7 +748,7 @@ function CheckoutPageContentInner({
           type="button"
           onClick={validateAndPay}
           disabled={processing}
-          className="w-full mt-8 h-[54px] bg-black text-white text-sm font-bold rounded-sm hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full mt-8 h-13 bg-primary text-primary-foreground text-base font-medium rounded-full hover:bg-[#0077ed] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
         >
           {processing ? (
             <>

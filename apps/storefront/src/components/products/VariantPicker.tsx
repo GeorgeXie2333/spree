@@ -3,7 +3,7 @@
 import type { OptionType, Variant } from "@spree/sdk";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
-import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface VariantPickerProps {
   variants: Variant[];
@@ -18,7 +18,7 @@ export function VariantPicker({
   selectedVariant,
   onVariantChange,
 }: VariantPickerProps) {
-  const t = useTranslations("products");
+  const t = useTranslations("pdp");
   const optionValuesMap = useMemo(() => {
     const map: Record<string, Set<string>> = {};
 
@@ -127,28 +127,35 @@ export function VariantPicker({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       {optionTypes.map((optionType) => {
         const values = Array.from(optionValuesMap[optionType.id] || []);
         const selectedValue = selectedOptions[optionType.id];
+        const selectedLabel = selectedValue
+          ? getOptionValueDetails(optionType.id, selectedValue)?.label ||
+            selectedValue
+          : null;
         const isColor = optionType.kind === "color_swatch";
 
         return (
           <div key={optionType.id}>
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium text-gray-900">
-                {optionType.label}
-              </span>
-              {selectedValue && (
-                <span className="text-sm text-gray-500">
-                  {getOptionValueDetails(optionType.id, selectedValue)?.label ||
-                    selectedValue}
-                </span>
-              )}
-            </div>
+            {/* "Label: value" row, Apple style */}
+            <p className="mb-3 text-sm font-medium text-foreground">
+              {selectedLabel
+                ? t.rich("optionLabel", {
+                    label: optionType.label,
+                    value: selectedLabel,
+                    muted: (chunks) => (
+                      <span className="font-normal text-muted-foreground">
+                        {chunks}
+                      </span>
+                    ),
+                  })
+                : optionType.label}
+            </p>
 
             {isColor ? (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-3">
                 {values.map((value) => {
                   const optionValue = getOptionValueDetails(
                     optionType.id,
@@ -168,12 +175,16 @@ export function VariantPicker({
                       onClick={() => handleOptionSelect(optionType.id, value)}
                       disabled={!isAvailable}
                       title={optionValue?.label || value}
-                      className={`
-                        w-10 h-10 rounded-lg border transition-all relative overflow-hidden
-                        ${isSelected ? "border-gray-900 ring-2 ring-primary ring-offset-2" : "border-gray-200"}
-                        ${!isAvailable ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}
-                        ${!isPurchasable && isAvailable ? "opacity-50" : ""}
-                      `}
+                      aria-label={optionValue?.label || value}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "relative size-8 overflow-hidden rounded-full border border-black/10 transition-shadow duration-200",
+                        isSelected
+                          ? "ring-2 ring-[#0071e3] ring-offset-2"
+                          : "hover:ring-2 hover:ring-border hover:ring-offset-2",
+                        !isAvailable && "cursor-not-allowed opacity-40",
+                        !isPurchasable && isAvailable && "opacity-40",
+                      )}
                       style={
                         optionValue?.image_url
                           ? {
@@ -182,12 +193,12 @@ export function VariantPicker({
                             }
                           : optionValue?.color_code
                             ? { backgroundColor: optionValue.color_code }
-                            : { backgroundColor: "#e5e7eb" }
+                            : { backgroundColor: "#e8e8ed" }
                       }
                     >
                       {!isPurchasable && isAvailable && (
                         <span className="absolute inset-0 flex items-center justify-center">
-                          <span className="w-full h-0.5 bg-gray-400 rotate-45 absolute" />
+                          <span className="absolute h-px w-full rotate-45 bg-muted-foreground" />
                         </span>
                       )}
                     </button>
@@ -195,7 +206,8 @@ export function VariantPicker({
                 })}
               </div>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              // Apple-style bordered selection blocks for buttons/dropdown kinds
+              <div className="grid grid-cols-2 gap-2">
                 {values.map((value) => {
                   const optionValue = getOptionValueDetails(
                     optionType.id,
@@ -209,25 +221,30 @@ export function VariantPicker({
                   );
 
                   return (
-                    <Button
+                    <button
                       type="button"
                       key={value}
-                      variant="outline"
                       onClick={() => handleOptionSelect(optionType.id, value)}
                       disabled={!isAvailable}
-                      className={
+                      aria-pressed={isSelected}
+                      className={cn(
+                        "rounded-xl border bg-white px-4 py-3 text-left text-sm font-medium text-foreground transition-colors duration-200",
                         isSelected
-                          ? "ring-2 ring-primary ring-offset-2 border-primary"
-                          : ""
-                      }
-                    >
-                      {optionValue?.label || value}
-                      {!isPurchasable && isAvailable && (
-                        <span className="ml-1 text-xs text-gray-400">
-                          {t("outOfStockVariant")}
-                        </span>
+                          ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
+                          : "border-border hover:border-muted-foreground",
+                        (!isAvailable || !isPurchasable) &&
+                          "opacity-40 hover:border-border",
+                        !isAvailable && "cursor-not-allowed",
                       )}
-                    </Button>
+                    >
+                      <span
+                        className={cn(
+                          (!isAvailable || !isPurchasable) && "line-through",
+                        )}
+                      >
+                        {optionValue?.label || value}
+                      </span>
+                    </button>
                   );
                 })}
               </div>

@@ -3,6 +3,7 @@
 import type { Fulfillment } from "@spree/sdk";
 import { useTranslations } from "next-intl";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { cn } from "@/lib/utils";
 
 interface DeliveryMethodSectionProps {
   fulfillments: Fulfillment[];
@@ -24,14 +25,14 @@ export function DeliveryMethodSection({
 
   return (
     <div>
-      <h2 className="text-lg font-bold text-gray-900 mb-3">
+      <h2 className="text-lg font-semibold tracking-tight text-foreground mb-3">
         {t("shippingMethod")}
       </h2>
 
       {errors && errors.length > 0 && (
-        <div className="rounded-sm border border-red-300 bg-red-50 px-4 py-3 mb-3">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 mb-3">
           {errors.map((error, index) => (
-            <p key={index} className="text-sm text-red-700">
+            <p key={index} className="text-sm text-destructive">
               {error}
             </p>
           ))}
@@ -39,11 +40,11 @@ export function DeliveryMethodSection({
       )}
 
       {fulfillments.length === 0 ? (
-        <div className="rounded-sm bg-gray-100 px-4 py-3.5 text-sm text-gray-500">
+        <div className="rounded-xl bg-card px-4 py-3.5 text-sm text-muted-foreground">
           {t("enterShippingAddressForMethods")}
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {fulfillments.map((fulfillment, index) => {
             const selectedRate = fulfillment.delivery_rates.find(
               (r) => r.selected,
@@ -51,7 +52,7 @@ export function DeliveryMethodSection({
             return (
               <div key={fulfillment.id}>
                 {fulfillments.length > 1 && (
-                  <p className="text-xs font-medium text-gray-500 mb-2">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">
                     {t("shipmentOf", {
                       current: index + 1,
                       total: fulfillments.length,
@@ -73,24 +74,25 @@ export function DeliveryMethodSection({
                     onDeliveryRateSelect(fulfillment.id, rateId)
                   }
                   disabled={processing}
-                  className="rounded-sm border overflow-hidden gap-0"
+                  className="gap-3"
                 >
-                  {fulfillment.delivery_rates.map((rate, rateIndex) => (
+                  {fulfillment.delivery_rates.map((rate) => (
                     <label
                       key={rate.id}
-                      className={`flex items-center justify-between px-4 py-3.5 cursor-pointer transition-colors ${
+                      className={cn(
+                        "flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors duration-200",
                         rate.selected
-                          ? "bg-blue-50"
-                          : "bg-white hover:bg-gray-50"
-                      } ${rateIndex > 0 ? "border-t" : ""}`}
+                          ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
+                          : "border-border bg-background hover:bg-card",
+                      )}
                     >
                       <div className="flex items-center gap-3">
                         <RadioGroupItem value={rate.id} />
-                        <span className="text-sm text-gray-900">
+                        <span className="text-sm text-foreground">
                           {rate.name}
                         </span>
                       </div>
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-foreground">
                         {rate.display_cost}
                       </span>
                     </label>

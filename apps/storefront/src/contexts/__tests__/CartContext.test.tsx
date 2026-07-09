@@ -35,7 +35,7 @@ const mockToastError = vi.mocked(toast.error);
 const mockCart = {
   id: "cart-1",
   items: [
-    { id: "li-1", quantity: 2, name: "Shirt" },
+    { id: "li-1", quantity: 2, name: "CenWatch Air" },
     { id: "li-2", quantity: 1, name: "Pants" },
   ],
 } as never;
@@ -43,7 +43,7 @@ const mockCart = {
 const updatedCart = {
   id: "cart-1",
   items: [
-    { id: "li-1", quantity: 2, name: "Shirt" },
+    { id: "li-1", quantity: 2, name: "CenWatch Air" },
     { id: "li-2", quantity: 1, name: "Pants" },
     { id: "li-3", quantity: 1, name: "Hat" },
   ],

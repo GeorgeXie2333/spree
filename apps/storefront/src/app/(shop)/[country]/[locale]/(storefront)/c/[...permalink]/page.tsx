@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductListing } from "@/components/products/ProductListing";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { getCategory, getCategoryProducts } from "@/lib/data/categories";
+import {
+  getCategoryProducts,
+  getCenwatchCategory,
+} from "@/lib/data/categories";
 import { resolveCurrency } from "@/lib/data/markets";
-import { getProductFilters } from "@/lib/data/products";
+import { getCenwatchCategoryProductFilters } from "@/lib/data/products";
 import { generateCategoryMetadata } from "@/lib/metadata/category";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
@@ -36,15 +39,9 @@ export default async function CategoryPage({
   const fullPermalink = permalink.join("/");
   const basePath = `/${country}/${locale}`;
 
-  let category;
-  try {
-    category = await getCategory(fullPermalink, {
-      expand: ["ancestors", "children"],
-    });
-  } catch (error) {
-    console.error("Failed to fetch category:", error);
-    notFound();
-  }
+  const category = await getCenwatchCategory(fullPermalink, {
+    expand: ["ancestors", "children"],
+  });
 
   if (!category) {
     notFound();
@@ -59,6 +56,10 @@ export default async function CategoryPage({
   // call directly. Inline arrow closures don't serialize across the
   // server→client boundary; `.bind()` on a server action reference does.
   const fetchCategoryProducts = getCategoryProducts.bind(null, category.id);
+  const fetchCategoryFilters = getCenwatchCategoryProductFilters.bind(
+    null,
+    category.id,
+  );
 
   return (
     <div>
@@ -68,7 +69,7 @@ export default async function CategoryPage({
 
       <CategoryBanner category={category} basePath={basePath} locale={locale} />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+      <div className="container mx-auto px-4 pb-16 sm:px-6 lg:px-8">
         <ProductListing
           state={listingState}
           basePath={basePath}
@@ -79,7 +80,7 @@ export default async function CategoryPage({
           categoryId={category.id}
           baseParams={{ in_category: category.id }}
           fetchProducts={fetchCategoryProducts}
-          fetchFilters={getProductFilters}
+          fetchFilters={fetchCategoryFilters}
         />
       </div>
     </div>

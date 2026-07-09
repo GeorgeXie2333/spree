@@ -14,7 +14,6 @@ import {
   SheetFooter,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getCenwatchContent } from "@/content/cenwatch";
 import { useStore } from "@/contexts/StoreContext";
 import { useCountrySwitch } from "@/hooks/useCountrySwitch";
 
@@ -35,7 +34,6 @@ type PanelType =
 interface MobileMenuProps {
   rootCategories: Category[];
   basePath: string;
-  locale: string;
 }
 
 function localizedHref(basePath: string, href: string): string {
@@ -45,13 +43,9 @@ function localizedHref(basePath: string, href: string): string {
   return `${basePath}${href.startsWith("/") ? href : `/${href}`}`;
 }
 
-export function MobileMenu({
-  rootCategories,
-  basePath,
-  locale,
-}: MobileMenuProps) {
+export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
   const t = useTranslations("header");
-  const content = getCenwatchContent(locale);
+  const tf = useTranslations("footer");
   const [open, setOpen] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [panelStack, setPanelStack] = useState<PanelType[]>([{ kind: "main" }]);
@@ -174,9 +168,9 @@ export function MobileMenu({
 
       <SheetContent
         side="left"
-        className="flex flex-col !gap-0 !rounded-none overflow-hidden max-md:!top-16 max-md:!h-[calc(100%-4rem)] max-md:!w-full max-md:!max-w-none max-md:!border-r-0"
+        className="flex flex-col !gap-0 !rounded-none overflow-hidden max-md:!top-[84px] max-md:!h-[calc(100%-84px)] max-md:!w-full max-md:!max-w-none max-md:!border-r-0"
         showCloseButton={false}
-        overlayClassName="max-md:!top-16 max-md:!bg-transparent"
+        overlayClassName="max-md:!top-[84px] max-md:!bg-transparent"
       >
         <SheetTitle className="sr-only">{t("menu")}</SheetTitle>
         {/* Menu header — changes based on active panel */}
@@ -231,7 +225,13 @@ export function MobileMenu({
             }`}
           >
             <nav className="flex flex-col gap-1 px-4 flex-1 overflow-y-auto pt-2">
-              {content.navigation.map((item) => (
+              {[
+                { label: t("home"), href: "/" },
+                { label: t("allProducts"), href: "/products" },
+                { label: tf("userGuide"), href: "/operation-instructions" },
+                { label: tf("contact"), href: "/contact" },
+                { label: tf("orderTracking"), href: "/order-tracking" },
+              ].map((item) => (
                 <Link
                   key={item.href}
                   href={localizedHref(basePath, item.href)}

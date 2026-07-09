@@ -24,12 +24,12 @@ export function FulfillmentBlock({
 }: FulfillmentBlockProps) {
   const t = useTranslations("orders");
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-      <div className="px-6 py-4 border-b border-gray-200">
+    <div className="bg-card rounded-[18px] overflow-hidden mb-4">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex flex-col lg:flex-row lg:gap-6 gap-4">
           {shipAddress && (
             <div className="lg:w-1/2">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+              <h3 className="text-sm font-semibold text-foreground mb-2">
                 {t("deliveryAddress")}
               </h3>
               <AddressBlock address={shipAddress} />
@@ -37,14 +37,14 @@ export function FulfillmentBlock({
           )}
           <div className="lg:w-1/2 lg:flex justify-between">
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+              <h3 className="text-sm font-semibold text-foreground mb-2">
                 {t("shippingMethod")}
               </h3>
-              <p className="text-sm text-gray-900">
+              <p className="text-sm text-foreground">
                 {fulfillment.delivery_method?.name || t("canceled")}
               </p>
               {fulfillment.stock_location && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {t("shippedFrom", {
                     location: fulfillment.stock_location.name,
                   })}
@@ -85,13 +85,13 @@ export function FulfillmentBlock({
         {fulfillment.status !== "canceled" &&
           fulfillment.status !== "shipped" &&
           !fulfillment.tracking && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-xl text-sm text-gray-500 text-center">
+            <div className="mt-3 p-3 bg-background rounded-xl text-sm text-muted-foreground text-center">
               {t("noTrackingInfo")}
             </div>
           )}
       </div>
 
-      <div className="divide-y divide-gray-200">
+      <div className="divide-y divide-border">
         {lineItems.map((item) => (
           <div key={item.id} className="px-6 py-4">
             <LineItemCard item={item} basePath={basePath} />

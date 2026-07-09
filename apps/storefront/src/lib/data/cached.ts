@@ -1,6 +1,6 @@
 import { cache } from "react";
-import { getCategory } from "./categories";
-import { getProduct } from "./products";
+import { getCenwatchCategory } from "./categories";
+import { getCenwatchProduct } from "./products";
 
 /** Expand list used on the product detail page. */
 export const PRODUCT_PAGE_EXPAND = [
@@ -9,6 +9,7 @@ export const PRODUCT_PAGE_EXPAND = [
   "option_types",
   "custom_fields",
   "categories.ancestors",
+  "prior_price",
 ];
 
 /** Slim expand used by generateProductMetadata (needs only the primary image for og:image). */
@@ -30,16 +31,18 @@ export const PRODUCT_CARD_FIELDS = [
   "thumbnail_url",
   "purchasable",
   "default_variant_id",
+  "variant_count",
+  "available_on",
   "price",
   "original_price",
   "categories",
 ];
 
 export const getCachedProduct = cache((slugOrId: string, expand: string[]) =>
-  getProduct(slugOrId, { expand }),
+  getCenwatchProduct(slugOrId, expand),
 );
 
 export const getCachedCategory = cache(
   (idOrPermalink: string, expand: string[]) =>
-    getCategory(idOrPermalink, { expand }),
+    getCenwatchCategory(idOrPermalink, { expand }),
 );

@@ -3,13 +3,12 @@
 #
 # Steps:
 #   1. `spree seed` — seed the default store, roles, countries.
-#   2. `spree sample-data` — load sample products, categories, images.
+#   2. Create the CenWatch category and a purchasable watch fixture.
 #   3. `spree api-key create --name E2E --type publishable` — mint a key
 #      and capture the printed pk_... token.
 #
-# Idempotent: the CLI's seed/sample-data tasks are no-ops on already-seeded
-# databases, and a fresh API key per run is fine (old "E2E" keys just
-# accumulate but don't break anything).
+# Idempotent: the CLI seed task and CenWatch fixture use stable identifiers.
+# A fresh API key per run is fine; old E2E keys accumulate harmlessly.
 #
 # Output: writes `.env.e2e` at the repo root with SPREE_API_URL +
 # SPREE_PUBLISHABLE_KEY for the storefront to consume.
@@ -73,8 +72,45 @@ fi
 echo "==> Seeding default Spree data (spree seed)"
 pnpm exec spree seed
 
-echo "==> Loading sample products and categories (spree sample-data)"
-pnpm exec spree sample-data
+echo "==> Creating the CenWatch E2E catalog"
+docker compose exec -T web bin/rails runner - <<'RUBY'
+store = Spree::Store.default
+taxonomy = Spree::Taxonomy.find_or_create_by!(name: 'CenWatch')
+category = Spree::Taxon.find_or_initialize_by(permalink: 'cenwatch')
+category.assign_attributes(
+  name: 'CenWatch',
+  taxonomy: taxonomy,
+  parent: taxonomy.root
+)
+category.save!
+
+shipping_category = Spree::ShippingCategory.find_or_create_by!(name: 'Default')
+product = Spree::Product.find_or_initialize_by(slug: 'cenwatch-e2e')
+product.assign_attributes(
+  name: 'CenWatch Air Touch Watch',
+  description: 'Air touch control for phones, tablets, computers, and smart displays.',
+  available_on: 1.day.ago,
+  shipping_category: shipping_category
+)
+product.save!
+product.stores << store unless product.stores.include?(store)
+product.taxons << category unless product.taxons.include?(category)
+
+variant = product.master
+variant.update!(sku: 'CENWATCH-E2E')
+price = variant.prices.find_or_initialize_by(
+  currency: store.default_currency || 'USD'
+)
+price.amount = 199
+price.save!
+
+stock_location = Spree::StockLocation.first ||
+  Spree::StockLocation.create!(name: 'CenWatch Warehouse', default: true)
+stock_item = stock_location.stock_items.find_or_create_by!(variant: variant)
+stock_item.set_count_on_hand(100)
+
+puts "OK: #{product.name} / #{variant.sku} in #{category.permalink}"
+RUBY
 
 # Vanilla Spree ships without any payment gateway configured. The Admin API
 # can create one declaratively, but that endpoint only exists from Spree 5.5

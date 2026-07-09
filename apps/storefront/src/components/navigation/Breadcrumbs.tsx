@@ -1,5 +1,4 @@
 import type { Category } from "@spree/sdk";
-import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 
@@ -47,23 +46,19 @@ export async function Breadcrumbs({
 
   return (
     <nav aria-label={t("breadcrumb")} className="mb-6">
-      <ol className="flex items-center space-x-2 text-sm">
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
           return (
-            <li key={index} className="flex items-center">
-              {index > 0 && (
-                <ChevronRight className="w-4 h-4 text-gray-400 mx-2" />
-              )}
+            <li key={index} className="flex items-center gap-x-2">
+              {index > 0 && <span aria-hidden="true">›</span>}
               {isLast ? (
-                <span className="text-gray-500" aria-current="page">
-                  {item.name}
-                </span>
+                <span aria-current="page">{item.name}</span>
               ) : (
                 <Link
                   href={item.href}
-                  className="text-primary hover:text-primary/70"
+                  className="transition-colors duration-200 hover:text-link"
                 >
                   {item.name}
                 </Link>

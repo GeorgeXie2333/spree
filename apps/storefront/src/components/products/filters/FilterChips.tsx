@@ -3,7 +3,6 @@
 import type { OptionFilter, ProductFiltersResponse } from "@spree/sdk";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { getAvailabilityLabel } from "@/lib/utils/filters";
 import {
   findMatchingBucket,
@@ -86,26 +85,30 @@ export function FilterChips({
   if (chips.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-3">
+    <div className="mt-3 flex flex-wrap items-center gap-2">
       {chips.map((chip) => (
         <span
           key={chip.key}
-          className="inline-flex items-center gap-1.5 px-3 py-1 text-sm bg-gray-50 text-primary rounded-lg"
+          className="inline-flex items-center gap-0.5 rounded-full bg-card py-1 pr-1.5 pl-3 text-xs text-foreground"
         >
           <span>{chip.label}</span>
           <button
             type="button"
             onClick={chip.onRemove}
-            className="p-0.5 text-primary hover:text-primary transition-colors"
+            className="rounded-full p-0.5 text-muted-foreground transition-colors duration-200 hover:bg-[#e8e8ed] hover:text-foreground"
             aria-label={t("clearFilter", { label: chip.label })}
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="size-3" />
           </button>
         </span>
       ))}
-      <Button variant="link" size="sm" onClick={onClearAll}>
+      <button
+        type="button"
+        onClick={onClearAll}
+        className="px-1.5 text-sm text-link transition-colors duration-200 hover:underline"
+      >
         {t("clearAll")}
-      </Button>
+      </button>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import type { Order } from "@spree/sdk";
-import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { AddressBlock } from "@/components/order/AddressBlock";
@@ -30,16 +29,16 @@ export async function OrderDetail({
     <div>
       <Link
         href={`${basePath}/account/orders`}
-        className="text-sm text-gray-500 hover:text-gray-700 mb-4 inline-flex items-center gap-1"
+        className="mb-4 inline-flex items-center text-sm text-link hover:underline"
       >
-        <ChevronLeft className="w-4 h-4" />
         {t("backToOrders")}
+        <span aria-hidden="true"> ›</span>
       </Link>
 
-      <h1 className="text-2xl font-bold text-gray-900">
+      <h1 className="text-3xl font-semibold tracking-tight text-foreground">
         {t("orderTitle", { number: order.number })}
       </h1>
-      <p className="text-sm text-gray-500 mt-1 mb-6">
+      <p className="mt-1 mb-6 text-sm text-muted-foreground">
         {t("placedOn", { date: formatDateTime(order.completed_at, locale) })}
       </p>
 
@@ -66,8 +65,8 @@ export async function OrderDetail({
           );
         })
       ) : (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-          <div className="divide-y divide-gray-200">
+        <div className="mb-4 overflow-hidden rounded-[18px] bg-card">
+          <div className="divide-y divide-border">
             {order.items?.map((item) => (
               <div key={item.id} className="px-6 py-4">
                 <LineItemCard item={item} basePath={basePath} />
@@ -78,19 +77,19 @@ export async function OrderDetail({
       )}
 
       {order.customer_note && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">
+        <div className="mb-4 rounded-[18px] bg-card p-6">
+          <h3 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
             {t("specialInstructions")}
           </h3>
-          <p className="text-sm text-gray-900">{order.customer_note}</p>
+          <p className="text-sm text-foreground">{order.customer_note}</p>
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-200">
+      <div className="mb-4 overflow-hidden rounded-[18px] bg-card">
+        <div className="grid grid-cols-1 divide-y divide-border lg:grid-cols-2 lg:divide-x lg:divide-y-0">
           {order.billing_address && (
             <div className="px-6 py-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+              <h3 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
                 {t("billingAddress")}
               </h3>
               <AddressBlock address={order.billing_address} />
@@ -98,7 +97,7 @@ export async function OrderDetail({
           )}
           {order.payments && order.payments.length > 0 && (
             <div className="px-6 py-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">
+              <h3 className="mb-2 text-sm font-semibold tracking-tight text-foreground">
                 {t("paymentInformation")}
               </h3>
               {order.payments
@@ -106,7 +105,7 @@ export async function OrderDetail({
                 .map((payment) => (
                   <div key={payment.id} className="mb-3 last:mb-0">
                     <PaymentInfo payment={payment} />
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {payment.display_amount}
                     </p>
                   </div>
@@ -116,7 +115,7 @@ export async function OrderDetail({
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="rounded-[18px] bg-card p-6">
         <OrderTotals order={order} />
       </div>
     </div>

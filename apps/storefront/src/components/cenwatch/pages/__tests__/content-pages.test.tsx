@@ -1,75 +1,89 @@
 import { render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { ContactPage } from "@/components/cenwatch/pages/ContactPage";
 import { OperationInstructionsPage } from "@/components/cenwatch/pages/OperationInstructionsPage";
 import { OrderTrackingPage } from "@/components/cenwatch/pages/OrderTrackingPage";
-import { getCenwatchContent } from "@/content/cenwatch";
+import { siteConfig } from "@/lib/site-config";
+import enMessages from "../../../../../messages/en.json";
+import zhMessages from "../../../../../messages/zh.json";
 
-describe("CenWatch content pages", () => {
-  it("renders localized operation instructions from typed content", () => {
-    const content = getCenwatchContent("zh");
+function renderWithMessages(
+  ui: React.ReactElement,
+  locale: "en" | "zh" = "en",
+) {
+  const messages = locale === "zh" ? zhMessages : enMessages;
+  return render(
+    <NextIntlClientProvider locale={locale} messages={messages}>
+      {ui}
+    </NextIntlClientProvider>,
+  );
+}
 
-    render(<OperationInstructionsPage content={content} />);
+describe("Support content pages", () => {
+  it("renders localized operation instructions from next-intl messages", () => {
+    renderWithMessages(<OperationInstructionsPage />, "zh");
 
     expect(
       screen.getByRole("heading", {
         level: 1,
-        name: content.instructions.title,
+        name: zhMessages.guide.title,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText(content.instructions.intro)).toBeInTheDocument();
+    expect(screen.getByText(zhMessages.guide.intro)).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
         level: 2,
-        name: content.instructions.sections[0]?.title,
+        name: zhMessages.guide.connectionTitle,
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(content.instructions.sections[0]?.body[0] ?? ""),
+      screen.getByText(zhMessages.guide.connectionStep1),
     ).toBeInTheDocument();
   });
 
   it("renders an accessible contact form that sends through mailto", () => {
-    const content = getCenwatchContent("en");
+    renderWithMessages(<ContactPage />);
 
-    render(<ContactPage content={content} />);
-
-    const form = screen.getByRole("form", { name: content.contact.title });
-    expect(form).toHaveAttribute(
-      "action",
-      `mailto:${content.brand.supportEmail}`,
-    );
-    expect(screen.getByLabelText(content.contact.fields.name)).toHaveAttribute(
+    const form = screen.getByRole("form", { name: enMessages.contact.title });
+    expect(form).toHaveAttribute("action", `mailto:${siteConfig.supportEmail}`);
+    expect(screen.getByLabelText(enMessages.contact.nameLabel)).toHaveAttribute(
       "name",
       "name",
-    );
-    expect(screen.getByLabelText(content.contact.fields.email)).toHaveAttribute(
-      "type",
-      "email",
     );
     expect(
-      screen.getByRole("button", { name: content.contact.submit }),
+      screen.getByLabelText(enMessages.contact.emailLabel),
+    ).toHaveAttribute("type", "email");
+    expect(
+      screen.getByRole("button", { name: enMessages.contact.submit }),
     ).toBeInTheDocument();
-    expect(screen.getByText(content.contact.emailFallback)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        enMessages.contact.emailFallback.replace(
+          "{email}",
+          siteConfig.supportEmail,
+        ),
+      ),
+    ).toBeInTheDocument();
   });
 
   it("renders order tracking against the exact-match API without fake order status", () => {
-    const content = getCenwatchContent("en");
-
-    render(<OrderTrackingPage content={content} />);
+    renderWithMessages(<OrderTrackingPage />);
 
     expect(
-      screen.getByRole("heading", { level: 1, name: content.tracking.title }),
+      screen.getByRole("heading", {
+        level: 1,
+        name: enMessages.tracking.title,
+      }),
     ).toBeInTheDocument();
     expect(
-      screen.getByLabelText(content.tracking.orderNumber),
+      screen.getByLabelText(enMessages.tracking.orderNumberLabel),
     ).toBeInTheDocument();
-    expect(screen.getByLabelText(content.tracking.email)).toHaveAttribute(
-      "type",
-      "email",
-    );
     expect(
-      screen.getByRole("button", { name: content.tracking.submit }),
+      screen.getByLabelText(enMessages.tracking.emailLabel),
+    ).toHaveAttribute("type", "email");
+    expect(
+      screen.getByRole("button", { name: enMessages.tracking.submit }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/delivered/i)).not.toBeInTheDocument();
   });

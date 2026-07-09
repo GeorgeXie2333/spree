@@ -27,7 +27,7 @@ const spreeApiImagePattern = (() => {
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  allowedDevOrigins: ["shop.lvh.me", "*.trycloudflare.com", "192.168.33.13"],
+  allowedDevOrigins: ["shop.lvh.me", "*.trycloudflare.com"],
   transpilePackages: ["@spree/sdk"],
   reactCompiler: true,
   experimental: {
@@ -56,11 +56,6 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
       ...spreeApiImagePattern,
-      {
-        protocol: "https",
-        hostname: "api.cenwatch.com",
-        pathname: "/rails/active_storage/**",
-      },
       ...(allowLocalImages
         ? [
             {
@@ -75,16 +70,6 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-      {
-        protocol: "https",
-        hostname: "**.vendo.dev",
-        pathname: "/rails/active_storage/**",
-      },
-      {
-        protocol: "https",
-        hostname: "**.spree.sh",
-        pathname: "/rails/active_storage/**",
-      },
     ],
   },
 };

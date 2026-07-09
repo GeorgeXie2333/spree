@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { getTranslations } from "next-intl/server";
 import { OrderList } from "@/components/account/OrderList";
+import { EmptyState } from "@/components/commerce/EmptyState";
 import { Button } from "@/components/ui/button";
 import { getOrders } from "@/lib/data/orders";
 
@@ -24,21 +25,21 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
+      <h1 className="mb-6 text-3xl font-semibold tracking-tight text-foreground">
         {t("orderHistory")}
       </h1>
 
       {orders.length === 0 ? (
-        <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {t("noOrders")}
-          </h3>
-          <p className="text-gray-500 mb-6">{t("noOrdersDescription")}</p>
-          <Button asChild>
-            <Link href={`${basePath}/products`}>{t("startShopping")}</Link>
-          </Button>
-        </div>
+        <EmptyState
+          icon={<ShoppingBag />}
+          title={t("noOrders")}
+          description={t("noOrdersDescription")}
+          action={
+            <Button asChild>
+              <Link href={`${basePath}/products`}>{t("startShopping")}</Link>
+            </Button>
+          }
+        />
       ) : (
         <OrderList orders={orders} basePath={basePath} locale={locale} />
       )}

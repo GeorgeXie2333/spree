@@ -1,7 +1,10 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useState } from "react";
-import type { CenwatchContent } from "@/content/cenwatch";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 type TrackingResult =
   | {
@@ -22,11 +25,8 @@ type TrackingResult =
       }>;
     };
 
-interface OrderTrackingFormProps {
-  content: CenwatchContent;
-}
-
-export function OrderTrackingForm({ content }: OrderTrackingFormProps) {
+export function OrderTrackingForm() {
+  const t = useTranslations("tracking");
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -53,13 +53,11 @@ export function OrderTrackingForm({ content }: OrderTrackingFormProps) {
         setResult({
           ok: false,
           message:
-            response.status === 503
-              ? content.tracking.unavailable
-              : content.tracking.genericFailure,
+            response.status === 503 ? t("unavailable") : t("genericFailure"),
         });
       }
     } catch {
-      setResult({ ok: false, message: content.tracking.unavailable });
+      setResult({ ok: false, message: t("unavailable") });
     } finally {
       setIsSubmitting(false);
     }
@@ -67,60 +65,82 @@ export function OrderTrackingForm({ content }: OrderTrackingFormProps) {
 
   return (
     <form
-      aria-label={content.tracking.title}
-      className="rounded-lg border border-neutral-200 bg-neutral-50 p-5 shadow-sm sm:p-6"
+      aria-label={t("title")}
+      className="rounded-[18px] bg-card p-6 sm:p-8"
       onSubmit={handleSubmit}
     >
       <div className="grid gap-4">
-        <label className="grid gap-2 text-sm font-medium text-neutral-800">
-          {content.tracking.orderNumber}
-          <input
+        <Field>
+          <FieldLabel htmlFor="tracking-order-number">
+            {t("orderNumberLabel")}
+          </FieldLabel>
+          <Input
+            id="tracking-order-number"
             name="order_number"
-            className="h-11 rounded-md border border-neutral-300 bg-white px-3 text-base outline-none focus:border-neutral-950"
             autoComplete="off"
             placeholder="R123456789"
             required
+            className="rounded-xl border-border bg-white"
           />
-        </label>
-        <label className="grid gap-2 text-sm font-medium text-neutral-800">
-          {content.tracking.email}
-          <input
+        </Field>
+        <Field>
+          <FieldLabel htmlFor="tracking-email">{t("emailLabel")}</FieldLabel>
+          <Input
+            id="tracking-email"
             name="email"
             type="email"
             required
-            className="h-11 rounded-md border border-neutral-300 bg-white px-3 text-base outline-none focus:border-neutral-950"
             autoComplete="email"
+            className="rounded-xl border-border bg-white"
           />
-        </label>
+        </Field>
       </div>
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="mt-5 h-11 rounded-md bg-neutral-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting ? content.tracking.loading : content.tracking.submit}
-      </button>
+      <Button type="submit" disabled={isSubmitting} size="lg" className="mt-6">
+        {isSubmitting ? t("loading") : t("submit")}
+      </Button>
 
       {result ? (
         <section
           aria-live="polite"
-          className="mt-5 rounded-md border border-cyan-200 bg-cyan-50 p-4 text-sm leading-6 text-cyan-950"
+          className="mt-6 rounded-[14px] bg-white p-4 text-sm leading-6 text-foreground"
         >
-          <h2 className="text-sm font-semibold">
-            {content.tracking.resultHeading}
+          <h2 className="text-sm font-semibold tracking-tight">
+            {t("resultHeading")}
           </h2>
           {result.ok ? (
-            <div className="mt-3 grid gap-2">
-              <p>{result.order_number}</p>
-              {result.order_status ? <p>{result.order_status}</p> : null}
-              {result.payment_state ? <p>{result.payment_state}</p> : null}
-              {result.shipment_state ? <p>{result.shipment_state}</p> : null}
+            <div className="mt-3 grid gap-2 text-muted-foreground">
+              <p>
+                <span className="text-foreground">{t("resultOrder")}: </span>
+                {result.order_number}
+              </p>
+              {result.order_status ? (
+                <p>
+                  <span className="text-foreground">{t("resultStatus")}: </span>
+                  {result.order_status}
+                </p>
+              ) : null}
+              {result.payment_state ? (
+                <p>
+                  <span className="text-foreground">
+                    {t("resultPayment")}:{" "}
+                  </span>
+                  {result.payment_state}
+                </p>
+              ) : null}
+              {result.shipment_state ? (
+                <p>
+                  <span className="text-foreground">
+                    {t("resultShipment")}:{" "}
+                  </span>
+                  {result.shipment_state}
+                </p>
+              ) : null}
               {result.shipments?.map((shipment) => (
                 <p key={`${shipment.tracking_number}-${shipment.status}`}>
                   {shipment.carrier ? `${shipment.carrier}: ` : ""}
                   {shipment.tracking_url ? (
                     <a
-                      className="font-semibold underline"
+                      className="text-link hover:underline"
                       href={shipment.tracking_url}
                       rel="noreferrer"
                       target="_blank"
@@ -134,8 +154,8 @@ export function OrderTrackingForm({ content }: OrderTrackingFormProps) {
               ))}
             </div>
           ) : (
-            <p className="mt-3">
-              {result.message || content.tracking.genericFailure}
+            <p className="mt-3 text-muted-foreground">
+              {result.message || t("genericFailure")}
             </p>
           )}
         </section>

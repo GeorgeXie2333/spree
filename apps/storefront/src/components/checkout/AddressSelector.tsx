@@ -7,6 +7,7 @@ import { useCallback, useMemo } from "react";
 import { AddressFormFields } from "@/components/checkout/AddressFormFields";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 import type { AddressFormData } from "@/lib/utils/address";
 
 interface AddressSelectorProps {
@@ -95,31 +96,33 @@ export function AddressSelector({
 
   return (
     <div onBlur={handleContainerBlur}>
-      {/* Saved addresses — bordered container matching Shipping/Payment style */}
       {savedAddresses.length > 0 && (
         <RadioGroup
           value={selectedAddressId}
           onValueChange={handleSelectAddress}
-          className="rounded-sm border overflow-hidden gap-0"
+          className="gap-3"
         >
-          {savedAddresses.map((address, index) => (
+          {savedAddresses.map((address) => (
             <label
               key={address.id}
-              className={`flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
+              className={cn(
+                "flex items-start gap-3 rounded-xl border p-4 cursor-pointer transition-colors duration-200",
                 selectedAddressId === address.id
-                  ? "bg-blue-50"
-                  : "bg-white hover:bg-gray-50"
-              } ${index > 0 ? "border-t" : ""}`}
+                  ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
+                  : "border-border bg-background hover:bg-card",
+              )}
             >
               <RadioGroupItem value={address.id} className="mt-0.5 shrink-0" />
               <div className="flex-1 min-w-0">
-                <span className="text-sm text-gray-900">
+                <span className="text-sm text-foreground">
                   {address.full_name}
                   {address.company && (
-                    <span className="text-gray-500">, {address.company}</span>
+                    <span className="text-muted-foreground">
+                      , {address.company}
+                    </span>
                   )}
                 </span>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                   {address.address1}
                   {address.address2 && `, ${address.address2}`}, {address.city},{" "}
                   {address.state_text || address.state_name}{" "}
@@ -133,7 +136,7 @@ export function AddressSelector({
                     e.preventDefault();
                     onEditAddress(address);
                   }}
-                  className="text-xs text-gray-500 underline underline-offset-2 hover:text-gray-900 flex-shrink-0"
+                  className="text-xs text-link hover:underline underline-offset-2 flex-shrink-0"
                 >
                   {tc("edit")}
                 </button>
@@ -141,24 +144,26 @@ export function AddressSelector({
             </label>
           ))}
 
-          {/* Use a different address option */}
           <label
-            className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer border-t transition-colors ${
+            className={cn(
+              "flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors duration-200",
               selectedAddressId === "new"
-                ? "bg-blue-50"
-                : "bg-white hover:bg-gray-50"
-            }`}
+                ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
+                : "border-border bg-background hover:bg-card",
+            )}
           >
             <RadioGroupItem value="new" />
-            <MapPin className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
-            <span className="text-sm text-gray-900">
+            <MapPin
+              className="w-5 h-5 text-muted-foreground"
+              strokeWidth={1.5}
+            />
+            <span className="text-sm text-foreground">
               {t("useDifferentAddress")}
             </span>
           </label>
         </RadioGroup>
       )}
 
-      {/* Address form (shown when "new" is selected or no saved addresses) */}
       {showForm && (
         <div className={savedAddresses.length > 0 ? "mt-4" : undefined}>
           <AddressFormFields

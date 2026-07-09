@@ -14,16 +14,16 @@ const SearchBar = dynamic(
     })),
   {
     loading: () => (
-      <div className="h-10 w-full bg-gray-100 rounded-md animate-pulse" />
+      <div className="h-10 w-full bg-muted rounded-full animate-pulse" />
     ),
   },
 );
 
 interface SearchToggleProps {
   basePath: string;
-  /** Left slot (e.g. mobile menu) */
+  /** Left slot (e.g. mobile menu + wordmark) */
   left: ReactNode;
-  /** Center slot (e.g. logo) */
+  /** Center slot (e.g. desktop category nav) */
   center: ReactNode;
   /** Rendered before the search button in the right section */
   rightStart: ReactNode;
@@ -31,6 +31,7 @@ interface SearchToggleProps {
   rightEnd: ReactNode;
 }
 
+/** Frosted-glass nav row with an expanding search overlay. */
 export function SearchToggle({
   basePath,
   left,
@@ -48,7 +49,7 @@ export function SearchToggle({
   }, []);
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 h-16 relative">
+    <div className="relative h-12 border-b border-border/40 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
       {/* Normal header content */}
       <div
         className={`absolute inset-0 transition-all duration-300 ease-in-out ${
@@ -66,7 +67,7 @@ export function SearchToggle({
             <div className="flex justify-center min-w-0">{center}</div>
 
             {/* Right section */}
-            <div className="flex items-center flex-1 justify-end space-x-2">
+            <div className="flex items-center flex-1 justify-end space-x-1">
               {rightStart}
 
               {/* Search toggle */}
@@ -79,7 +80,7 @@ export function SearchToggle({
                 aria-expanded={searchOpen}
                 aria-controls="search-overlay"
               >
-                <Search className="size-5" />
+                <Search className="size-[18px]" />
               </Button>
 
               {rightEnd}
@@ -125,10 +126,10 @@ export function SearchToggle({
             onClick={closeSearch}
             aria-label={t("closeSearch")}
           >
-            <X className="size-5" />
+            <X className="size-[18px]" />
           </Button>
         </div>
       </div>
-    </header>
+    </div>
   );
 }

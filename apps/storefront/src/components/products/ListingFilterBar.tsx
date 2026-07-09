@@ -11,6 +11,8 @@ interface ListingFilterBarProps {
   filtersData: ProductFiltersResponse | null;
   activeFilters: ActiveFilters;
   totalCount: number;
+  /** Server-rendered grid / empty state laid out by FilterBar. */
+  children?: React.ReactNode;
 }
 
 /**
@@ -22,6 +24,7 @@ export function ListingFilterBar({
   filtersData,
   activeFilters,
   totalCount,
+  children,
 }: ListingFilterBarProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -48,14 +51,19 @@ export function ListingFilterBar({
   );
 
   return (
-    <div aria-busy={isPending}>
+    <div
+      aria-busy={isPending}
+      className={`transition-opacity duration-200 ${isPending ? "opacity-60" : ""}`}
+    >
       <FilterBar
         filtersData={filtersData}
         filtersLoading={false}
         activeFilters={activeFilters}
         totalCount={totalCount}
         onFilterChange={handleFilterChange}
-      />
+      >
+        {children}
+      </FilterBar>
     </div>
   );
 }

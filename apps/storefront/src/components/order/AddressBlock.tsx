@@ -6,8 +6,8 @@ interface AddressBlockProps {
 
 export function AddressBlock({ address }: AddressBlockProps) {
   return (
-    <div className="text-sm text-gray-600 space-y-0.5">
-      <p className="font-medium text-gray-800">{address.full_name}</p>
+    <div className="text-sm text-muted-foreground space-y-0.5">
+      <p className="font-medium text-foreground">{address.full_name}</p>
       {address.company && <p>{address.company}</p>}
       <p>{address.address1}</p>
       {address.address2 && <p>{address.address2}</p>}

@@ -45,10 +45,10 @@ function AddressCard({ address, onEdit, onDelete }: AddressCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
-      <div className="flex justify-between items-start">
-        <div className="text-sm text-gray-600 space-y-0.5">
-          <p className="font-medium text-gray-800">{address.full_name}</p>
+    <div className="rounded-[18px] bg-card p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-0.5 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">{address.full_name}</p>
           {address.company && <p>{address.company}</p>}
           <p>{address.address1}</p>
           {address.address2 && <p>{address.address2}</p>}
@@ -58,10 +58,14 @@ function AddressCard({ address, onEdit, onDelete }: AddressCardProps) {
           <p>{address.country_name}</p>
           {address.phone && <p className="mt-1">{address.phone}</p>}
         </div>
-        <div className="flex gap-2">
-          <Button variant="link" size="sm" onClick={onEdit}>
+        <div className="flex shrink-0 gap-3">
+          <button
+            type="button"
+            onClick={onEdit}
+            className="cursor-pointer text-sm text-link hover:underline"
+          >
             {t("edit")}
-          </Button>
+          </button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" disabled={deleting}>
@@ -134,7 +138,6 @@ export function AddressManagement({
       if (!result.success) {
         throw new Error(result.error);
       }
-      // Update just the one address in state
       if (result.address) {
         setAddresses((prev) =>
           prev.map((addr) => (addr.id === id ? result.address! : addr)),
@@ -145,7 +148,6 @@ export function AddressManagement({
       if (!result.success) {
         throw new Error(result.error);
       }
-      // Append the new address
       if (result.address) {
         setAddresses((prev) => [...prev, result.address!]);
       }
@@ -184,13 +186,13 @@ export function AddressManagement({
       {showAddButton && (
         <div className="mb-6">
           <Button onClick={handleAdd}>
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             {t("addAddress")}
           </Button>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {addresses.map((address) => (
           <AddressCard
             key={address.id}

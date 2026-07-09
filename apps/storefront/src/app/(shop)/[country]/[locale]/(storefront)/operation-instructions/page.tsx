@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { OperationInstructionsPage } from "@/components/cenwatch/pages/OperationInstructionsPage";
-import { getCenwatchContent } from "@/content/cenwatch";
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -10,17 +10,17 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { locale } = await params;
-  const content = getCenwatchContent(locale);
+  const t = await getTranslations({
+    locale: locale as Locale,
+    namespace: "guide",
+  });
 
   return {
-    title: content.instructions.title,
-    description: content.instructions.intro,
+    title: t("title"),
+    description: t("intro"),
   };
 }
 
-export default async function OperationInstructionsRoute({
-  params,
-}: PageProps) {
-  const { locale } = await params;
-  return <OperationInstructionsPage content={getCenwatchContent(locale)} />;
+export default async function OperationInstructionsRoute() {
+  return <OperationInstructionsPage />;
 }

@@ -1,9 +1,14 @@
-import type { Category } from "@spree/sdk";
+import type { Category, Product } from "@spree/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { ProductRail } from "@/components/commerce/ProductRail";
+import { SectionHeader } from "@/components/commerce/SectionHeader";
 import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { getCachedProduct, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
+import { PRODUCT_CARD_FIELDS, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
+import { resolveCurrency } from "@/lib/data/markets";
+import { getCenwatchProduct, getProducts } from "@/lib/data/products";
 import { generateProductMetadata } from "@/lib/metadata/product";
 import {
   buildBreadcrumbJsonLd,
@@ -43,6 +48,24 @@ function findBreadcrumbCategory(
   return categories[0];
 }
 
+/** Products from the same category as `product`, excluding itself. */
+async function getRelatedProducts(
+  product: Product,
+  category?: Category,
+): Promise<Product[]> {
+  if (!category) return [];
+  try {
+    const { data } = await getProducts({
+      in_category: category.id,
+      limit: 8,
+      fields: PRODUCT_CARD_FIELDS,
+    });
+    return data.filter((p) => p.id !== product.id);
+  } catch {
+    return [];
+  }
+}
+
 export default async function ProductPage({
   params,
   searchParams,
@@ -51,10 +74,8 @@ export default async function ProductPage({
   const { category_id } = await searchParams;
   const basePath = `/${country}/${locale}`;
 
-  let product;
-  try {
-    product = await getCachedProduct(slug, PRODUCT_PAGE_EXPAND);
-  } catch {
+  const product = await getCenwatchProduct(slug, PRODUCT_PAGE_EXPAND);
+  if (!product) {
     notFound();
   }
 
@@ -70,6 +91,13 @@ export default async function ProductPage({
     product.categories || [],
     category_id,
   );
+  const relatedCategory = product.categories?.[0];
+
+  const [relatedProducts, currency, t] = await Promise.all([
+    getRelatedProducts(product, relatedCategory),
+    resolveCurrency(country),
+    getTranslations({ locale: locale as Locale, namespace: "pdp" }),
+  ]);
 
   return (
     <>
@@ -84,7 +112,7 @@ export default async function ProductPage({
           })}
         />
       )}
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div className="container mx-auto px-4 pt-6 sm:px-6 lg:px-8">
         {breadcrumbCategory && (
           <Breadcrumbs
             category={breadcrumbCategory}
@@ -95,6 +123,23 @@ export default async function ProductPage({
         )}
       </div>
       <ProductDetails product={product} basePath={basePath} />
+      {relatedProducts.length > 0 && (
+        <section className="container mx-auto px-4 pt-8 pb-16 sm:px-6 lg:px-8">
+          <SectionHeader
+            title={t("relatedTitle")}
+            subtitle={t("relatedSubtitle")}
+          />
+          <div className="mt-8">
+            <ProductRail
+              products={relatedProducts}
+              basePath={basePath}
+              listId="pdp-related"
+              listName="Related Products"
+              currency={currency}
+            />
+          </div>
+        </section>
+      )}
     </>
   );
 }

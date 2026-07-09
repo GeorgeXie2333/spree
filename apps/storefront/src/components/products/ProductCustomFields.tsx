@@ -35,6 +35,10 @@ function renderValue(
   }
 }
 
+/**
+ * Two-column definition list of product custom fields. Rendered inside the
+ * PDP "Specifications" accordion — no heading or outer chrome of its own.
+ */
 export function ProductCustomFields({
   customFields,
 }: ProductCustomFieldsProps): React.JSX.Element | null {
@@ -45,22 +49,15 @@ export function ProductCustomFields({
   }
 
   return (
-    <div className="mt-8 border-t pt-8">
-      <h2 className="text-lg font-medium text-gray-900 mb-4">
-        {t("properties")}
-      </h2>
-      <dl className="space-y-3">
-        {customFields.map((field) => (
-          <div key={field.id} className="flex">
-            <dt className="w-32 shrink-0 text-gray-500 text-sm">
-              {field.label}
-            </dt>
-            <dd className="text-gray-900 text-sm min-w-0">
-              {renderValue(field, t)}
-            </dd>
-          </div>
-        ))}
-      </dl>
-    </div>
+    <dl className="grid grid-cols-[minmax(7rem,11rem)_1fr] gap-x-6 gap-y-2.5">
+      {customFields.map((field) => (
+        <div key={field.id} className="contents">
+          <dt className="text-sm text-muted-foreground">{field.label}</dt>
+          <dd className="min-w-0 text-sm text-foreground">
+            {renderValue(field, t)}
+          </dd>
+        </div>
+      ))}
+    </dl>
   );
 }

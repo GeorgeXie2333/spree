@@ -402,7 +402,7 @@ function ExpressCheckoutInner({
           }`}
         >
           <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
-          <p className="mt-4 text-sm font-medium text-gray-700">
+          <p className="mt-4 text-sm font-medium text-foreground">
             {t("finalizingPayment")}
           </p>
         </div>
@@ -417,7 +417,7 @@ function ExpressCheckoutInner({
                 : "opacity-0 pointer-events-none"
             }`}
           >
-            <div className="w-5 h-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-border border-t-muted-foreground rounded-full animate-spin" />
           </div>
 
           {/* Buttons — always mounted so Stripe can init, fade in when ready */}
@@ -456,14 +456,16 @@ function ExpressCheckoutInner({
               onShippingAddressChange={handleShippingAddressChange}
               onShippingRateChange={handleShippingRateChange}
             />
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
             {available && showDivider && (
               <div className="relative mt-4">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200" />
+                  <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">{t("or")}</span>
+                  <span className="px-2 bg-background text-muted-foreground">
+                    {t("or")}
+                  </span>
                 </div>
               </div>
             )}

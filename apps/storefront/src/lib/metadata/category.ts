@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCachedCategory } from "@/lib/data/cached";
+import { getCenwatchCategory } from "@/lib/data/categories";
 import { buildCanonicalUrl } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 
@@ -16,13 +16,10 @@ export async function generateCategoryMetadata({
 }: CategoryMetadataParams): Promise<Metadata> {
   const fullPermalink = permalink.join("/");
 
-  let category;
-  try {
-    category = await getCachedCategory(fullPermalink, [
-      "ancestors",
-      "children",
-    ]);
-  } catch {
+  const category = await getCenwatchCategory(fullPermalink, {
+    expand: ["ancestors", "children"],
+  });
+  if (!category) {
     return { title: "Category Not Found" };
   }
 

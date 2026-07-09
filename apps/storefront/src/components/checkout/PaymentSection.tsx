@@ -22,14 +22,6 @@ import {
 import { PaymentIcon } from "react-svg-credit-card-payment-icons";
 import { AddressFormFields } from "@/components/checkout/AddressFormFields";
 import {
-  AdyenPaymentForm,
-  type AdyenPaymentFormHandle,
-} from "@/components/checkout/AdyenPaymentForm";
-import {
-  PayPalPaymentForm,
-  type PayPalPaymentFormHandle,
-} from "@/components/checkout/PayPalPaymentForm";
-import {
   confirmWithSavedCard,
   StripePaymentForm,
   type StripePaymentFormHandle,
@@ -38,10 +30,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCountryStates } from "@/hooks/useCountryStates";
 import { getCreditCards } from "@/lib/data/credit-cards";
-import {
-  createCheckoutPaymentSession,
-  createDirectPayment,
-} from "@/lib/data/payment";
+import { createCheckoutPaymentSession } from "@/lib/data/payment";
 import {
   type AddressFormData,
   addressToFormData,
@@ -50,7 +39,7 @@ import {
 } from "@/lib/utils/address";
 import { getCardIconType, getCardLabel } from "@/lib/utils/credit-card";
 import { extractBasePath } from "@/lib/utils/path";
-import { resolveGatewayId } from "@/lib/utils/payment-gateway";
+import { isStripePaymentMethod } from "@/lib/utils/payment-gateway";
 
 export type PaymentCompleteResult =
   | { type: "session"; sessionId: string; sessionResult?: string }
@@ -93,7 +82,9 @@ export function PaymentSection({
   const t = useTranslations("checkout");
 
   // ── Payment methods from Spree ──────────────────────────────────────
-  const paymentMethods = cart.payment_methods ?? [];
+  const paymentMethods = (cart.payment_methods ?? []).filter(
+    isStripePaymentMethod,
+  );
   const hasMultipleMethods = paymentMethods.length > 1;
 
   // Default to the first method; fall back if the stored ID becomes stale
@@ -149,8 +140,7 @@ export function PaymentSection({
 
   // ── Payment gateway state (session-based) ───────────────────────────
   // Stores the raw external_data from the Spree PaymentSession.
-  // Each gateway form extracts what it needs (e.g. client_secret for Stripe,
-  // session_id + session_data for Adyen).
+  // Stripe returns the client secret used by the Payment Element.
   const [sessionExternalData, setSessionExternalData] = useState<Record<
     string,
     unknown
@@ -158,32 +148,18 @@ export function PaymentSection({
   const [paymentSessionId, setPaymentSessionId] = useState<string | null>(null);
   const [gatewayError, setGatewayError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const gatewayHandleRef = useRef<
-    | StripePaymentFormHandle
-    | AdyenPaymentFormHandle
-    | PayPalPaymentFormHandle
-    | null
-  >(null);
+  const gatewayHandleRef = useRef<StripePaymentFormHandle | null>(null);
   const initRef = useRef(false);
   const sessionRequestIdRef = useRef(0);
   const completionInFlightRef = useRef(false);
 
-  const handleGatewayReady = useCallback(
-    (
-      handle:
-        | StripePaymentFormHandle
-        | AdyenPaymentFormHandle
-        | PayPalPaymentFormHandle,
-    ) => {
-      gatewayHandleRef.current = handle;
-    },
-    [],
-  );
+  const handleGatewayReady = useCallback((handle: StripePaymentFormHandle) => {
+    gatewayHandleRef.current = handle;
+  }, []);
 
   // ── Session management ──────────────────────────────────────────────
   const createSession = useCallback(
     async (cardId: string | null, method: PaymentMethod) => {
-      const currentGatewayId = resolveGatewayId(method.type);
       const requestId = ++sessionRequestIdRef.current;
 
       setLoading(true);
@@ -201,7 +177,7 @@ export function PaymentSection({
           return_url: returnUrl,
         };
 
-        if (currentGatewayId === "stripe" && cardId) {
+        if (cardId) {
           externalData.stripe_payment_method_id = cardId;
         }
 
@@ -216,12 +192,7 @@ export function PaymentSection({
         if (result.success && result.session) {
           const extData = result.session.external_data;
           if (extData && Object.keys(extData).length > 0) {
-            // Include external_id so gateway forms can access the
-            // provider-side session/order ID (e.g. Adyen session ID).
-            setSessionExternalData({
-              ...extData,
-              _external_id: result.session.external_id,
-            });
+            setSessionExternalData(extData);
             setPaymentSessionId(result.session.id);
           } else {
             setGatewayError(t("failedToInitPayment"));
@@ -383,59 +354,6 @@ export function PaymentSection({
     setBillAddress((prev) => updateAddressField(prev, field, value));
   };
 
-  // ── Auto-complete after gateway approval (PayPal popup / Adyen sessions) ──
-  const handleGatewayApproved = useCallback(
-    async (sessionResult?: string) => {
-      if (completionInFlightRef.current) return;
-      if (!paymentSessionId) return;
-
-      completionInFlightRef.current = true;
-      setProcessing(true);
-      setGatewayError(null);
-
-      try {
-        // Update billing address
-        let addressSuccess: boolean;
-        if (useShippingForBilling) {
-          addressSuccess = await onUpdateBillingAddress({
-            use_shipping: true,
-          });
-        } else {
-          const billingData = formDataToAddress(billAddress);
-          addressSuccess = await onUpdateBillingAddress({
-            billing_address: billingData,
-          });
-        }
-
-        if (!addressSuccess) {
-          setProcessing(false);
-          completionInFlightRef.current = false;
-          setGatewayError(t("failedToSaveBilling"));
-          return;
-        }
-
-        await onPaymentComplete({
-          type: "session",
-          sessionId: paymentSessionId,
-          sessionResult,
-        });
-      } catch {
-        setGatewayError(t("paymentError"));
-        setProcessing(false);
-        completionInFlightRef.current = false;
-      }
-    },
-    [
-      paymentSessionId,
-      useShippingForBilling,
-      billAddress,
-      onUpdateBillingAddress,
-      onPaymentComplete,
-      setProcessing,
-      t,
-    ],
-  );
-
   // ── Submit ──────────────────────────────────────────────────────────
   useImperativeHandle(
     ref,
@@ -502,7 +420,7 @@ export function PaymentSection({
 
             // 2. Process payment based on method type
             if (selectedMethod.session_required) {
-              // Session-based flow (Stripe, Adyen, etc.)
+              // Stripe payment-session flow.
               if (!paymentSessionId || !sessionExternalData) {
                 setProcessing(false);
                 return { error: t("failedToInitPayment") };
@@ -515,12 +433,7 @@ export function PaymentSection({
               const clientSecret = sessionExternalData.client_secret as
                 | string
                 | undefined;
-              const gatewayId = resolveGatewayId(selectedMethod.type);
-              const isStripe = gatewayId === "stripe";
-              const isApprovalDriven =
-                gatewayId === "adyen" || gatewayId === "paypal";
-              const canUseSavedCard =
-                isStripe && Boolean(selectedCardId && clientSecret);
+              const canUseSavedCard = Boolean(selectedCardId && clientSecret);
 
               if (!canUseSavedCard && !gatewayHandleRef.current) {
                 setProcessing(false);
@@ -536,7 +449,7 @@ export function PaymentSection({
                 );
                 error = result.error;
               } else {
-                // New payment via gateway handle (Stripe PaymentElement, Adyen Drop-in, etc.)
+                // New card via Stripe Payment Element.
                 const result =
                   await gatewayHandleRef.current!.confirmPayment(returnUrl);
                 error = result.error;
@@ -548,13 +461,6 @@ export function PaymentSection({
                 return { error };
               }
 
-              // Approval-driven gateways (Adyen, PayPal) complete the order
-              // via handleGatewayApproved when their callback fires — don't
-              // call onPaymentComplete here or we'll race with the callback.
-              if (isApprovalDriven) {
-                return {};
-              }
-
               await onPaymentComplete({
                 type: "session",
                 sessionId: paymentSessionId,
@@ -563,19 +469,8 @@ export function PaymentSection({
             }
 
             // Direct payment flow (Check, Cash on Delivery, etc.)
-            const paymentResult = await createDirectPayment(
-              cart.id,
-              selectedMethod.id,
-            );
-            if (!paymentResult.success) {
-              const msg = paymentResult.error || t("failedToCreatePayment");
-              setGatewayError(msg);
-              setProcessing(false);
-              return { error: msg };
-            }
-
-            await onPaymentComplete({ type: "direct" });
-            return {};
+            setProcessing(false);
+            return { error: t("stripeUnavailable") };
           } catch {
             const msg = t("paymentError");
             setGatewayError(msg);
@@ -609,15 +504,17 @@ export function PaymentSection({
   if (isZeroAmount) {
     return (
       <div>
-        <h2 className="text-lg font-bold text-gray-900">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("paymentMethod")}
         </h2>
-        <div className="mt-2 rounded-sm border bg-gray-50 px-4 py-6 text-center">
+        <div className="mt-3 rounded-xl border border-border bg-card px-4 py-6 text-center">
           <Info
-            className="w-8 h-8 text-gray-300 mx-auto mb-2"
+            className="w-8 h-8 text-muted-foreground mx-auto mb-2"
             strokeWidth={1.5}
           />
-          <p className="text-sm text-gray-600">{t("noPaymentRequired")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("noPaymentRequired")}
+          </p>
         </div>
 
         {/* Billing address */}
@@ -629,7 +526,9 @@ export function PaymentSection({
                 handleUseShippingChange(checked === true)
               }
             />
-            <span className="text-sm text-gray-900">{t("sameAsShipping")}</span>
+            <span className="text-sm text-foreground">
+              {t("sameAsShipping")}
+            </span>
           </label>
           {!useShippingForBilling && (
             <div className="mt-4">
@@ -652,15 +551,17 @@ export function PaymentSection({
   if (paymentMethods.length === 0) {
     return (
       <div>
-        <h2 className="text-lg font-bold text-gray-900">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {t("paymentMethod")}
         </h2>
-        <div className="mt-2 rounded-sm border bg-gray-50 px-4 py-8 text-center">
+        <div className="mt-3 rounded-xl border border-border bg-card px-4 py-8 text-center">
           <CreditCard
-            className="w-10 h-10 text-gray-300 mx-auto mb-3"
+            className="w-10 h-10 text-muted-foreground mx-auto mb-3"
             strokeWidth={1.5}
           />
-          <p className="text-sm text-gray-500">{t("noPaymentMethods")}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("stripeUnavailable")}
+          </p>
         </div>
       </div>
     );
@@ -670,43 +571,47 @@ export function PaymentSection({
   return (
     <div>
       {/* Section Header */}
-      <h2 className="text-lg font-bold text-gray-900">{t("paymentMethod")}</h2>
-      <p className="text-sm text-gray-500 mt-0.5">{t("secureTransactions")}</p>
+      <h2 className="text-lg font-semibold tracking-tight text-foreground">
+        {t("paymentMethod")}
+      </h2>
+      <p className="text-sm text-muted-foreground mt-0.5">
+        {t("secureTransactions")}
+      </p>
 
       {/* Inline requirement errors from parent */}
       {errors && errors.length > 0 && (
-        <div className="rounded-sm border border-red-300 bg-red-50 px-4 py-3 mb-3 mt-2">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 mb-3 mt-2">
           {errors.map((err, i) => (
-            <p key={i} className="text-sm text-red-700">
+            <p key={i} className="text-sm text-destructive">
               {err}
             </p>
           ))}
         </div>
       )}
 
-      {/* Payment methods */}
+      {/* Payment methods — Apple-style outlined selection blocks */}
       <RadioGroup
         value={effectiveSelectedMethodId}
         onValueChange={handleMethodSelect}
-        className="rounded-sm border overflow-hidden gap-0 mt-3"
+        className="gap-3 mt-3"
       >
-        {paymentMethods.map((pm, index) => {
+        {paymentMethods.map((pm) => {
           const isSelected = pm.id === effectiveSelectedMethodId;
-          const pmGatewayId = pm.session_required
-            ? resolveGatewayId(pm.type)
-            : null;
 
           return (
-            <div key={pm.id}>
+            <div
+              key={pm.id}
+              className={
+                isSelected
+                  ? "rounded-xl border-2 border-[#0071e3] bg-[#0071e3]/[0.04] overflow-hidden"
+                  : "rounded-xl border border-border bg-background overflow-hidden"
+              }
+            >
               {/* Method header row */}
               {hasMultipleMethods && (
-                <label
-                  className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors ${
-                    isSelected ? "bg-blue-50" : "bg-white hover:bg-gray-50"
-                  } ${index > 0 ? "border-t" : ""}`}
-                >
+                <label className="flex items-center gap-3 px-4 py-3.5 cursor-pointer">
                   <RadioGroupItem value={pm.id} />
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-foreground">
                     {pm.name}
                   </span>
                 </label>
@@ -714,10 +619,10 @@ export function PaymentSection({
 
               {/* Single method header (no radio, like current behavior) */}
               {!hasMultipleMethods && (
-                <div className="flex items-center justify-between px-4 py-3.5 bg-blue-50">
+                <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex items-center gap-3">
                     <RadioGroupItem value={pm.id} />
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-foreground">
                       {pm.name}
                     </span>
                   </div>
@@ -726,203 +631,124 @@ export function PaymentSection({
 
               {/* Sub-form for the selected method */}
               {isSelected && (
-                <div className="border-t bg-gray-50">
-                  {pm.session_required ? (
-                    <>
-                      {/* Stripe: saved cards selector */}
-                      {pmGatewayId === "stripe" && (
-                        <>
-                          {/* Demo-only test card note */}
-                          <p className="text-xs text-gray-400 px-4 pt-3">
-                            {t("testCardNote", {
-                              testCard: "4242 4242 4242 4242",
-                            })}
-                          </p>
+                <div className="border-t border-border">
+                  {/* Stripe: saved cards selector */}
+                  {/* Demo-only test card note */}
+                  <p className="text-xs text-muted-foreground px-4 pt-3">
+                    {t("testCardNote", {
+                      testCard: "4242 4242 4242 4242",
+                    })}
+                  </p>
 
-                          {savedCards.length > 0 && (
-                            <div className="px-4 pt-3">
-                              <RadioGroup
-                                value={selectedCardId ?? "__new__"}
-                                onValueChange={(val) =>
-                                  handleCardSelect(
-                                    val === "__new__" ? null : val,
-                                  )
-                                }
-                                className="gap-0 rounded-sm border overflow-hidden"
-                              >
-                                {savedCards.map((card, cardIndex) => (
-                                  <label
-                                    key={card.id}
-                                    className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                                      selectedCardId ===
-                                      card.gateway_payment_profile_id
-                                        ? "bg-white"
-                                        : "bg-white hover:bg-gray-50"
-                                    } ${cardIndex > 0 ? "border-t" : ""}`}
-                                  >
-                                    <RadioGroupItem
-                                      value={
-                                        card.gateway_payment_profile_id ??
-                                        card.id
-                                      }
-                                    />
-                                    <PaymentIcon
-                                      type={getCardIconType(card.brand)}
-                                      format="flatRounded"
-                                      width={34}
-                                    />
-                                    <span className="text-sm text-gray-900 flex-1">
-                                      {t("savedCardLabel", {
-                                        brand: getCardLabel(card.brand),
-                                        digits: card.last4,
-                                      })}
-                                    </span>
-                                    <span className="text-xs text-gray-500">
-                                      {t("cardExpiry", {
-                                        month: String(card.month).padStart(
-                                          2,
-                                          "0",
-                                        ),
-                                        year: String(card.year),
-                                      })}
-                                    </span>
-                                    {card.default && (
-                                      <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
-                                        {t("default")}
-                                      </span>
-                                    )}
-                                  </label>
-                                ))}
-
-                                {/* Add new card */}
-                                <label
-                                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer border-t transition-colors ${
-                                    isAddingNew
-                                      ? "bg-white"
-                                      : "bg-white hover:bg-gray-50"
-                                  }`}
-                                >
-                                  <RadioGroupItem value="__new__" />
-                                  <CreditCard
-                                    className="w-5 h-5 text-gray-400"
-                                    strokeWidth={1.5}
-                                  />
-                                  <span className="text-sm text-gray-900">
-                                    {t("addNewPaymentMethod")}
-                                  </span>
-                                </label>
-                              </RadioGroup>
-                            </div>
-                          )}
-                        </>
-                      )}
-
-                      {/* Shared: loading spinner */}
-                      {loading && (
-                        <div className="flex items-center justify-center py-10">
-                          <Loader2 className="animate-spin h-5 w-5 text-gray-400" />
-                          <span className="ml-2 text-sm text-gray-500">
-                            {t("loadingPaymentForm")}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* Shared: gateway error */}
-                      {gatewayError && !loading && (
-                        <div className="px-4 py-3">
-                          <div className="rounded-sm border border-red-300 bg-red-50 px-4 py-3">
-                            <p className="text-sm text-red-700 flex items-center gap-2">
-                              <CircleAlert className="h-4 w-4 flex-shrink-0" />
-                              {gatewayError}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Gateway-specific payment form */}
-                      {!loading &&
-                        sessionExternalData &&
-                        (() => {
-                          const ext = sessionExternalData;
-                          switch (pmGatewayId) {
-                            case "stripe": {
-                              const secret = ext.client_secret as
-                                | string
-                                | undefined;
-                              return (
-                                secret &&
-                                isAddingNew && (
-                                  <div className="p-4">
-                                    <StripePaymentForm
-                                      key={secret}
-                                      clientSecret={secret}
-                                      onReady={handleGatewayReady}
-                                    />
-                                  </div>
-                                )
-                              );
+                  {savedCards.length > 0 && (
+                    <div className="px-4 pt-3">
+                      <RadioGroup
+                        value={selectedCardId ?? "__new__"}
+                        onValueChange={(val) =>
+                          handleCardSelect(val === "__new__" ? null : val)
+                        }
+                        className="gap-2"
+                      >
+                        {savedCards.map((card) => (
+                          <label
+                            key={card.id}
+                            className={
+                              selectedCardId === card.gateway_payment_profile_id
+                                ? "flex items-center gap-3 rounded-xl border-2 border-[#0071e3] bg-[#0071e3]/[0.04] px-4 py-3 cursor-pointer"
+                                : "flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 cursor-pointer hover:bg-card"
                             }
-                            case "adyen": {
-                              const sid = ext._external_id as
-                                | string
-                                | undefined;
-                              const sdata = ext.session_data as
-                                | string
-                                | undefined;
-                              return sid && sdata ? (
-                                <div className="p-4">
-                                  <AdyenPaymentForm
-                                    key={sid}
-                                    sessionId={sid}
-                                    sessionData={sdata}
-                                    onReady={handleGatewayReady}
-                                    onApproved={handleGatewayApproved}
-                                  />
-                                </div>
-                              ) : null;
-                            }
-                            case "paypal": {
-                              const orderId = ext.id as string | undefined;
-                              return orderId ? (
-                                <div className="p-4">
-                                  <PayPalPaymentForm
-                                    key={orderId}
-                                    paypalOrderId={orderId}
-                                    currency={cart.currency}
-                                    onReady={handleGatewayReady}
-                                    onApproved={handleGatewayApproved}
-                                  />
-                                </div>
-                              ) : null;
-                            }
-                            default:
-                              return (
-                                <div className="px-4 py-6 text-center">
-                                  <Info
-                                    className="w-8 h-8 text-gray-300 mx-auto mb-2"
-                                    strokeWidth={1.5}
-                                  />
-                                  <p className="text-sm text-gray-500">
-                                    {t("unsupportedGateway")}
-                                  </p>
-                                </div>
-                              );
+                          >
+                            <RadioGroupItem
+                              value={card.gateway_payment_profile_id ?? card.id}
+                            />
+                            <PaymentIcon
+                              type={getCardIconType(card.brand)}
+                              format="flatRounded"
+                              width={34}
+                            />
+                            <span className="text-sm text-foreground flex-1">
+                              {t("savedCardLabel", {
+                                brand: getCardLabel(card.brand),
+                                digits: card.last4,
+                              })}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {t("cardExpiry", {
+                                month: String(card.month).padStart(2, "0"),
+                                year: String(card.year),
+                              })}
+                            </span>
+                            {card.default && (
+                              <span className="text-[11px] font-medium text-muted-foreground bg-card px-1.5 py-0.5 rounded">
+                                {t("default")}
+                              </span>
+                            )}
+                          </label>
+                        ))}
+
+                        {/* Add new card */}
+                        <label
+                          className={
+                            isAddingNew
+                              ? "flex items-center gap-3 rounded-xl border-2 border-[#0071e3] bg-[#0071e3]/[0.04] px-4 py-3 cursor-pointer"
+                              : "flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 cursor-pointer hover:bg-card"
                           }
-                        })()}
-                    </>
-                  ) : (
-                    /* ── Direct/manual payment ── */
-                    <div className="px-4 py-4">
-                      {pm.description && (
-                        <p className="text-sm text-gray-600 mb-2">
-                          {pm.description}
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-500">
-                        {t("manualPaymentInfo")}
-                      </p>
+                        >
+                          <RadioGroupItem value="__new__" />
+                          <CreditCard
+                            className="w-5 h-5 text-muted-foreground"
+                            strokeWidth={1.5}
+                          />
+                          <span className="text-sm text-foreground">
+                            {t("addNewPaymentMethod")}
+                          </span>
+                        </label>
+                      </RadioGroup>
                     </div>
                   )}
+
+                  {/* Shared: loading spinner */}
+                  {loading && (
+                    <div className="flex items-center justify-center py-10">
+                      <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        {t("loadingPaymentForm")}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Shared: gateway error */}
+                  {gatewayError && !loading && (
+                    <div className="px-4 py-3">
+                      <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
+                        <p className="text-sm text-destructive flex items-center gap-2">
+                          <CircleAlert className="h-4 w-4 flex-shrink-0" />
+                          {gatewayError}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Stripe payment form */}
+                  {!loading &&
+                    sessionExternalData &&
+                    (() => {
+                      const secret = sessionExternalData.client_secret as
+                        | string
+                        | undefined;
+                      return (
+                        secret &&
+                        isAddingNew && (
+                          <div className="p-4">
+                            <StripePaymentForm
+                              key={secret}
+                              clientSecret={secret}
+                              onReady={handleGatewayReady}
+                            />
+                          </div>
+                        )
+                      );
+                    })()}
                 </div>
               )}
             </div>
@@ -939,7 +765,7 @@ export function PaymentSection({
               handleUseShippingChange(checked === true)
             }
           />
-          <span className="text-sm text-gray-900">{t("sameAsShipping")}</span>
+          <span className="text-sm text-foreground">{t("sameAsShipping")}</span>
         </label>
 
         {!useShippingForBilling && (

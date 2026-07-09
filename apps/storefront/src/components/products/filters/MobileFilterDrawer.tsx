@@ -10,6 +10,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
 import {
   getActiveFilterCount,
   getAvailabilityLabel,
@@ -93,26 +94,28 @@ export function MobileFilterDrawer({
     >
       <SheetContent
         side="left"
-        className="w-full max-w-sm flex flex-col p-0 gap-0"
+        className="flex w-full max-w-sm flex-col gap-0 p-0"
         showCloseButton={false}
         aria-describedby={undefined}
       >
         <SheetTitle className="sr-only">{t("filters")}</SheetTitle>
 
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between border-b border-border/60 p-4">
           <Button
             variant="ghost"
             size="icon"
             onClick={onClose}
             aria-label={t("closeFilters")}
           >
-            <X className="w-6 h-6" />
+            <X className="size-5" />
           </Button>
-          <h2 className="text-lg font-semibold uppercase">{t("filters")}</h2>
+          <h2 className="text-base font-semibold tracking-tight text-foreground">
+            {t("filters")}
+          </h2>
           <div className="w-10" />
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-7">
+        <div className="flex-1 divide-y divide-border/60 overflow-y-auto px-5">
           {filtersData?.filters.map((filter) => {
             switch (filter.type) {
               case "option":
@@ -148,7 +151,7 @@ export function MobileFilterDrawer({
           })}
         </div>
 
-        <div className="border-t border-gray-200 p-4 space-y-2">
+        <div className="space-y-2 border-t border-border/60 p-4">
           {stagedCount > 0 && (
             <Button variant="ghost" className="w-full" onClick={handleClearAll}>
               {t("clearAllFiltersCount", { count: stagedCount })}
@@ -175,8 +178,8 @@ function MobileOptionSection({
   const isColorFilter = filter.kind === "color_swatch";
 
   return (
-    <div>
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+    <div className="py-5">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">
         {filter.label}
       </h3>
       {isColorFilter ? (
@@ -189,35 +192,38 @@ function MobileOptionSection({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onToggle(option.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${
-                  isSelected ? "bg-gray-50" : "hover:bg-gray-50"
-                }`}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 transition-colors duration-200",
+                  isSelected ? "bg-card" : "hover:bg-card",
+                )}
               >
                 <span
-                  className={`w-7 h-7 rounded-lg shrink-0 border-2 transition-colors overflow-hidden ${
-                    isSelected
-                      ? "border-gray-500 ring-2 ring-primary-200"
-                      : "border-gray-200"
-                  }`}
+                  className={cn(
+                    "size-7 shrink-0 rounded-full border border-black/10 bg-cover bg-center transition-all duration-200",
+                    isSelected &&
+                      "ring-2 ring-[#0071e3] ring-offset-2 ring-offset-background",
+                  )}
                   style={
                     option.image_url
-                      ? {
-                          backgroundImage: `url(${option.image_url})`,
-                          backgroundSize: "cover",
-                        }
-                      : option.color_code
-                        ? { backgroundColor: option.color_code }
-                        : { backgroundColor: "#e5e7eb" }
+                      ? { backgroundImage: `url(${option.image_url})` }
+                      : { backgroundColor: option.color_code || "#e8e8ed" }
                   }
                 />
                 <span
-                  className={`text-sm flex-1 text-left ${isSelected ? "font-medium text-gray-900" : "text-gray-700"}`}
+                  className={cn(
+                    "flex-1 text-left text-sm",
+                    isSelected
+                      ? "font-medium text-foreground"
+                      : "text-foreground/80",
+                  )}
                 >
                   {option.label}
                 </span>
-                <span className="text-xs text-gray-400">({option.count})</span>
+                <span className="text-xs text-muted-foreground">
+                  ({option.count})
+                </span>
                 {isSelected && (
-                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  <Check className="size-4 shrink-0 text-primary" />
                 )}
               </button>
             );
@@ -233,11 +239,12 @@ function MobileOptionSection({
                 type="button"
                 aria-pressed={isSelected}
                 onClick={() => onToggle(option.id)}
-                className={`px-3.5 py-2 text-sm rounded-xl border transition-colors ${
+                className={cn(
+                  "rounded-full border px-3.5 py-2 text-sm transition-colors duration-200",
                   isSelected
-                    ? "border-gray-500 bg-primary text-white"
-                    : "border-gray-300 text-gray-700 hover:border-gray-400"
-                }`}
+                    ? "border-transparent bg-primary text-primary-foreground"
+                    : "border-border text-foreground hover:border-foreground/40",
+                )}
               >
                 {option.label}
               </button>
@@ -269,8 +276,8 @@ function MobilePriceSection({
   );
 
   return (
-    <div>
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+    <div className="py-5">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">
         {t("price")}
       </h3>
       <div className="space-y-1">
@@ -288,16 +295,15 @@ function MobilePriceSection({
                   onPriceChange(bucket.min, bucket.max);
                 }
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-colors ${
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200",
                 isSelected
-                  ? "bg-gray-50 font-medium text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
+                  ? "bg-card font-medium text-foreground"
+                  : "text-foreground/80 hover:bg-card",
+              )}
             >
               <span className="flex-1 text-left">{bucket.label}</span>
-              {isSelected && (
-                <Check className="w-4 h-4 text-primary shrink-0" />
-              )}
+              {isSelected && <Check className="size-4 shrink-0 text-primary" />}
             </button>
           );
         })}
@@ -318,8 +324,8 @@ function MobileAvailabilitySection({
   const t = useTranslations("products");
 
   return (
-    <div>
-      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+    <div className="py-5">
+      <h3 className="mb-3 text-sm font-semibold text-foreground">
         {t("availability")}
       </h3>
       <div className="space-y-1">
@@ -337,19 +343,20 @@ function MobileAvailabilitySection({
                   onChange(option.id);
                 }
               }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-xl transition-colors ${
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200",
                 isSelected
-                  ? "bg-gray-50 font-medium text-gray-900"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
+                  ? "bg-card font-medium text-foreground"
+                  : "text-foreground/80 hover:bg-card",
+              )}
             >
               <span className="flex-1 text-left">
                 {getAvailabilityLabel(option.id, t)}
               </span>
-              <span className="text-xs text-gray-400">({option.count})</span>
-              {isSelected && (
-                <Check className="w-4 h-4 text-primary shrink-0" />
-              )}
+              <span className="text-xs text-muted-foreground">
+                ({option.count})
+              </span>
+              {isSelected && <Check className="size-4 shrink-0 text-primary" />}
             </button>
           );
         })}

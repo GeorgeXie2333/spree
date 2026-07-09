@@ -1,5 +1,9 @@
 import type { Category, Media, Product } from "@spree/sdk";
 import type { MetadataRoute } from "next";
+import {
+  CENWATCH_CATEGORY_PERMALINK,
+  isCenwatchCategory,
+} from "@/lib/cenwatch/catalog";
 import { getCenwatchLaunchCountryLocales } from "@/lib/cenwatch/markets";
 import { isSupportedLocale } from "@/lib/i18n/routing";
 import { getClient } from "@/lib/spree";
@@ -37,6 +41,7 @@ const cachedCategoriesByLocale = new Map<
   string,
   Promise<CategoryWithTimestamp[]>
 >();
+const cachedCatalogRootsByLocale = new Map<string, Promise<Category>>();
 let cachedCountryLocales: Promise<CountryLocale[]> | null = null;
 
 function getDefaultLocaleOptions(): LocaleOptions {
@@ -76,6 +81,21 @@ function getCachedCategories(
       throw err;
     });
     cachedCategoriesByLocale.set(key, cached);
+  }
+  return cached;
+}
+
+function getCachedCatalogRoot(localeOpts: LocaleOptions): Promise<Category> {
+  const key = localeCacheKey(localeOpts.locale, localeOpts.country);
+  let cached = cachedCatalogRootsByLocale.get(key);
+  if (!cached) {
+    cached = getClient()
+      .categories.get(CENWATCH_CATEGORY_PERMALINK, undefined, localeOpts)
+      .catch((err) => {
+        cachedCatalogRootsByLocale.delete(key);
+        throw err;
+      });
+    cachedCatalogRootsByLocale.set(key, cached);
   }
   return cached;
 }
@@ -175,7 +195,7 @@ export default async function sitemap(props: {
       });
     }
 
-    for (const category of categories.filter((c) => !c.is_root)) {
+    for (const category of categories) {
       entries.push({
         url: `${basePath}/c/${category.permalink}`,
         ...(category.updated_at
@@ -263,10 +283,15 @@ async function fetchTotalCount(
 ): Promise<number> {
   const localeOptions = getDefaultLocaleOptions();
   const client = getClient();
-  const response =
-    resource === "products"
-      ? await client.products.list({ page: 1, limit: 1 }, localeOptions)
-      : await client.categories.list({ page: 1, limit: 1 }, localeOptions);
+  if (resource === "categories") {
+    return (await fetchAllCategories(localeOptions)).length;
+  }
+
+  const rootCategory = await getCachedCatalogRoot(localeOptions);
+  const response = await client.products.list(
+    { page: 1, limit: 1, in_category: rootCategory.id },
+    localeOptions,
+  );
   return response.meta.count;
 }
 
@@ -274,12 +299,18 @@ async function fetchAllProducts(
   localeOptions: LocaleOptions,
 ): Promise<ProductWithMedia[]> {
   const allProducts: ProductWithMedia[] = [];
+  const rootCategory = await getCachedCatalogRoot(localeOptions);
   let page = 1;
   let totalPages = 1;
 
   do {
     const response = await getClient().products.list(
-      { page, limit: ITEMS_PER_PAGE, expand: ["media"] },
+      {
+        page,
+        limit: ITEMS_PER_PAGE,
+        expand: ["media"],
+        in_category: rootCategory.id,
+      },
       localeOptions,
     );
     allProducts.push(...(response.data as ProductWithMedia[]));
@@ -307,5 +338,5 @@ async function fetchAllCategories(
     page++;
   } while (page <= totalPages && page <= MAX_PAGES);
 
-  return allCategories;
+  return allCategories.filter(isCenwatchCategory);
 }

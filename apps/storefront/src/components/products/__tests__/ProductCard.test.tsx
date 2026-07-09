@@ -14,10 +14,10 @@ vi.mock("@/contexts/StoreContext", () => ({
 // Minimal product fixtures — cast to Product for component props
 const baseProduct = {
   id: "prod-1",
-  name: "Classic T-Shirt",
-  slug: "classic-t-shirt",
+  name: "CenWatch Air",
+  slug: "cenwatch-air",
   purchasable: true,
-  thumbnail_url: "https://example.com/shirt.jpg",
+  thumbnail_url: "https://example.com/cenwatch.jpg",
   price: {
     display_amount: "$25.00",
     amount_in_cents: 2500,
@@ -32,10 +32,10 @@ const baseProduct = {
 
 const saleProduct = {
   id: "prod-2",
-  name: "Sale T-Shirt",
-  slug: "sale-t-shirt",
+  name: "CenWatch Air Pro",
+  slug: "cenwatch-air-pro",
   purchasable: true,
-  thumbnail_url: "https://example.com/shirt.jpg",
+  thumbnail_url: "https://example.com/cenwatch.jpg",
   price: {
     display_amount: "$15.00",
     amount_in_cents: 1500,
@@ -53,7 +53,7 @@ const outOfStockProduct = {
   name: "Sold Out Item",
   slug: "sold-out-item",
   purchasable: false,
-  thumbnail_url: "https://example.com/shirt.jpg",
+  thumbnail_url: "https://example.com/cenwatch.jpg",
   price: {
     display_amount: "$25.00",
     amount_in_cents: 2500,
@@ -88,7 +88,7 @@ describe("ProductCard", () => {
   it("renders product name and price", () => {
     render(<ProductCard product={baseProduct} basePath="/us/en" />);
 
-    expect(screen.getByText("Classic T-Shirt")).toBeInTheDocument();
+    expect(screen.getByText("CenWatch Air")).toBeInTheDocument();
     expect(screen.getByText("$25.00")).toBeInTheDocument();
   });
 
@@ -96,7 +96,7 @@ describe("ProductCard", () => {
     render(<ProductCard product={baseProduct} basePath="/us/en" />);
 
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/us/en/products/classic-t-shirt");
+    expect(link).toHaveAttribute("href", "/us/en/products/cenwatch-air");
   });
 
   it("shows Sale badge when on sale", () => {
@@ -130,8 +130,8 @@ describe("ProductCard", () => {
     render(<ProductCard product={baseProduct} basePath="/us/en" />);
 
     const img = screen.getByRole("img");
-    expect(img).toHaveAttribute("src", "https://example.com/shirt.jpg");
-    expect(img).toHaveAttribute("alt", "Classic T-Shirt");
+    expect(img).toHaveAttribute("src", "https://example.com/cenwatch.jpg");
+    expect(img).toHaveAttribute("alt", "CenWatch Air");
   });
 
   it("renders placeholder when no thumbnail", () => {
@@ -146,6 +146,6 @@ describe("ProductCard", () => {
     render(<ProductCard product={baseProduct} />);
 
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/products/classic-t-shirt");
+    expect(link).toHaveAttribute("href", "/products/cenwatch-air");
   });
 });

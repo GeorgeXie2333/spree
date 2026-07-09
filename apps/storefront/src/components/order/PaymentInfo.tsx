@@ -3,13 +3,7 @@ import { useTranslations } from "next-intl";
 import { PaymentIcon } from "react-svg-credit-card-payment-icons";
 import { getCardIconType, getCardLabel } from "@/lib/utils/credit-card";
 
-interface PaymentInfoProps {
-  payment: Payment;
-  /** Label override for store credit payments (e.g. "Gift Card") */
-  storeCreditLabel?: string;
-}
-
-export function PaymentInfo({ payment, storeCreditLabel }: PaymentInfoProps) {
+export function PaymentInfo({ payment }: { payment: Payment }) {
   const t = useTranslations("orders");
   const source = payment.source;
 
@@ -23,13 +17,13 @@ export function PaymentInfo({ payment, storeCreditLabel }: PaymentInfoProps) {
           width={40}
         />
         <div>
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-sm font-medium text-foreground">
             {t("cardEndingIn", {
               label: getCardLabel(card.brand),
               digits: card.last4,
             })}
           </p>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             {t("cardExpires", {
               month: String(card.month).padStart(2, "0"),
               year: card.year,
@@ -42,11 +36,12 @@ export function PaymentInfo({ payment, storeCreditLabel }: PaymentInfoProps) {
 
   if (payment.source_type === "store_credit" && source) {
     const credit = source as StoreCredit;
-    const label = storeCreditLabel || t("storeCredit");
     return (
       <div>
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        <p className="text-xs text-gray-500">
+        <p className="text-sm font-medium text-foreground">
+          {t("storeCredit")}
+        </p>
+        <p className="text-xs text-muted-foreground">
           {t("storeCreditApplied", {
             amount: payment.display_amount,
             remaining: credit.display_amount_remaining,
@@ -58,10 +53,10 @@ export function PaymentInfo({ payment, storeCreditLabel }: PaymentInfoProps) {
 
   return (
     <div>
-      <p className="text-sm font-medium text-gray-900">
+      <p className="text-sm font-medium text-foreground">
         {payment.payment_method?.name}
       </p>
-      <p className="text-xs text-gray-500">{payment.display_amount}</p>
+      <p className="text-xs text-muted-foreground">{payment.display_amount}</p>
     </div>
   );
 }

@@ -4,14 +4,17 @@ import type {
   ProductFiltersResponse,
   ProductListParams,
 } from "@spree/sdk";
-import { Search } from "lucide-react";
+import { SearchX } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { type ReactElement, Suspense } from "react";
+import { EmptyState } from "@/components/commerce/EmptyState";
+import { ClearFiltersButton } from "@/components/products/filters";
 import { InfiniteProductList } from "@/components/products/InfiniteProductList";
 import { ListingAnalytics } from "@/components/products/ListingAnalytics";
 import { ListingFilterBar } from "@/components/products/ListingFilterBar";
 import { ProductListingSkeleton } from "@/components/products/ProductListingSkeleton";
 import { PRODUCT_CARD_FIELDS } from "@/lib/data/cached";
+import { getActiveFilterCount } from "@/lib/utils/filters";
 import {
   type ListingSearchParams,
   listingKey,
@@ -141,6 +144,7 @@ async function ProductListingInner({
   const totalPages = productsResponse.meta.pages;
 
   const hasResults = products.length > 0;
+  const hasActiveFilters = getActiveFilterCount(state.filters) > 0;
 
   return (
     <>
@@ -148,10 +152,8 @@ async function ProductListingInner({
         filtersData={filtersResponse}
         activeFilters={state.filters}
         totalCount={totalCount}
-      />
-
-      {hasResults ? (
-        <>
+      >
+        {hasResults ? (
           <InfiniteProductList
             // Remount on any filter / sort / query change so the
             // island picks up the new initialProducts and resets its
@@ -172,28 +174,29 @@ async function ProductListingInner({
             listName={listName}
             currency={currency}
           />
-          <ListingAnalytics
-            products={products}
-            listId={listId}
-            listName={listName}
-            query={state.query}
-            currency={currency}
-            stateKey={listingKey(state)}
+        ) : (
+          <EmptyState
+            icon={<SearchX />}
+            title={t("noProductsFound")}
+            description={emptyMessage ?? t("tryAdjustingFilters")}
+            action={
+              hasActiveFilters ? (
+                <ClearFiltersButton>{t("clearFilters")}</ClearFiltersButton>
+              ) : undefined
+            }
           />
-        </>
-      ) : (
-        <div className="text-center py-12">
-          <Search
-            className="mx-auto h-12 w-12 text-gray-400"
-            strokeWidth={1.5}
-          />
-          <h3 className="mt-4 text-lg font-medium text-gray-900">
-            {t("noProductsFound")}
-          </h3>
-          <p className="mt-2 text-gray-500">
-            {emptyMessage ?? t("tryAdjustingFilters")}
-          </p>
-        </div>
+        )}
+      </ListingFilterBar>
+
+      {hasResults && (
+        <ListingAnalytics
+          products={products}
+          listId={listId}
+          listName={listName}
+          query={state.query}
+          currency={currency}
+          stateKey={listingKey(state)}
+        />
       )}
     </>
   );

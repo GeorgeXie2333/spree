@@ -1,11 +1,12 @@
 "use client";
 
 import type { Media } from "@spree/sdk";
-import { ZoomIn } from "lucide-react";
+import { Play, ZoomIn } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTranslations } from "next-intl";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ProductImage } from "@/components/ui/product-image";
+import { cn } from "@/lib/utils";
 
 const SWIPE_THRESHOLD_PX = 50;
 const SWIPE_MAX_VERTICAL_PX = 75;
@@ -48,6 +49,51 @@ function getThumbImageUrl(media: Media | undefined): string | null {
   return media.small_url || media.mini_url || media.original_url || null;
 }
 
+function isVideoMedia(media: Media | undefined): boolean {
+  if (!media) return false;
+  return media.media_type === "video" || !!media.external_video_url;
+}
+
+/** Map a YouTube/Vimeo page URL to its embeddable player URL, or null for
+ * direct video files that should render in a native <video> element. */
+function getVideoEmbedUrl(url: string): string | null {
+  const youtube = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/,
+  );
+  if (youtube) return `https://www.youtube.com/embed/${youtube[1]}`;
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}`;
+  return null;
+}
+
+function VideoTile({ media, title }: { media: Media; title: string }) {
+  const externalUrl = media.external_video_url;
+  const embedUrl = externalUrl ? getVideoEmbedUrl(externalUrl) : null;
+  const fileUrl = embedUrl ? null : externalUrl || media.original_url;
+
+  return (
+    <div className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-black">
+      {embedUrl ? (
+        <iframe
+          src={embedUrl}
+          title={title}
+          className="absolute inset-0 h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : fileUrl ? (
+        // biome-ignore lint/a11y/useMediaCaption: admin-managed product media has no caption tracks
+        <video
+          src={fileUrl}
+          controls
+          playsInline
+          className="absolute inset-0 h-full w-full object-contain"
+        />
+      ) : null}
+    </div>
+  );
+}
+
 export function MediaGallery(props: MediaGalleryProps) {
   // Reset internal state when the parent changes activeIndex by rekeying.
   // Avoids the useEffect-to-sync-prop antipattern.
@@ -60,6 +106,7 @@ function MediaGalleryInner({
   activeIndex,
 }: MediaGalleryProps) {
   const t = useTranslations("products");
+  const tPdp = useTranslations("pdp");
   const [selectedIndex, setSelectedIndex] = useState(activeIndex ?? 0);
   const [isZoomed, setIsZoomed] = useState(false);
   const [mainImageErrorUrl, setMainImageErrorUrl] = useState<string | null>(
@@ -67,6 +114,17 @@ function MediaGalleryInner({
   );
 
   const safeIndex = Math.max(0, Math.min(selectedIndex, images.length - 1));
+
+  // Indices of image-only media — the lightbox can't render videos, so it
+  // navigates within this subset and maps back to full gallery indices.
+  const imageIndices = useMemo(
+    () =>
+      images
+        .map((media, index) => ({ media, index }))
+        .filter(({ media }) => !isVideoMedia(media))
+        .map(({ index }) => index),
+    [images],
+  );
 
   // Horizontal swipe on the main image navigates between media. When a
   // swipe is detected we suppress the synthetic click so the lightbox
@@ -109,7 +167,7 @@ function MediaGalleryInner({
 
   if (images.length === 0) {
     return (
-      <div className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden">
+      <div className="relative aspect-square overflow-hidden rounded-[18px] bg-card">
         <ProductImage
           src={null}
           alt={productName}
@@ -125,90 +183,133 @@ function MediaGalleryInner({
     setMainImageErrorUrl(null);
   };
 
-  const selectedImage = images[safeIndex];
-  const mainImageUrl = getMainImageUrl(selectedImage);
+  const selectedMedia = images[safeIndex];
+  const selectedIsVideo = isVideoMedia(selectedMedia);
+  const mainImageUrl = getMainImageUrl(selectedMedia);
   const showMainImage = mainImageUrl && mainImageErrorUrl !== mainImageUrl;
+  const lightboxIndex = Math.max(0, imageIndices.indexOf(safeIndex));
 
-  return (
-    <div className="flex flex-col gap-4">
-      {/* Main Image */}
+  const renderThumb = (media: Media, index: number) => {
+    const isVideo = isVideoMedia(media);
+    const thumbUrl = getThumbImageUrl(media);
+    return (
       <button
         type="button"
-        className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden cursor-zoom-in w-full touch-pan-y"
-        onClick={() => {
-          if (suppressClickRef.current) {
-            suppressClickRef.current = false;
-            return;
-          }
-          if (showMainImage) setIsZoomed(true);
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        aria-label={t("openImageZoom")}
-        disabled={!showMainImage}
+        key={media.id}
+        onClick={() => selectImage(index)}
+        aria-label={
+          isVideo ? tPdp("playVideo") : tPdp("goToMedia", { index: index + 1 })
+        }
+        aria-current={index === safeIndex}
+        className={cn(
+          "relative size-16 shrink-0 overflow-hidden rounded-xl bg-card transition-shadow duration-200",
+          index === safeIndex
+            ? "ring-2 ring-[#0071e3] ring-offset-2"
+            : "hover:ring-1 hover:ring-border",
+        )}
       >
-        <ProductImage
-          key={safeIndex}
-          src={mainImageUrl}
-          alt={selectedImage?.alt || productName}
-          fill
-          className="object-cover"
-          fetchPriority="high"
-          loading="eager"
-          priority
-          quality={85}
-          sizes="(max-width: 768px) 100vw, 50vw"
-          placeholder="blur"
-          blurDataURL={BLUR_PLACEHOLDER}
-          iconClassName="w-24 h-24"
-          onError={() => mainImageUrl && setMainImageErrorUrl(mainImageUrl)}
-        />
-        {/* Zoom hint */}
-        {showMainImage && (
-          <div className="absolute bottom-4 right-4 bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-lg text-sm text-gray-600 flex items-center gap-1.5">
-            <ZoomIn className="w-4 h-4" />
-            {t("clickToZoom")}
-          </div>
+        {isVideo ? (
+          <>
+            {thumbUrl && (
+              <ProductImage
+                src={thumbUrl}
+                alt={media.alt || productName}
+                fill
+                className="object-cover"
+                sizes="64px"
+              />
+            )}
+            <span className="absolute inset-0 flex items-center justify-center bg-black/40">
+              <Play className="size-5 fill-white text-white" />
+            </span>
+          </>
+        ) : (
+          <ProductImage
+            src={thumbUrl}
+            alt={media.alt || `${productName} ${index + 1}`}
+            fill
+            className="object-cover"
+            sizes="64px"
+          />
         )}
       </button>
+    );
+  };
 
-      {/* Thumbnails */}
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:gap-4">
+      {/* Desktop vertical thumbnail strip */}
       {images.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {images.map((image, index) => {
-            const thumbUrl = getThumbImageUrl(image);
-            return (
-              <button
-                type="button"
-                key={image.id}
-                onClick={() => selectImage(index)}
-                className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-colors bg-gray-100 ${
-                  index === safeIndex
-                    ? "border-gray-600"
-                    : "border-transparent hover:border-gray-300"
-                }`}
-              >
-                <ProductImage
-                  src={thumbUrl}
-                  alt={image.alt || `${productName} ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="80px"
-                />
-              </button>
-            );
-          })}
+        <div className="no-scrollbar hidden max-h-[min(100%,36rem)] shrink-0 flex-col gap-3 overflow-y-auto lg:flex">
+          {images.map((media, index) => renderThumb(media, index))}
         </div>
       )}
 
-      {/* Lightbox (lazy) */}
-      {isZoomed && showMainImage && (
+      <div className="min-w-0 flex-1">
+        {/* Main media tile */}
+        {selectedIsVideo ? (
+          <VideoTile media={selectedMedia} title={productName} />
+        ) : (
+          <button
+            type="button"
+            className="relative aspect-square w-full cursor-zoom-in touch-pan-y overflow-hidden rounded-[18px] bg-card"
+            onClick={() => {
+              if (suppressClickRef.current) {
+                suppressClickRef.current = false;
+                return;
+              }
+              if (showMainImage) setIsZoomed(true);
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            aria-label={t("openImageZoom")}
+            disabled={!showMainImage}
+          >
+            <ProductImage
+              key={safeIndex}
+              src={mainImageUrl}
+              alt={selectedMedia?.alt || productName}
+              fill
+              className="object-cover"
+              fetchPriority="high"
+              loading="eager"
+              priority
+              quality={85}
+              sizes="(max-width: 768px) 100vw, 50vw"
+              placeholder="blur"
+              blurDataURL={BLUR_PLACEHOLDER}
+              iconClassName="w-24 h-24"
+              onError={() => mainImageUrl && setMainImageErrorUrl(mainImageUrl)}
+            />
+            {showMainImage && (
+              <div className="absolute right-4 bottom-4 flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+                <ZoomIn className="size-3.5" />
+                {t("clickToZoom")}
+              </div>
+            )}
+          </button>
+        )}
+
+        {/* Mobile horizontal snap-scroll thumbnails */}
+        {images.length > 1 && (
+          <div className="no-scrollbar mt-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-px-1 pb-1 lg:hidden">
+            {images.map((media, index) => (
+              <div key={media.id} className="snap-start">
+                {renderThumb(media, index)}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Lightbox (lazy) — images only, videos play inline */}
+      {isZoomed && showMainImage && !selectedIsVideo && (
         <LazyMediaLightbox
-          images={images}
-          activeIndex={safeIndex}
+          images={imageIndices.map((i) => images[i])}
+          activeIndex={lightboxIndex}
           productName={productName}
           onClose={() => setIsZoomed(false)}
-          onNavigate={selectImage}
+          onNavigate={(nextIndex) => selectImage(imageIndices[nextIndex])}
         />
       )}
     </div>

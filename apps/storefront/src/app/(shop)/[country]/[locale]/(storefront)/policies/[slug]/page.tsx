@@ -55,19 +55,21 @@ export default async function PolicyPage({
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">{policy.name}</h1>
+    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+      <h1 className="mb-8 text-3xl font-semibold tracking-tight text-muted-foreground md:text-4xl">
+        {policy.name}
+      </h1>
       {policy.body_html ? (
         <div
-          className="prose prose-gray"
+          className="space-y-4 text-base leading-7 text-foreground [&_a]:text-link [&_a]:hover:underline [&_h2]:mt-10 [&_h2]:mb-3 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:tracking-tight [&_h3]:mt-8 [&_h3]:mb-2 [&_h3]:text-lg [&_h3]:font-semibold [&_li]:my-1 [&_ol]:my-4 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-4 [&_ul]:my-4 [&_ul]:list-disc [&_ul]:pl-5"
           dangerouslySetInnerHTML={{ __html: policy.body_html }}
         />
       ) : policy.body ? (
-        <div className="prose prose-gray whitespace-pre-wrap">
+        <div className="whitespace-pre-wrap text-base leading-7 text-foreground">
           {policy.body}
         </div>
       ) : (
-        <p className="text-gray-500">{t("noContent")}</p>
+        <p className="text-muted-foreground">{t("noContent")}</p>
       )}
     </div>
   );

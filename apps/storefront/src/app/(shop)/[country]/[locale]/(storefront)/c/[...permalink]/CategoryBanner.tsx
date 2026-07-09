@@ -9,6 +9,10 @@ interface CategoryBannerProps {
   locale: string;
 }
 
+/**
+ * Apple-style category PLP header: breadcrumbs, two-tone title +
+ * description, and a row of subcategory pill links when children exist.
+ */
 export async function CategoryBanner({
   category,
   basePath,
@@ -18,52 +22,37 @@ export async function CategoryBanner({
   cacheLife("minutes");
   cacheTag("category-banner");
 
+  const children = category.children ?? [];
+
   return (
-    <>
-      <div
-        className="flex flex-col justify-end min-h-[350px] bg-gray-50 bg-cover bg-center"
-        style={
-          category.image_url
-            ? { backgroundImage: `url(${category.image_url})` }
-            : undefined
-        }
-      >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Breadcrumbs
-            category={category}
-            basePath={basePath}
-            locale={locale}
-          />
+    <div className="container mx-auto px-4 pt-8 sm:px-6 lg:px-8">
+      <Breadcrumbs category={category} basePath={basePath} locale={locale} />
 
-          <div className="mb-4">
-            <h1 className="text-4xl font-bold text-gray-900">
-              {category.name}
-            </h1>
-          </div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+          {category.name}
+          {category.description ? (
+            <span className="font-semibold text-muted-foreground">
+              {" "}
+              {category.description}
+            </span>
+          ) : null}
+        </h1>
 
-          {/* Description */}
-          {category.description && (
-            <p className="mb-4 text-gray-600">{category.description}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Subcategories */}
-      {category.children && category.children.length > 0 && (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-4">
-          <div className="flex flex-wrap gap-2 items-center border-b border-gray-100 pb-4">
-            {category.children.map((child) => (
+        {children.length > 0 && (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {children.map((child) => (
               <Link
                 key={child.id}
                 href={`${basePath}/c/${child.permalink}`}
-                className="px-1.5 py-1 hover:bg-gray-100 rounded-lg text-gray-700 transition-colors"
+                className="rounded-full bg-card px-4 py-2 text-sm text-foreground transition-colors duration-200 hover:bg-[#e8e8ed]"
               >
                 {child.name}
               </Link>
             ))}
           </div>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 }

@@ -1,49 +1,32 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
-import {
-  CreditCard,
-  Gift,
-  Home,
-  LogOut,
-  MapPin,
-  ShoppingBag,
-  User,
-} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { extractBasePath } from "@/lib/utils/path";
 
 function getNavItems(t: ReturnType<typeof useTranslations<"account">>): {
   href: string;
   label: string;
-  icon: LucideIcon;
 }[] {
   return [
-    { href: "/account", label: t("overview"), icon: Home },
-    { href: "/account/orders", label: t("orders"), icon: ShoppingBag },
-    { href: "/account/addresses", label: t("addresses"), icon: MapPin },
-    {
-      href: "/account/credit-cards",
-      label: t("paymentMethods"),
-      icon: CreditCard,
-    },
-    { href: "/account/gift-cards", label: t("giftCards"), icon: Gift },
-    { href: "/account/profile", label: t("profile"), icon: User },
+    { href: "/account", label: t("overview") },
+    { href: "/account/orders", label: t("orders") },
+    { href: "/account/addresses", label: t("addresses") },
+    { href: "/account/credit-cards", label: t("paymentMethods") },
+    { href: "/account/profile", label: t("profile") },
   ];
 }
 
 function ContentSkeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="h-8 bg-gray-200 rounded w-1/3" />
-      <div className="h-4 bg-gray-200 rounded w-2/3" />
-      <div className="h-32 bg-gray-200 rounded" />
-      <div className="h-32 bg-gray-200 rounded" />
+      <div className="h-8 w-1/3 rounded-xl bg-card" />
+      <div className="h-4 w-2/3 rounded-xl bg-card" />
+      <div className="h-32 rounded-[18px] bg-card" />
+      <div className="h-32 rounded-[18px] bg-card" />
     </div>
   );
 }
@@ -71,53 +54,55 @@ function AccountShell({
 }: AccountShellProps) {
   const t = useTranslations("account");
   const navItems = getNavItems(t);
+
+  const isItemActive = (itemHref: string) => {
+    const href = `${basePath}${itemHref}`;
+    return (
+      pathname === href ||
+      (itemHref !== "/account" && pathname.startsWith(href))
+    );
+  };
+
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8  py-8">
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Navigation */}
-        <aside className="lg:w-64 flex-shrink-0">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            {/* User Info */}
-            <div className="p-4 border-b border-gray-200">
+    <div className="container mx-auto px-4 py-10 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-8 lg:flex-row lg:gap-12">
+        {/* Desktop sidebar — quiet text list */}
+        <aside className="hidden w-52 flex-shrink-0 lg:block">
+          <div className="sticky top-[100px] flex flex-col gap-6">
+            <div>
               {isLoading ? (
                 <div className="animate-pulse space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-24" />
-                  <div className="h-3 bg-gray-200 rounded w-32" />
+                  <div className="h-4 w-24 rounded bg-card" />
+                  <div className="h-3 w-36 rounded bg-card" />
                 </div>
               ) : (
                 <>
-                  <p className="font-medium text-gray-900">
+                  <p className="text-sm font-semibold tracking-tight text-foreground">
                     {user?.first_name
                       ? `${user.first_name} ${user.last_name || ""}`.trim()
                       : t("myAccount")}
                   </p>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="mt-0.5 truncate text-sm text-muted-foreground">
                     {user?.email}
                   </p>
                 </>
               )}
             </div>
 
-            {/* Navigation */}
-            <nav className="p-2">
+            <nav>
               <ul className="space-y-1">
                 {navItems.map((item) => {
-                  const href = `${basePath}${item.href}`;
-                  const isActive =
-                    pathname === href ||
-                    (item.href !== "/account" && pathname.startsWith(href));
-
+                  const active = isItemActive(item.href);
                   return (
                     <li key={item.href}>
                       <Link
-                        href={href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
-                          isActive
-                            ? "bg-gray-50 text-primary"
-                            : "text-gray-700 hover:bg-gray-50"
+                        href={`${basePath}${item.href}`}
+                        className={`block py-1.5 text-sm transition-colors duration-200 ${
+                          active
+                            ? "font-semibold text-foreground"
+                            : "text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        <item.icon className="w-5 h-5" />
                         {item.label}
                       </Link>
                     </li>
@@ -126,18 +111,48 @@ function AccountShell({
               </ul>
             </nav>
 
-            {/* Logout */}
-            <div className="p-2 border-t border-gray-200">
-              <Button variant="ghost" onClick={onLogout} disabled={isLoading}>
-                <LogOut className="w-5 h-5" />
+            <div className="border-t border-border pt-4">
+              <button
+                type="button"
+                onClick={onLogout}
+                disabled={isLoading}
+                className="cursor-pointer text-sm text-link transition-colors duration-200 hover:underline disabled:opacity-50"
+              >
                 {t("signOut")}
-              </Button>
+              </button>
             </div>
           </div>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 min-w-0">{children}</main>
+        {/* Mobile: horizontal scroll tabs */}
+        <div className="no-scrollbar -mx-4 flex gap-5 overflow-x-auto border-b border-border px-4 pb-3 lg:hidden">
+          {navItems.map((item) => {
+            const active = isItemActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={`${basePath}${item.href}`}
+                className={`shrink-0 whitespace-nowrap pb-0.5 text-sm transition-colors duration-200 ${
+                  active
+                    ? "border-b-2 border-foreground font-semibold text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+          <button
+            type="button"
+            onClick={onLogout}
+            disabled={isLoading}
+            className="shrink-0 cursor-pointer whitespace-nowrap pb-0.5 text-sm text-link transition-colors duration-200 hover:underline disabled:opacity-50"
+          >
+            {t("signOut")}
+          </button>
+        </div>
+
+        <main className="min-w-0 flex-1">{children}</main>
       </div>
     </div>
   );
@@ -153,7 +168,6 @@ export default function AccountLayout({
   const basePath = extractBasePath(pathname);
   const { user, logout, isAuthenticated, loading } = useAuth();
 
-  // Pages that don't require authentication
   const authPagePaths = new Set([
     `${basePath}/account/register`,
     `${basePath}/account/forgot-password`,
@@ -162,7 +176,6 @@ export default function AccountLayout({
   const isAuthPage = authPagePaths.has(pathname);
   const isMainAccountPage = pathname === `${basePath}/account`;
 
-  // Redirect to login if not authenticated and trying to access protected sub-pages
   useEffect(() => {
     if (!loading && !isAuthenticated && !isAuthPage && !isMainAccountPage) {
       router.replace(`${basePath}/account`);
@@ -176,15 +189,14 @@ export default function AccountLayout({
     router,
   ]);
 
-  // Show loading or redirect-in-progress skeleton
   if (loading || (!isAuthenticated && !isAuthPage && !isMainAccountPage)) {
     if (isAuthPage || isMainAccountPage) {
       return (
-        <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/2 mx-auto" />
-            <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto" />
-            <div className="h-48 bg-gray-200 rounded" />
+        <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
+          <div className="animate-pulse space-y-4 rounded-[18px] bg-card p-8">
+            <div className="mx-auto h-8 w-1/2 rounded-xl bg-white/60" />
+            <div className="mx-auto h-4 w-3/4 rounded-xl bg-white/60" />
+            <div className="h-40 rounded-xl bg-white/60" />
           </div>
         </div>
       );
@@ -196,7 +208,6 @@ export default function AccountLayout({
     );
   }
 
-  // Don't show nav for login/register pages
   if (isAuthPage || !isAuthenticated) {
     return <>{children}</>;
   }

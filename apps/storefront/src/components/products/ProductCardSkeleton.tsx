@@ -1,17 +1,17 @@
 import type * as React from "react";
 
 /**
- * Skeleton placeholder for a single product card.
- * Matches the layout of `<ProductCard>` — no border, rounded image,
- * text placeholders below.
+ * Skeleton placeholder for a single product card. Matches the
+ * Apple-style `<ProductCard>` shape: gray rounded-[18px] image tile
+ * with text placeholder lines below.
  */
 export function ProductCardSkeleton(): React.JSX.Element {
   return (
     <div className="animate-pulse">
-      <div className="aspect-square bg-gray-200 rounded-md" />
-      <div className="p-4">
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-        <div className="h-5 bg-gray-200 rounded w-1/4" />
+      <div className="aspect-square rounded-[18px] bg-card" />
+      <div className="px-1 pt-4 pb-2">
+        <div className="h-4 w-3/4 rounded-full bg-card" />
+        <div className="mt-2.5 h-4 w-1/3 rounded-full bg-card" />
       </div>
     </div>
   );

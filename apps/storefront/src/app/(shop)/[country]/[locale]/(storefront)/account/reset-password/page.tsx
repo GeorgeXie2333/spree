@@ -7,18 +7,12 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { resetPassword } from "@/lib/data/customer";
 import { extractBasePath } from "@/lib/utils/path";
+
+const inputClassName = "rounded-xl border-border bg-white";
 
 export default function ResetPasswordPage() {
   const t = useTranslations("resetPassword");
@@ -38,25 +32,23 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // No token = invalid link
   if (!token) {
     return (
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle>{t("invalidLink")}</CardTitle>
-            <CardDescription>{t("invalidLinkDescription")}</CardDescription>
-          </CardHeader>
-
-          <CardFooter className="justify-center">
-            <Link
-              href={`${basePath}/account/forgot-password`}
-              className="text-sm text-primary hover:text-primary/70 font-medium"
-            >
-              {t("requestNewLink")}
-            </Link>
-          </CardFooter>
-        </Card>
+      <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-[18px] bg-card p-8 text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("invalidLink")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("invalidLinkDescription")}
+          </p>
+          <Link
+            href={`${basePath}/account/forgot-password`}
+            className="mt-6 inline-block text-sm text-link hover:underline"
+          >
+            {t("requestNewLink")}
+          </Link>
+        </div>
       </div>
     );
   }
@@ -93,143 +85,142 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
-              <CircleCheck className="w-6 h-6 text-green-600" />
-            </div>
-            <CardTitle>{t("success")}</CardTitle>
-            <CardDescription>{t("successDescription")}</CardDescription>
-          </CardHeader>
-
-          <CardContent>
-            <Button
-              size="lg"
-              className="w-full"
-              onClick={() => router.push(`${basePath}/account`)}
-            >
-              {t("signIn")}
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-[18px] bg-card p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white">
+            <CircleCheck className="h-6 w-6 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("success")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("successDescription")}
+          </p>
+          <Button
+            size="lg"
+            className="mt-6 w-full"
+            onClick={() => router.push(`${basePath}/account`)}
+          >
+            {t("signIn")}
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
-        </CardHeader>
+    <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
+      <div className="rounded-[18px] bg-card p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("title")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("description")}
+          </p>
+        </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <CircleAlert />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-            <Field>
-              <FieldLabel htmlFor="password">{t("newPassword")}</FieldLabel>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? ta("hidePassword") : ta("showPassword")
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </Button>
-                </div>
+          <Field>
+            <FieldLabel htmlFor="password">{t("newPassword")}</FieldLabel>
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                placeholder="••••••••"
+                className={`${inputClassName} pr-10`}
+              />
+              <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={
+                    showPassword ? ta("hidePassword") : ta("showPassword")
+                  }
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </Button>
               </div>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="passwordConfirmation">
-                {t("confirmPassword")}
-              </FieldLabel>
-              <div className="relative">
-                <Input
-                  type={showPasswordConfirmation ? "text" : "password"}
-                  id="passwordConfirmation"
-                  autoComplete="new-password"
-                  value={passwordConfirmation}
-                  onChange={(e) => setPasswordConfirmation(e.target.value)}
-                  required
-                  minLength={6}
-                  placeholder="••••••••"
-                  className="pr-10"
-                />
-                <div className="absolute right-1 top-1/2 -translate-y-1/2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() =>
-                      setShowPasswordConfirmation(!showPasswordConfirmation)
-                    }
-                    aria-label={
-                      showPasswordConfirmation
-                        ? ta("hidePassword")
-                        : ta("showPassword")
-                    }
-                  >
-                    {showPasswordConfirmation ? (
-                      <EyeOff className="w-5 h-5" />
-                    ) : (
-                      <Eye className="w-5 h-5" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </Field>
-
-            <div className="w-full">
-              <Button
-                type="submit"
-                disabled={submitting}
-                size="lg"
-                className="w-full"
-              >
-                {submitting ? t("resetting") : t("resetPassword")}
-              </Button>
             </div>
-          </form>
-        </CardContent>
+          </Field>
 
-        <CardFooter className="justify-center">
+          <Field>
+            <FieldLabel htmlFor="passwordConfirmation">
+              {t("confirmPassword")}
+            </FieldLabel>
+            <div className="relative">
+              <Input
+                type={showPasswordConfirmation ? "text" : "password"}
+                id="passwordConfirmation"
+                autoComplete="new-password"
+                value={passwordConfirmation}
+                onChange={(e) => setPasswordConfirmation(e.target.value)}
+                required
+                minLength={6}
+                placeholder="••••••••"
+                className={`${inputClassName} pr-10`}
+              />
+              <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() =>
+                    setShowPasswordConfirmation(!showPasswordConfirmation)
+                  }
+                  aria-label={
+                    showPasswordConfirmation
+                      ? ta("hidePassword")
+                      : ta("showPassword")
+                  }
+                >
+                  {showPasswordConfirmation ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </Button>
+              </div>
+            </div>
+          </Field>
+
+          <Button
+            type="submit"
+            disabled={submitting}
+            size="lg"
+            className="w-full"
+          >
+            {submitting ? t("resetting") : t("resetPassword")}
+          </Button>
+        </form>
+
+        <p className="mt-8 text-center">
           <Link
             href={`${basePath}/account`}
-            className="text-sm text-primary hover:text-primary/70 font-medium"
+            className="text-sm text-link hover:underline"
           >
             {t("backToSignIn")}
           </Link>
-        </CardFooter>
-      </Card>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,81 +1,83 @@
-import type { CenwatchContent } from "@/content/cenwatch";
+"use client";
 
-interface ContactPageProps {
-  content: CenwatchContent;
-}
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { siteConfig } from "@/lib/site-config";
 
-export function ContactPage({ content }: ContactPageProps) {
+export function ContactPage() {
+  const t = useTranslations("contact");
+  const supportEmail = siteConfig.supportEmail;
+
   return (
-    <div className="bg-white">
-      <section className="container mx-auto grid gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-8 lg:py-20">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-600">
-            {content.brand.name}
-          </p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-normal text-neutral-950 sm:text-5xl">
-            {content.contact.title}
-          </h1>
-          <p className="mt-5 text-base leading-7 text-neutral-700">
-            {content.contact.text}
-          </p>
-          <p className="mt-5 text-sm text-neutral-600">
-            {content.contact.emailFallback}
-          </p>
-        </div>
+    <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-xl text-center">
+        <h1 className="text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
+          {t("title")}
+        </h1>
+        <p className="mt-4 text-base text-muted-foreground">{t("intro")}</p>
+        <p className="mt-3 text-sm text-muted-foreground">
+          {t("emailFallback", { email: supportEmail })}
+        </p>
+      </div>
 
-        <form
-          aria-label={content.contact.title}
-          action={`mailto:${content.brand.supportEmail}`}
-          method="post"
-          encType="text/plain"
-          className="rounded-lg border border-neutral-200 bg-neutral-50 p-5 shadow-sm sm:p-6"
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-2 text-sm font-medium text-neutral-800">
-              {content.contact.fields.name}
-              <input
-                name="name"
-                className="h-11 rounded-md border border-neutral-300 bg-white px-3 text-base outline-none focus:border-neutral-950"
-                autoComplete="name"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-neutral-800">
-              {content.contact.fields.email}
-              <input
-                name="email"
-                type="email"
-                required
-                className="h-11 rounded-md border border-neutral-300 bg-white px-3 text-base outline-none focus:border-neutral-950"
-                autoComplete="email"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-neutral-800 sm:col-span-2">
-              {content.contact.fields.phone}
-              <input
-                name="phone"
-                type="tel"
-                className="h-11 rounded-md border border-neutral-300 bg-white px-3 text-base outline-none focus:border-neutral-950"
-                autoComplete="tel"
-              />
-            </label>
-            <label className="grid gap-2 text-sm font-medium text-neutral-800 sm:col-span-2">
-              {content.contact.fields.message}
-              <textarea
-                name="message"
-                required
-                rows={6}
-                className="rounded-md border border-neutral-300 bg-white px-3 py-2 text-base outline-none focus:border-neutral-950"
-              />
-            </label>
-          </div>
-          <button
-            type="submit"
-            className="mt-5 h-11 rounded-md bg-neutral-950 px-5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
-          >
-            {content.contact.submit}
-          </button>
-        </form>
-      </section>
+      <form
+        aria-label={t("title")}
+        action={`mailto:${supportEmail}`}
+        method="post"
+        encType="text/plain"
+        className="mx-auto mt-10 max-w-xl rounded-[18px] bg-card p-6 sm:p-8"
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="contact-name">{t("nameLabel")}</FieldLabel>
+            <Input
+              id="contact-name"
+              name="name"
+              autoComplete="name"
+              className="rounded-xl border-border bg-white"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="contact-email">{t("emailLabel")}</FieldLabel>
+            <Input
+              id="contact-email"
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              className="rounded-xl border-border bg-white"
+            />
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="contact-phone">{t("phoneLabel")}</FieldLabel>
+            <Input
+              id="contact-phone"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              className="rounded-xl border-border bg-white"
+            />
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="contact-message">
+              {t("messageLabel")}
+            </FieldLabel>
+            <Textarea
+              id="contact-message"
+              name="message"
+              required
+              rows={6}
+              className="rounded-xl border-border bg-white"
+            />
+          </Field>
+        </div>
+        <Button type="submit" size="lg" className="mt-6">
+          {t("submit")}
+        </Button>
+      </form>
     </div>
   );
 }

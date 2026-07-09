@@ -20,7 +20,7 @@ export default function EmailPreviewIndex() {
       <h1 style={{ fontSize: "24px", marginBottom: "8px" }}>Email Previews</h1>
       <p style={{ color: "#6b7280", marginBottom: "24px" }}>
         Dev-only previews of transactional email templates. Renders the same
-        templates used by webhook handlers, with sample data.
+        templates used by webhook handlers, with CenWatch preview data.
       </p>
       <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
         {emailFixtures.map((fixture) => (

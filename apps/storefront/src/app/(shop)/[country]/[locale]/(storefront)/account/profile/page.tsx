@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { updateCustomer } from "@/lib/data/customer";
 
-// Inner form component that resets when user changes (via key prop)
+const inputClassName = "rounded-xl border-border bg-white";
+
 function ProfileForm({
   user,
   refreshUser,
@@ -26,7 +27,6 @@ function ProfileForm({
 }) {
   const t = useTranslations("profile");
   const ta = useTranslations("account");
-  // Initialize form data from user props - no useEffect needed
   const [formData, setFormData] = useState({
     first_name: user.first_name || "",
     last_name: user.last_name || "",
@@ -70,18 +70,20 @@ function ProfileForm({
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">{t("profile")}</h1>
+      <h1 className="mb-6 text-3xl font-semibold tracking-tight text-foreground">
+        {t("profile")}
+      </h1>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="overflow-hidden rounded-[18px] bg-card">
         <form onSubmit={handleSubmit}>
-          <div className="p-6 space-y-6">
+          <div className="space-y-6 p-6 sm:p-8">
             {error && (
               <Alert variant="destructive">
                 <CircleAlert />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Field>
                 <FieldLabel htmlFor="first_name">{t("firstName")}</FieldLabel>
                 <Input
@@ -91,6 +93,7 @@ function ProfileForm({
                   onChange={(e) =>
                     setFormData({ ...formData, first_name: e.target.value })
                   }
+                  className={inputClassName}
                 />
               </Field>
 
@@ -103,6 +106,7 @@ function ProfileForm({
                   onChange={(e) =>
                     setFormData({ ...formData, last_name: e.target.value })
                   }
+                  className={inputClassName}
                 />
               </Field>
             </div>
@@ -117,6 +121,7 @@ function ProfileForm({
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
+                className={inputClassName}
               />
             </Field>
 
@@ -137,11 +142,11 @@ function ProfileForm({
                       if (passwordError) setPasswordError(null);
                     }}
                     placeholder="••••••••"
-                    className="pr-10"
+                    className={`${inputClassName} pr-10`}
                     aria-invalid={passwordError ? true : undefined}
                     aria-describedby="current_password_help"
                   />
-                  <div className="absolute right-1 top-1/2 -translate-y-1/2">
+                  <div className="absolute top-1/2 right-1 -translate-y-1/2">
                     <Button
                       type="button"
                       variant="ghost"
@@ -156,9 +161,9 @@ function ProfileForm({
                       }
                     >
                       {showCurrentPassword ? (
-                        <EyeOff className="w-5 h-5" />
+                        <EyeOff className="h-5 w-5" />
                       ) : (
-                        <Eye className="w-5 h-5" />
+                        <Eye className="h-5 w-5" />
                       )}
                     </Button>
                   </div>
@@ -166,7 +171,7 @@ function ProfileForm({
                 <p
                   id="current_password_help"
                   className={`text-sm ${
-                    passwordError ? "text-red-600" : "text-gray-500"
+                    passwordError ? "text-destructive" : "text-muted-foreground"
                   }`}
                 >
                   {passwordError || t("currentPasswordHelp")}
@@ -175,7 +180,7 @@ function ProfileForm({
             )}
           </div>
 
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+          <div className="flex justify-end border-t border-border px-6 py-4 sm:px-8">
             <Button type="submit" disabled={saving}>
               {saving ? t("saving") : t("saveChanges")}
             </Button>
@@ -183,26 +188,23 @@ function ProfileForm({
         </form>
       </div>
 
-      {/* Account Info */}
-      <div className="mt-8 bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">
+      <div className="mt-8 overflow-hidden rounded-[18px] bg-card">
+        <div className="border-b border-border px-6 py-4 sm:px-8">
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">
             {t("accountInformation")}
           </h2>
         </div>
-        <div className="p-6">
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-6 sm:p-8">
+          <dl className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <dt className="text-sm font-medium text-gray-500">
+              <dt className="text-sm text-muted-foreground">
                 {t("accountId")}
               </dt>
-              <dd className="mt-1 text-sm text-gray-900">{user.id}</dd>
+              <dd className="mt-1 text-sm text-foreground">{user.id}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-gray-500">
-                {t("email")}
-              </dt>
-              <dd className="mt-1 text-sm text-gray-900">{user.email}</dd>
+              <dt className="text-sm text-muted-foreground">{t("email")}</dt>
+              <dd className="mt-1 text-sm text-foreground">{user.email}</dd>
             </div>
           </dl>
         </div>
@@ -211,19 +213,17 @@ function ProfileForm({
   );
 }
 
-// Main page component - uses key prop to reset form when user changes
 export default function ProfilePage() {
   const t = useTranslations("profile");
   const { user, refreshUser } = useAuth();
 
   if (!user) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">{t("loadingProfile")}</p>
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">{t("loadingProfile")}</p>
       </div>
     );
   }
 
-  // Use key={user.id} to reset the form component when user changes
   return <ProfileForm key={user.id} user={user} refreshUser={refreshUser} />;
 }

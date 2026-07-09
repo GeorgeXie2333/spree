@@ -10,7 +10,7 @@ export function extractBasePath(pathname: string): string {
 
 /**
  * Get the path portion after the /country/locale prefix.
- * e.g. "/us/en/products/shoes" -> "/products/shoes"
+ * e.g. "/us/en/products/cenwatch-air" -> "/products/cenwatch-air"
  */
 export function getPathWithoutPrefix(pathname: string): string {
   const segments = pathname.split("/").filter(Boolean);

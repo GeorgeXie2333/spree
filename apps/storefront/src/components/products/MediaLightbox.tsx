@@ -132,7 +132,7 @@ export function MediaLightbox({
       <button
         ref={closeButtonRef}
         type="button"
-        className="absolute top-4 right-4 z-10 text-white p-3 hover:bg-white/10 rounded-lg transition-colors"
+        className="absolute top-4 right-4 z-10 rounded-full p-3 text-white transition-colors duration-200 hover:bg-white/10"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -146,7 +146,7 @@ export function MediaLightbox({
         <>
           <button
             type="button"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white p-3 hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full p-3 text-white transition-colors duration-200 hover:bg-white/10"
             onClick={(e) => {
               e.stopPropagation();
               goPrev();
@@ -157,7 +157,7 @@ export function MediaLightbox({
           </button>
           <button
             type="button"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white p-3 hover:bg-white/10 rounded-lg transition-colors"
+            className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full p-3 text-white transition-colors duration-200 hover:bg-white/10"
             onClick={(e) => {
               e.stopPropagation();
               goNext();
@@ -180,7 +180,7 @@ export function MediaLightbox({
       </div>
 
       {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white bg-black/50 px-3 py-1 rounded-lg text-sm">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
           {activeIndex + 1} / {images.length}
         </div>
       )}

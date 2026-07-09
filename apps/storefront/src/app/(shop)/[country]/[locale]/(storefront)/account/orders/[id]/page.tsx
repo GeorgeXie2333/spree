@@ -26,16 +26,19 @@ export default async function OrderDetailPage({
 
   if (!order || order.completed_at === null) {
     return (
-      <div className="text-center py-12">
-        <h2 className="text-xl font-medium text-gray-900 mb-2">
+      <div className="py-12 text-center">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">
           {t("orderNotFound")}
         </h2>
-        <p className="text-gray-500 mb-6">{t("orderNotFoundDescription")}</p>
+        <p className="mt-2 text-muted-foreground">
+          {t("orderNotFoundDescription")}
+        </p>
         <Link
           href={`${basePath}/account/orders`}
-          className="text-primary hover:text-primary font-medium"
+          className="mt-6 inline-block text-sm text-link hover:underline"
         >
           {t("backToOrders")}
+          <span aria-hidden="true"> ›</span>
         </Link>
       </div>
     );

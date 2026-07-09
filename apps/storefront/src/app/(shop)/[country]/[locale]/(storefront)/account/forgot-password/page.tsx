@@ -7,18 +7,12 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { requestPasswordReset } from "@/lib/data/customer";
 import { extractBasePath } from "@/lib/utils/path";
+
+const inputClassName = "rounded-xl border-border bg-white";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("forgotPassword");
@@ -53,105 +47,106 @@ export default function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-2">
-              <CircleCheck className="w-6 h-6 text-green-600" />
-            </div>
-            <CardTitle>{t("checkYourEmail")}</CardTitle>
-            <CardDescription>
-              {t.rich("resetEmailSent", {
-                email,
-                strong: (chunks) => <strong>{chunks}</strong>,
-              })}
-            </CardDescription>
-          </CardHeader>
+      <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
+        <div className="rounded-[18px] bg-card p-8 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white">
+            <CircleCheck className="h-6 w-6 text-green-600" />
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("checkYourEmail")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t.rich("resetEmailSent", {
+              email,
+              strong: (chunks) => (
+                <strong className="font-medium text-foreground">
+                  {chunks}
+                </strong>
+              ),
+            })}
+          </p>
 
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 text-sm text-gray-600">
-              <Mail className="w-5 h-5 mt-0.5 flex-shrink-0 text-gray-400" />
-              <p>{t("linkExpiry")}</p>
-            </div>
+          <div className="mt-6 flex items-start gap-3 text-left text-sm text-muted-foreground">
+            <Mail className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <p>{t("linkExpiry")}</p>
+          </div>
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setSubmitted(false);
-                setEmail("");
-              }}
-            >
-              {t("tryDifferentEmail")}
-            </Button>
-          </CardContent>
+          <Button
+            variant="outline"
+            className="mt-6 w-full"
+            onClick={() => {
+              setSubmitted(false);
+              setEmail("");
+            }}
+          >
+            {t("tryDifferentEmail")}
+          </Button>
 
-          <CardFooter className="justify-center">
-            <Link
-              href={`${basePath}/account`}
-              className="text-sm text-primary hover:text-primary/70 font-medium"
-            >
-              {t("backToSignIn")}
-            </Link>
-          </CardFooter>
-        </Card>
+          <Link
+            href={`${basePath}/account`}
+            className="mt-6 inline-block text-sm text-link hover:underline"
+          >
+            {t("backToSignIn")}
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto px-4 sm:px-6 lg:px-8 py-16">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
-        </CardHeader>
+    <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
+      <div className="rounded-[18px] bg-card p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            {t("title")}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {t("description")}
+          </p>
+        </div>
 
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <CircleAlert />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-            <Field>
-              <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
-              <Input
-                type="email"
-                id="email"
-                name="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-              />
-            </Field>
+          <Field>
+            <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
+            <Input
+              type="email"
+              id="email"
+              name="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+              className={inputClassName}
+            />
+          </Field>
 
-            <div className="w-full">
-              <Button
-                type="submit"
-                disabled={submitting}
-                size="lg"
-                className="w-full"
-              >
-                {submitting ? t("sending") : t("sendResetLink")}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
+          <Button
+            type="submit"
+            disabled={submitting}
+            size="lg"
+            className="w-full"
+          >
+            {submitting ? t("sending") : t("sendResetLink")}
+          </Button>
+        </form>
 
-        <CardFooter className="justify-center">
+        <p className="mt-8 text-center">
           <Link
             href={`${basePath}/account`}
-            className="text-sm text-primary hover:text-primary/70 font-medium"
+            className="text-sm text-link hover:underline"
           >
             {t("backToSignIn")}
           </Link>
-        </CardFooter>
-      </Card>
+        </p>
+      </div>
     </div>
   );
 }

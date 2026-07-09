@@ -8,7 +8,6 @@ const mockClient = {
     complete: vi.fn(),
     fulfillments: { update: vi.fn() },
     discountCodes: { apply: vi.fn(), remove: vi.fn() },
-    giftCards: { apply: vi.fn(), remove: vi.fn() },
   },
   orders: { get: vi.fn() },
 };
@@ -55,7 +54,6 @@ import {
   applyCode,
   getCheckoutOrder,
   removeDiscountCode,
-  removeGiftCard,
   selectDeliveryRate,
   updateCartMarket,
   updateOrderAddresses,
@@ -230,10 +228,9 @@ describe("checkout server actions", () => {
         cart: mockOrder,
         type: "discount",
       });
-      expect(mockClient.carts.giftCards.apply).not.toHaveBeenCalled();
     });
 
-    it("falls back to gift card when discount code returns 422", async () => {
+    it("returns the discount error without trying another code type", async () => {
       const { SpreeError } = await import("@spree/sdk");
       mockClient.carts.discountCodes.apply.mockRejectedValue(
         new SpreeError(
@@ -241,38 +238,6 @@ describe("checkout server actions", () => {
             error: { code: "processing_error", message: "Coupon not found" },
           },
           422,
-        ),
-      );
-      mockClient.carts.giftCards.apply.mockResolvedValue(mockOrder);
-
-      const result = await applyCode("order-1", "GC-ABCD-1234");
-
-      expect(result).toEqual({
-        success: true,
-        cart: mockOrder,
-        type: "gift_card",
-      });
-    });
-
-    it("returns error when both discount and gift card fail", async () => {
-      const { SpreeError } = await import("@spree/sdk");
-      mockClient.carts.discountCodes.apply.mockRejectedValue(
-        new SpreeError(
-          {
-            error: { code: "processing_error", message: "Coupon not found" },
-          },
-          422,
-        ),
-      );
-      mockClient.carts.giftCards.apply.mockRejectedValue(
-        new SpreeError(
-          {
-            error: {
-              code: "gift_card_not_found",
-              message: "Gift card not found",
-            },
-          },
-          404,
         ),
       );
 
@@ -284,37 +249,7 @@ describe("checkout server actions", () => {
       });
     });
 
-    it("shows backend gift card error when gift card is expired", async () => {
-      const { SpreeError } = await import("@spree/sdk");
-      mockClient.carts.discountCodes.apply.mockRejectedValue(
-        new SpreeError(
-          {
-            error: { code: "processing_error", message: "Coupon not found" },
-          },
-          422,
-        ),
-      );
-      mockClient.carts.giftCards.apply.mockRejectedValue(
-        new SpreeError(
-          {
-            error: {
-              code: "gift_card_expired",
-              message: "The Gift Card has expired.",
-            },
-          },
-          422,
-        ),
-      );
-
-      const result = await applyCode("order-1", "EXPIRED-GC");
-
-      expect(result).toEqual({
-        success: false,
-        error: "The Gift Card has expired.",
-      });
-    });
-
-    it("does not fall back to gift card on network errors", async () => {
+    it("returns network errors", async () => {
       mockClient.carts.discountCodes.apply.mockRejectedValue(
         new Error("Network error"),
       );
@@ -322,10 +257,9 @@ describe("checkout server actions", () => {
       const result = await applyCode("order-1", "SAVE10");
 
       expect(result).toEqual({ success: false, error: "Network error" });
-      expect(mockClient.carts.giftCards.apply).not.toHaveBeenCalled();
     });
 
-    it("does not fall back to gift card on 500 errors", async () => {
+    it("returns backend errors", async () => {
       const { SpreeError } = await import("@spree/sdk");
       mockClient.carts.discountCodes.apply.mockRejectedValue(
         new SpreeError(
@@ -345,7 +279,6 @@ describe("checkout server actions", () => {
         success: false,
         error: "Internal server error",
       });
-      expect(mockClient.carts.giftCards.apply).not.toHaveBeenCalled();
     });
   });
 
@@ -373,34 +306,6 @@ describe("checkout server actions", () => {
       expect(result).toEqual({
         success: false,
         error: "Promotion not found",
-      });
-    });
-  });
-
-  describe("removeGiftCard", () => {
-    it("returns success with order", async () => {
-      mockClient.carts.giftCards.remove.mockResolvedValue(mockOrder);
-
-      const result = await removeGiftCard("order-1", "gc_abc123");
-
-      expect(mockClient.carts.giftCards.remove).toHaveBeenCalledWith(
-        "order-1",
-        "gc_abc123",
-        { spreeToken: "order-token-123", token: undefined },
-      );
-      expect(result).toEqual({ success: true, cart: mockOrder });
-    });
-
-    it("returns error on failure", async () => {
-      mockClient.carts.giftCards.remove.mockRejectedValue(
-        new Error("Gift card not found"),
-      );
-
-      const result = await removeGiftCard("order-1", "gc_abc123");
-
-      expect(result).toEqual({
-        success: false,
-        error: "Gift card not found",
       });
     });
   });

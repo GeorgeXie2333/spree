@@ -7,7 +7,7 @@ import { expect, type FrameLocator, type Page, test } from "@playwright/test";
  * fills the shipping address, selects a delivery rate, pays with a Stripe
  * test card, and confirms the order-placed page renders.
  *
- * Backend: e2e-backend/docker-compose.yml (Spree 5.4.3.1 with sample data).
+ * Backend: e2e-backend/docker-compose.yml with a CenWatch-only fixture.
  * Payments: real Stripe test mode (pk_test_...) — card 4242 4242 4242 4242.
  *
  * Run with: pnpm --filter @cenwatch/storefront e2e:up && pnpm --filter @cenwatch/storefront test:e2e
@@ -59,7 +59,7 @@ test("guest can complete a checkout with a Stripe test card", async ({
   // which fires handleContainerBlur → tryAutoSave.
   await page.getByRole("heading", { name: /shipping method/i }).click();
 
-  // 4. Pick the first available shipping rate. Spree sample data ships
+  // 4. Pick the first available shipping rate. The CenWatch fixture ships
   //    with at least one rate for US destinations.
   const firstRate = page.getByRole("radio").first();
   await expect(firstRate).toBeVisible({ timeout: 30_000 });

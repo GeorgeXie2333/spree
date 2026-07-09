@@ -34,15 +34,9 @@ importers:
 
   apps/storefront:
     dependencies:
-      '@adyen/adyen-web':
-        specifier: ^6.33.0
-        version: 6.40.1
       '@next/third-parties':
         specifier: ^16.1.6
         version: 16.2.10(next@16.2.10(@playwright/test@1.61.1)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
-      '@paypal/react-paypal-js':
-        specifier: ^9.1.1
-        version: 9.3.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@react-email/components':
         specifier: ^1.0.12
         version: 1.0.12(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -4466,9 +4460,6 @@ packages:
   '@adobe/css-tools@4.5.0':
     resolution: {integrity: sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q==}
 
-  '@adyen/adyen-web@6.40.1':
-    resolution: {integrity: sha512-OEYnXZe2qHZDXAYguuIKFaH6tK9aLEcP7CaI+KoTeXig7EkQY8SzwM6tWYatzPhmIHcssocLQLlJ0keIOmCHUQ==}
-
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
@@ -4849,21 +4840,6 @@ packages:
   '@parcel/watcher@2.5.6':
     resolution: {integrity: sha512-tmmZ3lQxAe/k/+rNnXQRawJ4NjxO2hqiOLTHvWchtGZULp4RyFeh6aU4XdOYBFe2KE1oShQTv4AblOs2iOrNnQ==}
     engines: {node: '>= 10.0.0'}
-
-  '@paypal/paypal-js@9.7.0':
-    resolution: {integrity: sha512-eUQVZWTEhXhaPsYDmfUaOeV5zfeLUn7kCE7/BXm6uAtMhUoK0S7uPtUzosqfH1vZgjfUSyTzghDJtYxXyRRZig==}
-
-  '@paypal/paypal-js@9.8.0':
-    resolution: {integrity: sha512-qZ+jq36Y10MA2E28lnCh4nCNX3uH9s4TKUw6UkjenRkGYJD94z4vkZ2uUKzIYqgCIRZTDlacdU4274API5WzjA==}
-
-  '@paypal/react-paypal-js@9.3.0':
-    resolution: {integrity: sha512-QSLGVFoymBy0wSjRKLCH8xu829vcLhh1wmmdJ8FYMEHNO05xlCOLWdeWCm6r5PPVRpE0zJfLqxbAxhrN3C2g6g==}
-    peerDependencies:
-      react: ^16.8.0 || ^17 || ^18 || ^19
-      react-dom: ^16.8.0 || ^17 || ^18 || ^19
-
-  '@paypal/sdk-constants@1.0.158':
-    resolution: {integrity: sha512-OrX2kN4gsBl6fG1GS1ewsNk7TTqYmdtUMVaJ+wAzPhsv9M7dfni95WuJdt4pMALOo5ioZeJ05a16BUSca5IC+Q==}
 
   '@playwright/test@1.61.1':
     resolution: {integrity: sha512-8nKv6+0RJSL9FE4jYOEGXnPeM/Hg12qZpmqzZjRh3qM0Y7c3z1mrOTfFLids72RDQYVh9WpLEfR5WdpNX4fkig==}
@@ -10028,14 +10004,6 @@ snapshots:
 
   '@adobe/css-tools@4.5.0': {}
 
-  '@adyen/adyen-web@6.40.1':
-    dependencies:
-      '@paypal/paypal-js': 9.7.0
-      '@types/applepayjs': 14.0.9
-      '@types/googlepay': 0.7.10
-      classnames: 2.5.1
-      preact: 10.29.2
-
   '@alloc/quick-lru@5.2.0': {}
 
   '@asamuzakjp/css-color@5.1.11':
@@ -10300,26 +10268,6 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.5.6
       '@parcel/watcher-win32-ia32': 2.5.6
       '@parcel/watcher-win32-x64': 2.5.6
-
-  '@paypal/paypal-js@9.7.0':
-    dependencies:
-      promise-polyfill: 8.3.0
-
-  '@paypal/paypal-js@9.8.0':
-    dependencies:
-      promise-polyfill: 8.3.0
-
-  '@paypal/react-paypal-js@9.3.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      '@paypal/paypal-js': 9.8.0
-      '@paypal/sdk-constants': 1.0.158
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
-      server-only: 0.0.1
-
-  '@paypal/sdk-constants@1.0.158':
-    dependencies:
-      hi-base32: 0.5.1
 
   '@playwright/test@1.61.1':
     dependencies:
@@ -11994,4 +11942,3 @@ snapshots:
   xml-name-validator@5.0.0: {}
 
   xmlchars@2.2.0: {}
-

@@ -111,17 +111,18 @@
   --animate-hamburger-bottom-open: hamburger-bottom-open 0.35s ease-in-out forwards;
   --animate-hamburger-bottom-close: hamburger-bottom-close 0.35s ease-in-out forwards;
 
-  --color-primary-50: #eff6ff;
-  --color-primary-100: #dbeafe;
-  --color-primary-200: #bfdbfe;
-  --color-primary-300: #93c5fd;
-  --color-primary-400: #60a5fa;
-  --color-primary-500: #0077ff;
-  --color-primary-600: #0066dd;
-  --color-primary-700: #0055bb;
-  --color-primary-800: #004499;
-  --color-primary-900: #003377;
-  --color-primary-950: #001d4d;
+  --color-primary-50: #f0f7ff;
+  --color-primary-100: #e0efff;
+  --color-primary-200: #b9dcff;
+  --color-primary-300: #7cc0ff;
+  --color-primary-400: #369eff;
+  --color-primary-500: #0071e3;
+  --color-primary-600: #0066cc;
+  --color-primary-700: #0055b3;
+  --color-primary-800: #004494;
+  --color-primary-900: #003a7a;
+  --color-primary-950: #002451;
+  --color-link: var(--link);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -225,84 +226,45 @@ input[type="search"]::-webkit-search-cancel-button {
   cursor: pointer;
 }
 
-.product-carousel .swiper-button-next,
-.product-carousel .swiper-button-prev {
-  display: none;
-}
-
 /*
- * Skip rendering of featured products section on mobile where it's
- * below the fold (hero min-h-[823px]). Frees main thread for hero LCP.
- * Disabled on desktop (md+) where products are in viewport.
+ * Apple Store-inspired palette:
+ * white canvas, #F5F5F7 surfaces, #1D1D1F ink, #0071E3 CTA blue,
+ * hairline #D2D2D7 dividers.
  */
-@media (max-width: 767px) {
-  .featured-products {
-    content-visibility: auto;
-    contain-intrinsic-size: 0 500px;
-  }
-}
-
-/*
- * Pre-hydration layout for Swiper carousel.
- * Swiper SSR renders slides at 100% width with no spacing before JS initializes.
- * These rules match the Swiper breakpoints (1/2/3/4 slides) and spaceBetween (24px)
- * so the layout is stable from first paint, preventing CLS. Once Swiper hydrates
- * it sets inline widths and margins that override these.
- */
-.product-carousel .swiper-slide {
-  flex-shrink: 0;
-  width: 100%;
-  margin-right: 24px;
-}
-@media (min-width: 640px) {
-  .product-carousel .swiper-slide {
-    width: calc((100% - 24px) / 2);
-  }
-}
-@media (min-width: 768px) {
-  .product-carousel .swiper-slide {
-    width: calc((100% - 48px) / 3);
-  }
-}
-@media (min-width: 1024px) {
-  .product-carousel .swiper-slide {
-    width: calc((100% - 72px) / 4);
-  }
-}
-
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.58 0.22 27);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --card: #f5f5f7;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+  --primary: #0071e3;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f7;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f7;
+  --muted-foreground: #6e6e73;
+  --accent: #f5f5f7;
+  --accent-foreground: #1d1d1f;
+  --destructive: #e30000;
+  --border: #d2d2d7;
+  --input: #d2d2d7;
+  --ring: #0071e3;
+  --link: #0066cc;
   --chart-1: oklch(0.809 0.105 251.813);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  --sidebar: #f5f5f7;
+  --sidebar-foreground: #1d1d1f;
+  --sidebar-primary: #0071e3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e8ed;
+  --sidebar-accent-foreground: #1d1d1f;
+  --sidebar-border: #d2d2d7;
+  --sidebar-ring: #0071e3;
 }
 
 .dark {
@@ -312,8 +274,9 @@ input[type="search"]::-webkit-search-cancel-button {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.87 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #0a84ff;
+  --primary-foreground: #ffffff;
+  --link: #2997ff;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -344,13 +307,9 @@ input[type="search"]::-webkit-search-cancel-button {
     @apply border-border;
   }
   :focus-visible {
-    outline: 1px solid black;
-    border-radius: 2px;
-  }
-  @media (prefers-color-scheme: dark) {
-    :focus-visible {
-      outline-color: white;
-    }
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
   body {
     @apply bg-background text-foreground;

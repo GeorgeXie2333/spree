@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface FilterDropdownProps {
-  label: string;
+  label: React.ReactNode;
   badgeCount?: number;
   isOpen: boolean;
   onToggle: () => void;
@@ -39,19 +39,19 @@ export function FilterDropdown({
     >
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
+          variant="ghost"
           aria-expanded={isOpen}
           aria-haspopup="menu"
           size="sm"
         >
           <span>{label}</span>
           {hasActive && (
-            <span className="flex items-center justify-center w-5 h-5 text-xs bg-primary text-white rounded-lg">
+            <span className="flex size-4.5 items-center justify-center rounded-full bg-primary text-[11px] font-medium text-primary-foreground">
               {badgeCount}
             </span>
           )}
           <ChevronDown
-            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+            className={`size-3.5 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           />
         </Button>
       </DropdownMenuTrigger>

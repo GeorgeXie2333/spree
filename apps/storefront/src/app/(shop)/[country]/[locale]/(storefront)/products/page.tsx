@@ -42,19 +42,19 @@ export default async function ProductsPage({
   const listName = query ? "Search Results" : "All Products";
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 py-10 pb-16 sm:px-6 lg:px-8">
       <div className="mb-8">
         {query ? (
-          <h1 className="text-3xl font-bold text-gray-900">
-            {t("searchResultsFor", { query })}
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+            {t("searchResultsTitle", { query })}
           </h1>
         ) : (
-          <>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {t("allProducts")}
-            </h1>
-            <p className="mt-2 text-gray-500">{t("browseCollection")}</p>
-          </>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">
+            {t("allProductsTitle")}{" "}
+            <span className="text-muted-foreground">
+              {t("allProductsSubtitle")}
+            </span>
+          </h1>
         )}
       </div>
 
