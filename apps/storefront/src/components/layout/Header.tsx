@@ -36,6 +36,20 @@ const LazyCountrySwitcher = dynamic(
   },
 );
 
+const LazyLanguageSwitcher = dynamic(
+  () =>
+    import("@/components/layout/LanguageSwitcher").then((mod) => ({
+      default: mod.LanguageSwitcher,
+    })),
+  {
+    loading: () => (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground">
+        <div className="w-4 h-4 border-2 border-border border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  },
+);
+
 const storeName = getStoreName();
 
 interface HeaderProps {
@@ -79,8 +93,9 @@ export async function Header({
           <CategoryNav rootCategories={rootCategories} basePath={basePath} />
         }
         rightStart={
-          <div className="hidden lg:block">
+          <div className="hidden items-center gap-1 lg:flex">
             <LazyCountrySwitcher />
+            <LazyLanguageSwitcher />
           </div>
         }
         rightEnd={

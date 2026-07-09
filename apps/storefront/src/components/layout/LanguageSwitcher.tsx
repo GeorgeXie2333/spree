@@ -11,15 +11,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useStore } from "@/contexts/StoreContext";
-import { useCountrySwitch } from "@/hooks/useCountrySwitch";
-import { CountryFlagIcon } from "./CountryFlagIcon";
+import { useLocaleSwitch } from "@/hooks/useLocaleSwitch";
+import { getLanguageOption, languageOptions } from "@/lib/i18n/languages";
 
-export function CountrySwitcher() {
-  const { country, locale, currency, countries, loading } = useStore();
+export function LanguageSwitcher() {
+  const { country, locale, currency, loading } = useStore();
   const tc = useTranslations("common");
-  const { isCountryNavigating, handleCountrySelect } = useCountrySwitch({
+  const currentLanguage = getLanguageOption(locale);
+  const { isLocaleNavigating, handleLocaleSelect } = useLocaleSwitch({
     currentCountry: country,
     currentLocale: locale,
+    currency,
   });
 
   if (loading) {
@@ -33,29 +35,28 @@ export function CountrySwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <CountryFlagIcon countryCode={country} />
-          <span className="font-medium">{country.toUpperCase()}</span>
-          <span className="text-gray-400">|</span>
-          <span>{currency}</span>
+        <Button
+          variant="ghost"
+          aria-label={`${tc("selectLanguage")}: ${currentLanguage.label}`}
+        >
+          <span className="font-medium">{currentLanguage.shortLabel}</span>
           <ChevronDown className="w-4 h-4 text-gray-400" />
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>{tc("selectCountry")}</DropdownMenuLabel>
-        {countries.map((c) => {
-          const isSelected = c.iso.toLowerCase() === country.toLowerCase();
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuLabel>{tc("selectLanguage")}</DropdownMenuLabel>
+        {languageOptions.map((option) => {
+          const isSelected = option.locale === locale;
           return (
             <DropdownMenuItem
-              key={c.iso}
-              disabled={isCountryNavigating}
-              onSelect={() => handleCountrySelect(c)}
+              key={option.locale}
+              disabled={isLocaleNavigating}
+              onSelect={() => handleLocaleSelect(option.locale)}
             >
-              <CountryFlagIcon countryCode={c.iso} />
-              <span className="flex-1 font-medium">{c.name}</span>
-              <span className="text-xs text-muted-foreground">
-                {c.currency}
+              <span className="flex-1 font-medium">{option.label}</span>
+              <span className="text-xs uppercase text-muted-foreground">
+                {option.locale}
               </span>
               {isSelected && <Check className="w-4 h-4" />}
             </DropdownMenuItem>

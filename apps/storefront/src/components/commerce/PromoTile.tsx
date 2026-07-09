@@ -28,7 +28,7 @@ export function PromoTile({
   return (
     <div
       className={cn(
-        "relative flex min-h-72 flex-col overflow-hidden rounded-[18px] p-8 md:p-10",
+        "relative flex min-h-44 flex-col overflow-hidden rounded-[18px] p-6 md:p-8",
         dark ? "bg-[#0b0b0c] text-white" : "bg-card text-foreground",
         className,
       )}
@@ -39,7 +39,7 @@ export function PromoTile({
       {text && (
         <p
           className={cn(
-            "mt-2 max-w-md text-sm md:text-base",
+            "mt-2 max-w-none text-sm md:text-base",
             dark ? "text-white/70" : "text-muted-foreground",
           )}
         >

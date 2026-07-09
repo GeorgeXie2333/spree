@@ -20,7 +20,8 @@
     "selectCountry": "选择国家/地区",
     "myAccount": "我的账户",
     "storeCredit": "商店余额",
-    "amountDue": "应付金额"
+    "amountDue": "应付金额",
+    "selectLanguage": "选择语言"
   },
   "header": {
     "categories": "分类",

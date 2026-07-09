@@ -22,6 +22,14 @@ describe("HomeHero", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("img", { name: "CenWatch watches" }),
-    ).toHaveAttribute("src", "/cenwatch/hero-watches.jpg");
+    ).toHaveAttribute("src", "/cenwatch/hero-watches.png");
+    expect(screen.getByRole("img", { name: "CenWatch watches" })).toHaveClass(
+      "max-h-[260px]",
+      "md:max-h-[300px]",
+      "lg:max-h-[340px]",
+    );
+    expect(
+      screen.getByRole("img", { name: "CenWatch watches" }).closest("section"),
+    ).toHaveClass("pt-8", "pb-6", "md:pt-10", "md:pb-8");
   });
 });

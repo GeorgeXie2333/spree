@@ -10,6 +10,7 @@ import { getPathWithoutPrefix } from "@/lib/utils/path";
 
 interface UseCountrySwitchOptions {
   currentCountry: string;
+  currentLocale: string;
   onBeforeNavigate?: () => void;
 }
 
@@ -20,6 +21,7 @@ interface UseCountrySwitchResult {
 
 export function useCountrySwitch({
   currentCountry,
+  currentLocale,
   onBeforeNavigate,
 }: UseCountrySwitchOptions): UseCountrySwitchResult {
   const { cart, refreshCart } = useCart();
@@ -37,7 +39,7 @@ export function useCountrySwitch({
 
     setIsCountryNavigating(true);
 
-    const newLocale = entry.default_locale || "en";
+    const newLocale = currentLocale.toLowerCase();
     const newCurrency = entry.currency;
     const pathRest = getPathWithoutPrefix(pathname);
     const newPath = `/${nextCountry}/${newLocale}${pathRest}`;
