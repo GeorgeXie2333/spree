@@ -15,7 +15,7 @@ Docker host. 1Panel will handle domain routing and TLS separately.
 ## Key Decisions (do not deviate without discussion)
 
 - Publish the Spree API on host port `30000` and the storefront on `30001`.
-- Use `https://api.shop.cenwatch.com` as the public API URL and
+- Use `https://api-shop.cenwatch.com` as the public API URL and
   `https://shop.cenwatch.com` as the public storefront URL.
 - Keep PostgreSQL and Redis private to the Compose network.
 - Use the Spree `5.4.3.1` image already exercised by storefront E2E tests.

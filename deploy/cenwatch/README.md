@@ -27,7 +27,7 @@ credentials.
 The configured public URLs are:
 
 ```text
-https://api.shop.cenwatch.com
+https://api-shop.cenwatch.com
 https://shop.cenwatch.com
 ```
 
