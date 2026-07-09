@@ -1,0 +1,137 @@
+name: cenwatch
+
+x-spree: &spree
+  image: ghcr.io/spree/spree:${SPREE_VERSION_TAG:-5.4.3.1}
+  restart: unless-stopped
+  environment: &spree-environment
+    RAILS_ENV: production
+    RAILS_LOG_LEVEL: info
+    DATABASE_URL: postgres://spree:${POSTGRES_PASSWORD}@postgres:5432/spree_production
+    REDIS_URL: redis://redis:6379/0
+    SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    RAILS_FORCE_SSL: "true"
+    RAILS_ASSUME_SSL: "true"
+    ADMIN_EMAIL: ${ADMIN_EMAIL}
+    ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+    STOREFRONT_ORIGIN: ${SITE_URL}
+    STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+    STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  volumes:
+    - spree_storage:/rails/storage
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: spree
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: spree_production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spree -d spree_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    <<: *spree
+    ports:
+      - "127.0.0.1:30000:3000"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS -o /dev/null http://localhost:3000/up || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+
+  worker:
+    <<: *spree
+    command: bundle exec sidekiq
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      <<: *spree-environment
+      RAILS_MAX_THREADS: "10"
+
+  storefront:
+    image: cenwatch-storefront:local
+    build:
+      context: ../..
+      dockerfile: apps/storefront/Dockerfile
+      args:
+        SITE_URL: ${SITE_URL}
+        NEXT_PUBLIC_SITE_URL: ${SITE_URL}
+        SPREE_API_URL: ${SPREE_API_URL}
+        SPREE_PUBLISHABLE_KEY: ${SPREE_PUBLISHABLE_KEY}
+        SPREE_CHANNEL_CODE: shop
+        SPREE_VALIDATE_MARKETS: "false"
+        NEXT_PUBLIC_DEFAULT_COUNTRY: us
+        NEXT_PUBLIC_DEFAULT_LOCALE: en
+        NEXT_PUBLIC_STORE_NAME: CenWatch
+        NEXT_PUBLIC_STORE_DESCRIPTION: The air touch watch for controlling screens, rooms, smart devices, and AR experiences.
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+        CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3001"
+      HOSTNAME: 0.0.0.0
+      SITE_URL: ${SITE_URL}
+      NEXT_PUBLIC_SITE_URL: ${SITE_URL}
+      SPREE_API_URL: ${SPREE_API_URL}
+      SPREE_PUBLISHABLE_KEY: ${SPREE_PUBLISHABLE_KEY}
+      SPREE_CHANNEL_CODE: shop
+      SPREE_VALIDATE_MARKETS: "false"
+      NEXT_PUBLIC_DEFAULT_COUNTRY: us
+      NEXT_PUBLIC_DEFAULT_LOCALE: en
+      NEXT_PUBLIC_STORE_NAME: CenWatch
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
+      CONTACT_TO_EMAIL: ${CONTACT_TO_EMAIL}
+      ORDER_TRACKING_API_URL: ""
+      ORDER_TRACKING_API_SECRET: ""
+    depends_on:
+      web:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:30001:3001"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/robots.txt').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  postgres_data:
+  redis_data:
+  spree_storage:

@@ -10,12 +10,9 @@ node_modules/
 apps/storefront/.next/
 apps/storefront/node_modules/
 apps/storefront/.turbo/
-apps/storefront/.env*
-apps/storefront/**/.env*
-!apps/storefront/.env.example
-!apps/storefront/.env.local.example
-!apps/storefront/**/.env.example
-!apps/storefront/**/.env.local.example
+**/.env*
+!**/.env.example
+!**/.env.local.example
 packages/*
 !packages/cli/
 !packages/cli/package.json

@@ -1,6 +1,6 @@
 # CenWatch Single-Server Docker Deployment
 
-**Status:** Design Finalized
+**Status:** Complete
 **Target:** Spree 5.4 + CenWatch Storefront
 **Depends on:** CenWatch storefront Docker image
 **Author:** George / Codex
