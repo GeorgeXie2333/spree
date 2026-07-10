@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mockClient = {
   categories: {
     get: vi.fn(),
+    list: vi.fn(),
   },
   products: {
     list: vi.fn(),
@@ -21,11 +22,12 @@ vi.mock("next/cache", () => ({
 }));
 
 import {
+  getCategoryOrNull,
   getCategoryProducts,
-  getCenwatchRootCategory,
+  getTopLevelCategories,
 } from "@/lib/data/categories";
 
-describe("CenWatch category products", () => {
+describe("storefront category data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockClient.products.list.mockResolvedValue({
@@ -44,12 +46,7 @@ describe("CenWatch category products", () => {
     });
   });
 
-  it("allows product queries for CenWatch descendants", async () => {
-    mockClient.categories.get.mockResolvedValue({
-      id: "category-models",
-      permalink: "cenwatch/models",
-    });
-
+  it("allows product queries for any Store API category", async () => {
     await getCategoryProducts("category-models", { page: 2, limit: 12 });
 
     expect(mockClient.products.list).toHaveBeenCalledWith(
@@ -62,35 +59,38 @@ describe("CenWatch category products", () => {
     );
   });
 
-  it("fails closed for categories outside CenWatch", async () => {
+  it("returns any visible category regardless of its permalink", async () => {
     mockClient.categories.get.mockResolvedValue({
       id: "category-clothing",
       permalink: "clothing",
     });
 
-    const response = await getCategoryProducts("category-clothing", {
-      page: 3,
-      limit: 12,
+    await expect(getCategoryOrNull("clothing")).resolves.toMatchObject({
+      id: "category-clothing",
     });
-
-    expect(response.data).toEqual([]);
-    expect(response.meta).toMatchObject({ page: 3, limit: 12, count: 0 });
-    expect(mockClient.products.list).not.toHaveBeenCalled();
   });
 
-  it("fails closed without noisy logs when Spree is not configured", async () => {
-    const consoleError = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
-    mockClient.categories.get.mockRejectedValue(
-      new Error(
-        "Spree client is not configured. Either call initSpreeNext() or set environment variables.",
-      ),
+  it("loads every top-level category page for navigation", async () => {
+    mockClient.categories.list
+      .mockResolvedValueOnce({
+        data: [{ id: "category-clothing", name: "Clothing" }],
+        meta: { pages: 2 },
+      })
+      .mockResolvedValueOnce({
+        data: [{ id: "category-electronics", name: "Electronics" }],
+        meta: { pages: 2 },
+      });
+
+    await expect(getTopLevelCategories()).resolves.toHaveLength(2);
+    expect(mockClient.categories.list).toHaveBeenNthCalledWith(
+      1,
+      { depth_eq: 1, expand: ["children.children"], limit: 100, page: 1 },
+      { locale: "en", country: "us" },
     );
-
-    await expect(getCenwatchRootCategory()).resolves.toBeNull();
-
-    expect(consoleError).not.toHaveBeenCalled();
-    consoleError.mockRestore();
+    expect(mockClient.categories.list).toHaveBeenNthCalledWith(
+      2,
+      { depth_eq: 1, expand: ["children.children"], limit: 100, page: 2 },
+      { locale: "en", country: "us" },
+    );
   });
 });

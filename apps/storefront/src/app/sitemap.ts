@@ -1,9 +1,5 @@
 import type { Category, Media, Product } from "@spree/sdk";
 import type { MetadataRoute } from "next";
-import {
-  CENWATCH_CATEGORY_PERMALINK,
-  isCenwatchCategory,
-} from "@/lib/cenwatch/catalog";
 import { getCenwatchLaunchCountryLocales } from "@/lib/cenwatch/markets";
 import { isSupportedLocale } from "@/lib/i18n/routing";
 import { getClient } from "@/lib/spree";
@@ -41,7 +37,6 @@ const cachedCategoriesByLocale = new Map<
   string,
   Promise<CategoryWithTimestamp[]>
 >();
-const cachedCatalogRootsByLocale = new Map<string, Promise<Category>>();
 let cachedCountryLocales: Promise<CountryLocale[]> | null = null;
 
 function getDefaultLocaleOptions(): LocaleOptions {
@@ -85,21 +80,6 @@ function getCachedCategories(
   return cached;
 }
 
-function getCachedCatalogRoot(localeOpts: LocaleOptions): Promise<Category> {
-  const key = localeCacheKey(localeOpts.locale, localeOpts.country);
-  let cached = cachedCatalogRootsByLocale.get(key);
-  if (!cached) {
-    cached = getClient()
-      .categories.get(CENWATCH_CATEGORY_PERMALINK, undefined, localeOpts)
-      .catch((err) => {
-        cachedCatalogRootsByLocale.delete(key);
-        throw err;
-      });
-    cachedCatalogRootsByLocale.set(key, cached);
-  }
-  return cached;
-}
-
 function getCachedCountryLocales(): Promise<CountryLocale[]> {
   if (!cachedCountryLocales) {
     cachedCountryLocales = resolveCountryLocales().catch((err) => {
@@ -113,16 +93,23 @@ function getCachedCountryLocales(): Promise<CountryLocale[]> {
 export async function generateSitemaps(): Promise<Array<{ id: number }>> {
   try {
     const countryLocales = await getCachedCountryLocales();
-    const [productCount, categoryCount] = await Promise.all([
-      fetchTotalCount("products"),
-      fetchTotalCount("categories"),
-    ]);
+    const catalogCounts = await Promise.all(
+      countryLocales.map(async ({ country, locale }) => {
+        const localeOptions: LocaleOptions = { country, locale };
+        const [productCount, categoryCount] = await Promise.all([
+          fetchTotalCount("products", localeOptions),
+          fetchTotalCount("categories", localeOptions),
+        ]);
 
-    const urlsPerLocale =
-      STATIC_PAGES_PER_LOCALE +
-      Math.min(productCount, MAX_FETCHABLE_ITEMS) +
-      Math.min(categoryCount, MAX_FETCHABLE_ITEMS);
-    const totalUrls = urlsPerLocale * countryLocales.length;
+        return (
+          Math.min(productCount, MAX_FETCHABLE_ITEMS) +
+          Math.min(categoryCount, MAX_FETCHABLE_ITEMS)
+        );
+      }),
+    );
+    const totalUrls =
+      STATIC_PAGES_PER_LOCALE * countryLocales.length +
+      catalogCounts.reduce((total, count) => total + count, 0);
     const sitemapCount = Math.max(1, Math.ceil(totalUrls / URLS_PER_SITEMAP));
 
     return Array.from({ length: sitemapCount }, (_, i) => ({ id: i }));
@@ -280,16 +267,19 @@ function getStaticPageEntries(basePath: string): MetadataRoute.Sitemap {
 
 async function fetchTotalCount(
   resource: "products" | "categories",
+  localeOptions: LocaleOptions,
 ): Promise<number> {
-  const localeOptions = getDefaultLocaleOptions();
   const client = getClient();
-  if (resource === "categories") {
-    return (await fetchAllCategories(localeOptions)).length;
+  if (resource === "products") {
+    const response = await client.products.list(
+      { page: 1, limit: 1 },
+      localeOptions,
+    );
+    return response.meta.count;
   }
 
-  const rootCategory = await getCachedCatalogRoot(localeOptions);
-  const response = await client.products.list(
-    { page: 1, limit: 1, in_category: rootCategory.id },
+  const response = await client.categories.list(
+    { page: 1, limit: 1 },
     localeOptions,
   );
   return response.meta.count;
@@ -299,7 +289,6 @@ async function fetchAllProducts(
   localeOptions: LocaleOptions,
 ): Promise<ProductWithMedia[]> {
   const allProducts: ProductWithMedia[] = [];
-  const rootCategory = await getCachedCatalogRoot(localeOptions);
   let page = 1;
   let totalPages = 1;
 
@@ -309,7 +298,6 @@ async function fetchAllProducts(
         page,
         limit: ITEMS_PER_PAGE,
         expand: ["media"],
-        in_category: rootCategory.id,
       },
       localeOptions,
     );
@@ -338,5 +326,5 @@ async function fetchAllCategories(
     page++;
   } while (page <= totalPages && page <= MAX_PAGES);
 
-  return allCategories.filter(isCenwatchCategory);
+  return allCategories;
 }

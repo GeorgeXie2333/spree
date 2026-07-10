@@ -8,7 +8,7 @@ import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { PRODUCT_CARD_FIELDS, PRODUCT_PAGE_EXPAND } from "@/lib/data/cached";
 import { resolveCurrency } from "@/lib/data/markets";
-import { getCenwatchProduct, getProducts } from "@/lib/data/products";
+import { getProductOrNull, getProducts } from "@/lib/data/products";
 import { generateProductMetadata } from "@/lib/metadata/product";
 import {
   buildBreadcrumbJsonLd,
@@ -74,7 +74,7 @@ export default async function ProductPage({
   const { category_id } = await searchParams;
   const basePath = `/${country}/${locale}`;
 
-  const product = await getCenwatchProduct(slug, PRODUCT_PAGE_EXPAND);
+  const product = await getProductOrNull(slug, PRODUCT_PAGE_EXPAND);
   if (!product) {
     notFound();
   }

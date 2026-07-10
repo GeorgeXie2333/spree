@@ -1,7 +1,7 @@
 import type { Category } from "@spree/sdk";
 import { getTranslations } from "next-intl/server";
 import { PromoTile } from "@/components/commerce/PromoTile";
-import { getCenwatchRootCategory } from "@/lib/data/categories";
+import { getTopLevelCategories } from "@/lib/data/categories";
 
 interface HomePromosProps {
   basePath: string;
@@ -12,12 +12,7 @@ interface HomePromosProps {
 export async function HomePromos({ basePath, locale }: HomePromosProps) {
   const t = await getTranslations({ locale, namespace: "home" });
 
-  const rootCategory = await getCenwatchRootCategory();
-  const categories: Category[] = rootCategory
-    ? rootCategory.children?.length
-      ? rootCategory.children
-      : [rootCategory]
-    : [];
+  const categories: Category[] = await getTopLevelCategories();
 
   const firstCategory = categories[0];
   const categoryHref = firstCategory

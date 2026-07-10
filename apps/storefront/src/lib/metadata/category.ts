@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getCenwatchCategory } from "@/lib/data/categories";
+import { getCategoryOrNull } from "@/lib/data/categories";
 import { buildCanonicalUrl } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 
@@ -16,7 +16,7 @@ export async function generateCategoryMetadata({
 }: CategoryMetadataParams): Promise<Metadata> {
   const fullPermalink = permalink.join("/");
 
-  const category = await getCenwatchCategory(fullPermalink, {
+  const category = await getCategoryOrNull(fullPermalink, {
     expand: ["ancestors", "children"],
   });
   if (!category) {

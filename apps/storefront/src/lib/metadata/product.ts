@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PRODUCT_METADATA_EXPAND } from "@/lib/data/cached";
-import { getCenwatchProduct } from "@/lib/data/products";
+import { getProductOrNull } from "@/lib/data/products";
 import { buildCanonicalUrl, stripHtml } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 
@@ -15,7 +15,7 @@ export async function generateProductMetadata({
   locale,
   slug,
 }: ProductMetadataParams): Promise<Metadata> {
-  const product = await getCenwatchProduct(slug, PRODUCT_METADATA_EXPAND);
+  const product = await getProductOrNull(slug, PRODUCT_METADATA_EXPAND);
   if (!product) {
     return { title: "Product Not Found" };
   }

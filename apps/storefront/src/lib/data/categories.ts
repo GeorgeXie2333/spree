@@ -1,17 +1,10 @@
 "use server";
 
-import type {
-  Category,
-  PaginatedResponse,
-  Product,
-  ProductListParams,
-} from "@spree/sdk";
+import type { Category, ProductListParams } from "@spree/sdk";
 import { cacheLife, cacheTag } from "next/cache";
-import {
-  CENWATCH_CATEGORY_PERMALINK,
-  isCenwatchCategory,
-} from "@/lib/cenwatch/catalog";
 import { getAccessToken, getClient, getLocaleOptions } from "@/lib/spree";
+
+const TOP_LEVEL_CATEGORY_LIMIT = 100;
 
 function isUnconfiguredSpreeClient(error: unknown): boolean {
   return (
@@ -39,29 +32,61 @@ export async function getCategory(
   return cachedGetCategory(idOrPermalink, params, options);
 }
 
-export async function getCenwatchRootCategory(): Promise<Category | null> {
+export async function getCategoryOrNull(
+  idOrPermalink: string,
+  params?: { expand?: string[] },
+): Promise<Category | null> {
   try {
-    return await getCategory(CENWATCH_CATEGORY_PERMALINK, {
-      expand: ["children.children"],
-    });
+    return await getCategory(idOrPermalink, params);
   } catch (error) {
     if (!isUnconfiguredSpreeClient(error)) {
-      console.error("CenWatch catalog root is unavailable", error);
+      console.error(
+        `Storefront category is unavailable: ${idOrPermalink}`,
+        error,
+      );
     }
     return null;
   }
 }
 
-export async function getCenwatchCategory(
-  idOrPermalink: string,
-  params?: { expand?: string[] },
-): Promise<Category | null> {
+async function cachedListTopLevelCategories(
+  page: number,
+  options: { locale?: string; country?: string },
+) {
+  "use cache: remote";
+  cacheLife("tenMinutes");
+  cacheTag("categories");
+  return getClient().categories.list(
+    {
+      depth_eq: 1,
+      expand: ["children.children"],
+      limit: TOP_LEVEL_CATEGORY_LIMIT,
+      page,
+    },
+    options,
+  );
+}
+
+export async function getTopLevelCategories(): Promise<Category[]> {
   try {
-    const category = await getCategory(idOrPermalink, params);
-    return isCenwatchCategory(category) ? category : null;
+    const options = await getLocaleOptions();
+    const categories: Category[] = [];
+    let page = 1;
+    let totalPages = 1;
+
+    do {
+      const response = await cachedListTopLevelCategories(page, options);
+      categories.push(...response.data);
+      totalPages = response.meta.pages;
+      page++;
+    } while (page <= totalPages);
+
+    return categories;
   } catch (error) {
-    console.error(`CenWatch category is unavailable: ${idOrPermalink}`, error);
-    return null;
+    if (!isUnconfiguredSpreeClient(error)) {
+      console.error("Storefront categories are unavailable", error);
+    }
+    return [];
   }
 }
 
@@ -89,29 +114,7 @@ export async function getCategoryProducts(
   categoryId: string,
   params?: ProductListParams,
 ) {
-  const category = await getCenwatchCategory(categoryId);
-  if (!category) return emptyCategoryProducts(params);
-
   const options = await getLocaleOptions();
   const userToken = await getAccessToken();
-  return cachedListCategoryProducts(category.id, params, options, userToken);
-}
-
-function emptyCategoryProducts(
-  params?: ProductListParams,
-): PaginatedResponse<Product> {
-  return {
-    data: [],
-    meta: {
-      page: params?.page ?? 1,
-      limit: params?.limit ?? 25,
-      count: 0,
-      pages: 0,
-      from: 0,
-      to: 0,
-      in: 0,
-      previous: null,
-      next: null,
-    },
-  };
+  return cachedListCategoryProducts(categoryId, params, options, userToken);
 }

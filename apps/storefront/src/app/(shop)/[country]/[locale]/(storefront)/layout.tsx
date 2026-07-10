@@ -2,7 +2,7 @@ import type { Category } from "@spree/sdk";
 import Link from "next/link";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { getCenwatchRootCategory } from "@/lib/data/categories";
+import { getTopLevelCategories } from "@/lib/data/categories";
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -39,8 +39,7 @@ export default async function StorefrontLayout({
   const { country, locale } = await params;
   const basePath = `/${country}/${locale}`;
 
-  const rootCategory = await getCenwatchRootCategory();
-  const rootCategories: Category[] = rootCategory ? [rootCategory] : [];
+  const rootCategories: Category[] = await getTopLevelCategories();
 
   return (
     <>

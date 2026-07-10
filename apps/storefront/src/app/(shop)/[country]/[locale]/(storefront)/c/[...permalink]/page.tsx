@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductListing } from "@/components/products/ProductListing";
 import { JsonLd } from "@/components/seo/JsonLd";
-import {
-  getCategoryProducts,
-  getCenwatchCategory,
-} from "@/lib/data/categories";
+import { getCategoryOrNull, getCategoryProducts } from "@/lib/data/categories";
 import { resolveCurrency } from "@/lib/data/markets";
-import { getCenwatchCategoryProductFilters } from "@/lib/data/products";
+import { getCategoryProductFilters } from "@/lib/data/products";
 import { generateCategoryMetadata } from "@/lib/metadata/category";
 import { buildBreadcrumbJsonLd } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
@@ -39,7 +36,7 @@ export default async function CategoryPage({
   const fullPermalink = permalink.join("/");
   const basePath = `/${country}/${locale}`;
 
-  const category = await getCenwatchCategory(fullPermalink, {
+  const category = await getCategoryOrNull(fullPermalink, {
     expand: ["ancestors", "children"],
   });
 
@@ -56,7 +53,7 @@ export default async function CategoryPage({
   // call directly. Inline arrow closures don't serialize across the
   // server→client boundary; `.bind()` on a server action reference does.
   const fetchCategoryProducts = getCategoryProducts.bind(null, category.id);
-  const fetchCategoryFilters = getCenwatchCategoryProductFilters.bind(
+  const fetchCategoryFilters = getCategoryProductFilters.bind(
     null,
     category.id,
   );

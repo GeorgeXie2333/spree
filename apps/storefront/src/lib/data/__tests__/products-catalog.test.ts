@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockClient = {
-  categories: {
-    get: vi.fn(),
-  },
   products: {
     get: vi.fn(),
     list: vi.fn(),
@@ -23,21 +20,15 @@ vi.mock("next/cache", () => ({
 }));
 
 import {
-  getCenwatchCategoryProductFilters,
-  getCenwatchProduct,
+  getCategoryProductFilters,
   getProductFilters,
+  getProductOrNull,
   getProducts,
 } from "@/lib/data/products";
 
-const rootCategory = {
-  id: "category-cenwatch",
-  permalink: "cenwatch",
-};
-
-describe("CenWatch-scoped product data", () => {
+describe("storefront product data", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockClient.categories.get.mockResolvedValue(rootCategory);
     mockClient.products.list.mockResolvedValue({
       data: [],
       meta: {
@@ -60,7 +51,7 @@ describe("CenWatch-scoped product data", () => {
     });
   });
 
-  it("forces every product listing into the CenWatch root", async () => {
+  it("preserves the caller's category filters for the full storefront catalog", async () => {
     await getProducts({
       search: "air",
       in_category: "clothing",
@@ -70,23 +61,14 @@ describe("CenWatch-scoped product data", () => {
     expect(mockClient.products.list).toHaveBeenCalledWith(
       {
         search: "air",
-        in_category: "category-cenwatch",
+        in_category: "clothing",
+        in_categories: ["clothing"],
       },
       { locale: "en", country: "us" },
     );
   });
 
-  it("fails closed when the CenWatch root is unavailable", async () => {
-    mockClient.categories.get.mockRejectedValue(new Error("not found"));
-
-    const response = await getProducts({ search: "air" });
-
-    expect(response.data).toEqual([]);
-    expect(response.meta.count).toBe(0);
-    expect(mockClient.products.list).not.toHaveBeenCalled();
-  });
-
-  it("scopes product facets to the CenWatch root", async () => {
+  it("preserves active filters for the full storefront catalog", async () => {
     await getProductFilters({
       category_id: "clothing",
       q: { in_stock: true },
@@ -94,34 +76,15 @@ describe("CenWatch-scoped product data", () => {
 
     expect(mockClient.products.filters).toHaveBeenCalledWith(
       {
-        category_id: "category-cenwatch",
+        category_id: "clothing",
         q: { in_stock: true },
       },
       { locale: "en", country: "us" },
     );
   });
 
-  it("returns empty facets when the CenWatch root is unavailable", async () => {
-    mockClient.categories.get.mockRejectedValue(new Error("not found"));
-
-    const response = await getProductFilters();
-
-    expect(response).toEqual({
-      filters: [],
-      sort_options: [],
-      default_sort: "",
-      total_count: 0,
-    });
-    expect(mockClient.products.filters).not.toHaveBeenCalled();
-  });
-
-  it("allows a CenWatch descendant to further scope facets", async () => {
-    mockClient.categories.get.mockResolvedValue({
-      id: "category-models",
-      permalink: "cenwatch/models",
-    });
-
-    await getCenwatchCategoryProductFilters("category-models", {
+  it("scopes category facets directly to the requested category", async () => {
+    await getCategoryProductFilters("category-models", {
       q: { in_stock: true },
     });
 
@@ -134,46 +97,25 @@ describe("CenWatch-scoped product data", () => {
     );
   });
 
-  it("rejects facet queries for unrelated categories", async () => {
-    mockClient.categories.get.mockResolvedValue({
-      id: "category-clothing",
-      permalink: "clothing",
-    });
-
-    const response =
-      await getCenwatchCategoryProductFilters("category-clothing");
-
-    expect(response).toEqual({
-      filters: [],
-      sort_options: [],
-      default_sort: "",
-      total_count: 0,
-    });
-    expect(mockClient.products.filters).not.toHaveBeenCalled();
-  });
-
-  it("returns products assigned to any CenWatch descendant", async () => {
+  it("returns a visible product even when it has no categories", async () => {
     mockClient.products.get.mockResolvedValue({
-      id: "product-cenwatch",
-      categories: [{ id: "models", permalink: "cenwatch/models" }],
+      id: "product-uncategorized",
+      categories: [],
     });
 
-    const product = await getCenwatchProduct("air", ["media"]);
+    const product = await getProductOrNull("air", ["media"]);
 
-    expect(product?.id).toBe("product-cenwatch");
+    expect(product?.id).toBe("product-uncategorized");
     expect(mockClient.products.get).toHaveBeenCalledWith(
       "air",
-      { expand: ["media", "categories.ancestors"] },
+      { expand: ["media"] },
       { locale: "en", country: "us" },
     );
   });
 
-  it("rejects product details outside the CenWatch tree", async () => {
-    mockClient.products.get.mockResolvedValue({
-      id: "product-clothing",
-      categories: [{ id: "clothing", permalink: "clothing" }],
-    });
+  it("returns null when a product is not visible through the Store API", async () => {
+    mockClient.products.get.mockRejectedValue(new Error("not found"));
 
-    await expect(getCenwatchProduct("shirt")).resolves.toBeNull();
+    await expect(getProductOrNull("shirt")).resolves.toBeNull();
   });
 });

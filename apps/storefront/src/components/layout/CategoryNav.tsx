@@ -10,8 +10,6 @@ interface CategoryNavProps {
   basePath: string;
 }
 
-const MAX_TOP_LEVEL = 6;
-
 /**
  * Desktop category navigation with hover flyout panels for children,
  * in the style of the Apple Store top nav.
@@ -19,8 +17,6 @@ const MAX_TOP_LEVEL = 6;
 export function CategoryNav({ rootCategories, basePath }: CategoryNavProps) {
   const t = useTranslations("header");
   const [openId, setOpenId] = useState<string | null>(null);
-
-  const items = rootCategories.slice(0, MAX_TOP_LEVEL);
 
   return (
     <nav
@@ -36,7 +32,7 @@ export function CategoryNav({ rootCategories, basePath }: CategoryNavProps) {
         {t("allProducts")}
       </Link>
 
-      {items.map((category) => {
+      {rootCategories.map((category) => {
         const hasChildren = (category.children?.length ?? 0) > 0;
         const isOpen = openId === category.id;
 

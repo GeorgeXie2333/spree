@@ -1,6 +1,6 @@
 import type { Category } from "@spree/sdk";
 import { CategoryCircle } from "@/components/commerce/CategoryCircle";
-import { getCenwatchRootCategory } from "@/lib/data/categories";
+import { getTopLevelCategories } from "@/lib/data/categories";
 
 interface HomeCategoryRailProps {
   basePath: string;
@@ -11,12 +11,7 @@ interface HomeCategoryRailProps {
  * when there are no categories or the backend is unavailable.
  */
 export async function HomeCategoryRail({ basePath }: HomeCategoryRailProps) {
-  const rootCategory = await getCenwatchRootCategory();
-  const categories: Category[] = rootCategory
-    ? rootCategory.children?.length
-      ? rootCategory.children
-      : [rootCategory]
-    : [];
+  const categories: Category[] = await getTopLevelCategories();
 
   if (categories.length === 0) return null;
 

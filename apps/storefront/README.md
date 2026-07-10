@@ -3,13 +3,13 @@
 Customer storefront for `shop.cenwatch.com`, built with Next.js 16, React 19,
 Tailwind CSS 4, and the Spree Store API.
 
-The storefront is intentionally scoped to the Spree category permalink
-`cenwatch`. Products outside that category tree are excluded from listings,
-search, filters, metadata, and sitemap output, and their direct URLs return 404.
+The storefront exposes the complete catalog visible through the configured Spree
+Store API. Product visibility, availability, markets, and storefront access are
+enforced by Spree rather than a frontend category allowlist.
 
 ## Supported Storefront
 
-- CenWatch product and descendant-category browsing
+- Store API product and category browsing
 - Cart, addresses, shipping, taxes, and discount codes
 - Stripe checkout, including saved Stripe cards and zero-value orders
 - Customer profile, address book, saved cards, and order history
@@ -35,9 +35,8 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_or_live_publishable_key
 CONTACT_TO_EMAIL=hello@cenwatch.com
 ```
 
-The Spree store must contain a category with permalink `cenwatch`. Assign every
-storefront product to that category or one of its descendants. The storefront
-fails closed when the category is unavailable.
+No fixed category permalink is required. All products and categories visible to
+the configured Store API key are eligible for the storefront.
 
 Stripe secret keys stay in Spree. The storefront only receives the publishable
 key used by Stripe.js.
@@ -77,8 +76,8 @@ pnpm --filter @cenwatch/storefront build
 
 ## CenWatch E2E Checkout
 
-The E2E backend seeds only the CenWatch category and a purchasable product with
-SKU `CENWATCH-E2E`; it does not load Spree's generic catalog.
+The E2E backend seeds a minimal category and a purchasable product with SKU
+`CENWATCH-E2E`; it does not load Spree's generic catalog.
 
 Provide a Stripe test key pair from the same sandbox:
 

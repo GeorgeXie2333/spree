@@ -1,6 +1,6 @@
 import { cache } from "react";
-import { getCenwatchCategory } from "./categories";
-import { getCenwatchProduct } from "./products";
+import { getCategoryOrNull } from "./categories";
+import { getProductOrNull } from "./products";
 
 /** Expand list used on the product detail page. */
 export const PRODUCT_PAGE_EXPAND = [
@@ -39,10 +39,10 @@ export const PRODUCT_CARD_FIELDS = [
 ];
 
 export const getCachedProduct = cache((slugOrId: string, expand: string[]) =>
-  getCenwatchProduct(slugOrId, expand),
+  getProductOrNull(slugOrId, expand),
 );
 
 export const getCachedCategory = cache(
   (idOrPermalink: string, expand: string[]) =>
-    getCenwatchCategory(idOrPermalink, { expand }),
+    getCategoryOrNull(idOrPermalink, { expand }),
 );
