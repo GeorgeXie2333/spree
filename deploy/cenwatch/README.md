@@ -102,7 +102,7 @@ Before applying any data repair, back up PostgreSQL and inspect the locale rows:
 ```bash
 cd deploy/cenwatch
 sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
-  exec -T web bin/rails runner /rails/lib/cenwatch/audit_locale_content.rb
+  exec -T web bin/rails runner /rails/cenwatch-scripts/audit_locale_content.rb
 ```
 
 If the audit shows blank default-locale fields with valid `zh-CN` source
@@ -112,7 +112,7 @@ never overwrites existing translations:
 ```bash
 sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
   exec -T -e APPLY=true -e SOURCE_LOCALE=zh-CN web \
-  bin/rails runner /rails/lib/cenwatch/repair_locale_content.rb
+  bin/rails runner /rails/cenwatch-scripts/repair_locale_content.rb
 ```
 
 Recreate the storefront container after the backend update or repair so its

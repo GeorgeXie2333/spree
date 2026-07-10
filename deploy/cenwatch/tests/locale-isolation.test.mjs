@@ -8,6 +8,7 @@ const deployDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const composePath = resolve(deployDir, 'compose.yml')
 const deployScriptPath = resolve(deployDir, 'deploy.sh')
 const dockerfilePath = resolve(deployDir, 'spree.Dockerfile')
+const readmePath = resolve(deployDir, 'README.md')
 const initializerPath = resolve(deployDir, 'overrides', 'cenwatch_locale_isolation.rb')
 const auditPath = resolve(deployDir, 'scripts', 'audit_locale_content.rb')
 const repairPath = resolve(deployDir, 'scripts', 'repair_locale_content.rb')
@@ -67,4 +68,14 @@ test('ships a read-only audit and opt-in default-locale repair', () => {
   assert.match(repair, /record\.with_lock do/)
   assert.match(repair, /record\.reload/)
   assert.match(repair, /skipped_due_to_concurrent_update/)
+})
+
+test('keeps one-off Rails runner scripts outside Zeitwerk autoload paths', () => {
+  const dockerfile = read(dockerfilePath)
+  const readme = read(readmePath)
+
+  assert.doesNotMatch(dockerfile, /\/rails\/lib\/cenwatch/)
+  assert.match(dockerfile, /COPY deploy\/cenwatch\/scripts \/rails\/cenwatch-scripts/)
+  assert.match(readme, /\/rails\/cenwatch-scripts\/audit_locale_content\.rb/)
+  assert.match(readme, /\/rails\/cenwatch-scripts\/repair_locale_content\.rb/)
 })
