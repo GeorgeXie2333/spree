@@ -160,6 +160,10 @@ ensure_allowed_origin() {
   '
 }
 
+run_spree_upgrade() {
+  compose exec -T web bundle exec rake spree:upgrade
+}
+
 repair_product_media() {
   compose exec -T web bin/rails runner /rails/cenwatch-scripts/repair_product_media.rb
 }
@@ -261,6 +265,9 @@ compose up -d --wait postgres redis web worker
 
 log "Seeding the default Spree store and administrator"
 compose exec -T -e AUTO_ACCEPT=1 web bin/rails db:seed
+
+log "Running required Spree catalog upgrade tasks"
+run_spree_upgrade
 
 log "Creating or reusing the storefront API key"
 ensure_publishable_key

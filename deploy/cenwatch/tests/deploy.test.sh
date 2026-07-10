@@ -34,6 +34,20 @@ assert_not_contains_pattern() {
   fi
 }
 
+assert_line_appears_before() {
+  local file="$1"
+  local first="$2"
+  local second="$3"
+  local first_line
+  local second_line
+
+  first_line="$(grep -nFx -- "$first" "$file" | head -n 1 | cut -d: -f1)"
+  second_line="$(grep -nFx -- "$second" "$file" | head -n 1 | cut -d: -f1)"
+
+  [[ -n "$first_line" && -n "$second_line" && "$first_line" -lt "$second_line" ]] ||
+    fail "$first must appear before $second in $file"
+}
+
 assert_file "$COMPOSE_FILE"
 assert_file "$ENV_EXAMPLE"
 assert_file "$DEPLOY_SCRIPT"
@@ -67,6 +81,10 @@ assert_contains "$DEPLOY_SCRIPT" 'compose build --pull web worker'
 assert_contains "$DEPLOY_SCRIPT" 'compose pull postgres redis'
 assert_contains "$DEPLOY_SCRIPT" 'compose up -d --wait --force-recreate storefront'
 assert_contains "$DEPLOY_SCRIPT" '/rails/cenwatch-scripts/repair_product_media.rb'
+assert_contains "$DEPLOY_SCRIPT" 'bundle exec rake spree:upgrade'
+assert_line_appears_before "$DEPLOY_SCRIPT" 'compose exec -T -e AUTO_ACCEPT=1 web bin/rails db:seed' 'run_spree_upgrade'
+assert_line_appears_before "$DEPLOY_SCRIPT" 'run_spree_upgrade' 'repair_product_media'
+assert_line_appears_before "$DEPLOY_SCRIPT" 'run_spree_upgrade' 'compose build --pull storefront'
 assert_contains "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb" 'Spree::Admin::BaseController'
 assert_contains "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb" 'Spree::Api::V3::BaseController'
 
