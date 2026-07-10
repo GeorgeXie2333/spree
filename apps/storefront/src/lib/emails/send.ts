@@ -9,6 +9,7 @@ interface SendEmailOptions {
   subject: string;
   react: ReactElement;
   from?: string;
+  idempotencyKey?: string;
 }
 
 const isDev = process.env.NODE_ENV === "development";
@@ -18,13 +19,14 @@ export async function sendEmail({
   subject,
   react,
   from,
+  idempotencyKey,
 }: SendEmailOptions) {
   if (isDev || !process.env.RESEND_API_KEY) {
     await sendEmailDev({ to, subject, react, from });
     return;
   }
 
-  await sendEmailResend({ to, subject, react, from });
+  await sendEmailResend({ to, subject, react, from, idempotencyKey });
 }
 
 /**
@@ -57,7 +59,13 @@ async function sendEmailDev({ to, subject, react }: SendEmailOptions) {
 /**
  * Production: send via Resend API.
  */
-async function sendEmailResend({ to, subject, react, from }: SendEmailOptions) {
+async function sendEmailResend({
+  to,
+  subject,
+  react,
+  from,
+  idempotencyKey,
+}: SendEmailOptions) {
   const { Resend } = await import("resend");
   const resend = new Resend(process.env.RESEND_API_KEY);
   const fromAddress = from || getStoreEmailFrom();
@@ -68,12 +76,15 @@ async function sendEmailResend({ to, subject, react, from }: SendEmailOptions) {
     );
   }
 
-  const { error } = await resend.emails.send({
-    from: fromAddress,
-    to,
-    subject,
-    react,
-  });
+  const { error } = await resend.emails.send(
+    {
+      from: fromAddress,
+      to,
+      subject,
+      react,
+    },
+    idempotencyKey ? { idempotencyKey } : undefined,
+  );
 
   if (error) {
     console.error("[email] Failed to send:", error);

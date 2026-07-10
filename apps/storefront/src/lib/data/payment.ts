@@ -69,12 +69,9 @@ export async function completeCheckoutPaymentSession(
 }
 
 /**
- * Completes the order. Treats 403 and 422 as success:
- * - 403 = cart already completed (e.g. webhook handler completed it)
- * - 422 = state_lock_version conflict (concurrent request)
- *
- * When the order was already completed (403/422), fetch it from the API
- * so the caller always gets the order data for caching on the thank-you page.
+ * Complete the order. If the completion response is lost after the backend
+ * commits, a completed-order lookup provides an idempotent recovery path.
+ * HTTP status alone is never proof that checkout completed.
  */
 export async function completeCheckoutOrder(cartId: string) {
   try {
@@ -84,17 +81,13 @@ export async function completeCheckoutOrder(cartId: string) {
     updateTag("cart");
     return { success: true as const, order };
   } catch (error: unknown) {
-    if (error && typeof error === "object" && "status" in error) {
-      const status = (error as { status: number }).status;
-      if (status === 403 || status === 422) {
-        // Order already completed — try to fetch it so the thank-you page
-        // can cache and display it without a second round-trip.
-        const completedOrder = await getOrder(cartId).catch(() => null);
-        updateTag("checkout");
-        updateTag("cart");
-        return { success: true as const, order: completedOrder };
-      }
+    const completedOrder = await getOrder(cartId);
+    if (completedOrder) {
+      updateTag("checkout");
+      updateTag("cart");
+      return { success: true as const, order: completedOrder };
     }
+
     return {
       success: false as const,
       error:
@@ -119,9 +112,14 @@ export async function confirmPaymentAndCompleteCart(
     const cart = await getCart(cartId);
     if (!cart) {
       // Cart not found — the order may already be completed (e.g. by webhook).
-      // Try fetching it as a completed order before giving up.
-      const completedOrder = await getOrder(cartId).catch(() => null);
-      return { success: true, order: completedOrder };
+      // Only a real completed order is proof that checkout succeeded.
+      const completedOrder = await getOrder(cartId);
+      return completedOrder
+        ? { success: true, order: completedOrder }
+        : {
+            success: false,
+            error: "Unable to verify that the order was completed.",
+          };
     }
 
     if (cart.current_step === "complete") {

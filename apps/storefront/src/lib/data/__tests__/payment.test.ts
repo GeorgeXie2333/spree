@@ -10,6 +10,9 @@ const mockClient = {
       complete: vi.fn(),
     },
   },
+  orders: {
+    get: vi.fn(),
+  },
 };
 
 vi.mock("@/lib/spree", () => ({
@@ -52,6 +55,7 @@ const mockOrder = {
 describe("payment server actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClient.orders.get.mockResolvedValue(null);
   });
 
   describe("createCheckoutPaymentSession", () => {
@@ -147,26 +151,31 @@ describe("payment server actions", () => {
       expect(result).toEqual({ success: true, order: mockOrder });
     });
 
-    it("treats 403 as success (order already completed)", async () => {
+    it("returns a completed order when completion lost the race", async () => {
       const spreeError = Object.assign(new Error("Not authorized"), {
         status: 403,
       });
       mockClient.carts.complete.mockRejectedValue(spreeError);
+      mockClient.orders.get.mockResolvedValue(mockOrder);
 
       const result = await completeCheckoutOrder("cart-1");
 
-      expect(result).toEqual({ success: true, order: null });
+      expect(result).toEqual({ success: true, order: mockOrder });
     });
 
-    it("treats 422 as success (state_lock_version conflict)", async () => {
+    it("does not treat 422 as success without a completed order", async () => {
       const spreeError = Object.assign(new Error("Unprocessable Content"), {
         status: 422,
       });
       mockClient.carts.complete.mockRejectedValue(spreeError);
+      mockClient.orders.get.mockResolvedValue(null);
 
       const result = await completeCheckoutOrder("cart-1");
 
-      expect(result).toEqual({ success: true, order: null });
+      expect(result).toEqual({
+        success: false,
+        error: "Unprocessable Content",
+      });
     });
 
     it("returns error on non-403 failure", async () => {
@@ -279,13 +288,17 @@ describe("payment server actions", () => {
       expect(result).toEqual({ success: true, order: mockOrder });
     });
 
-    it("returns success when cart is not found (already completed by webhook)", async () => {
+    it("returns failure when neither cart nor completed order can be found", async () => {
       mockClient.carts.get.mockRejectedValue(new Error("Not found"));
+      mockClient.orders.get.mockResolvedValue(null);
 
       const result = await confirmPaymentAndCompleteCart("cart-1", "session-1");
 
       expect(mockClient.carts.complete).not.toHaveBeenCalled();
-      expect(result).toEqual({ success: true, order: null });
+      expect(result).toEqual({
+        success: false,
+        error: "Unable to verify that the order was completed.",
+      });
     });
 
     it("returns error when complete throws non-403 error", async () => {
@@ -305,7 +318,7 @@ describe("payment server actions", () => {
       });
     });
 
-    it("treats 403 from complete as success (order already completed)", async () => {
+    it("does not treat 403 from complete as success without an order", async () => {
       mockClient.carts.get.mockResolvedValue({
         id: "cart-1",
         current_step: "payment",
@@ -314,20 +327,23 @@ describe("payment server actions", () => {
         status: 403,
       });
       mockClient.carts.complete.mockRejectedValue(spreeError);
+      mockClient.orders.get.mockResolvedValue(null);
 
       const result = await confirmPaymentAndCompleteCart("cart-1");
 
-      expect(result).toEqual({ success: true, order: null });
+      expect(result).toEqual({ success: false, error: "Not authorized" });
     });
 
-    it("returns success when getCart throws (cart may have been completed)", async () => {
+    it("returns failure when getCart throws and no completed order exists", async () => {
       mockClient.carts.get.mockRejectedValue("unexpected");
+      mockClient.orders.get.mockResolvedValue(null);
 
       const result = await confirmPaymentAndCompleteCart("cart-1");
 
-      // getCart() returns null on error (clears stale cookies),
-      // so confirmPaymentAndCompleteCart treats it as already completed
-      expect(result).toEqual({ success: true, order: null });
+      expect(result).toEqual({
+        success: false,
+        error: "Unable to verify that the order was completed.",
+      });
     });
   });
 });

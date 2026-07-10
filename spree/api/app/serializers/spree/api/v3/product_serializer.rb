@@ -52,7 +52,7 @@ module Spree
         end
 
         attribute :description_html do |product|
-          product.description
+          ActionController::Base.helpers.sanitize(product.description)
         end
 
         attribute :default_variant_id do |product|

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { extractBasePath } from "@/lib/utils/path";
+import { extractBasePath, getSafeRedirectPath } from "@/lib/utils/path";
 
 const inputClassName = "rounded-xl border-border bg-white";
 
@@ -52,8 +52,9 @@ export default function AccountPage() {
 
     const result = await login(email, password);
     if (result.success) {
-      if (redirectUrl) {
-        router.push(redirectUrl);
+      const safeRedirectPath = getSafeRedirectPath(redirectUrl, basePath);
+      if (safeRedirectPath) {
+        router.push(safeRedirectPath);
       }
     } else {
       setError(result.error || t("invalidCredentials"));

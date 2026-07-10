@@ -26,6 +26,7 @@ import {
   StripePaymentForm,
   type StripePaymentFormHandle,
 } from "@/components/checkout/StripePaymentForm";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCountryStates } from "@/hooks/useCountryStates";
@@ -40,6 +41,7 @@ import {
 import { getCardIconType, getCardLabel } from "@/lib/utils/credit-card";
 import { extractBasePath } from "@/lib/utils/path";
 import { isStripePaymentMethod } from "@/lib/utils/payment-gateway";
+import { isStripeTestMode } from "@/lib/utils/stripe";
 
 export type PaymentCompleteResult =
   | { type: "session"; sessionId: string; sessionResult?: string }
@@ -634,11 +636,16 @@ export function PaymentSection({
                 <div className="border-t border-border">
                   {/* Stripe: saved cards selector */}
                   {/* Demo-only test card note */}
-                  <p className="text-xs text-muted-foreground px-4 pt-3">
-                    {t("testCardNote", {
-                      testCard: "4242 4242 4242 4242",
-                    })}
-                  </p>
+                  {isStripeTestMode() && (
+                    <Alert className="mx-4 mt-3">
+                      <Info />
+                      <AlertDescription>
+                        {t("testCardNote", {
+                          testCard: "4242 4242 4242 4242",
+                        })}
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
                   {savedCards.length > 0 && (
                     <div className="px-4 pt-3">

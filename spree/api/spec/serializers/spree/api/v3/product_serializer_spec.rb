@@ -23,6 +23,19 @@ RSpec.describe Spree::Api::V3::ProductSerializer do
       expect(subject.keys).not_to include('cost_price', 'cost_currency', 'deleted_at', 'sku', 'barcode')
     end
 
+    describe 'description_html' do
+      before do
+        product.update!(
+          description: '<p onclick="alert(1)">Safe <strong>formatting</strong><script>alert(1)</script><a href="javascript:alert(1)">link</a></p>'
+        )
+      end
+
+      it 'preserves safe formatting while removing executable HTML' do
+        expect(subject['description_html']).to include('<p>Safe <strong>formatting</strong>')
+        expect(subject['description_html']).not_to include('<script', 'onclick', 'javascript:')
+      end
+    end
+
     describe 'original_price' do
       context 'without price list (base price only)' do
         it 'returns null when original_price equals calculated price' do

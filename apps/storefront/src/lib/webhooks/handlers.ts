@@ -18,33 +18,9 @@ if (!SITE_URL && process.env.NODE_ENV === "production") {
 }
 
 /**
- * Idempotency guard — prevents duplicate email sends when Spree retries
- * a webhook delivery (timeout, lost response, etc.).
- *
- * Call `isAlreadyProcessed(id)` before sending. Call `markProcessed(id)`
- * only after the email is successfully sent. This way, failed sends
- * are retried on the next webhook delivery attempt.
- */
-const PROCESSED_EVENTS = new Set<string>();
-const MAX_PROCESSED_EVENTS = 10_000;
-
-function isAlreadyProcessed(eventId: string): boolean {
-  return PROCESSED_EVENTS.has(eventId);
-}
-
-function markProcessed(eventId: string): void {
-  if (PROCESSED_EVENTS.size >= MAX_PROCESSED_EVENTS) {
-    const first = PROCESSED_EVENTS.values().next().value;
-    if (first) PROCESSED_EVENTS.delete(first);
-  }
-  PROCESSED_EVENTS.add(eventId);
-}
-
-/**
  * Handle order.completed webhook — send order confirmation email.
  */
 export async function handleOrderCompleted(event: WebhookEvent<Order>) {
-  if (isAlreadyProcessed(event.id)) return;
   const order = event.data;
   if (!order.email) return;
 
@@ -64,6 +40,7 @@ export async function handleOrderCompleted(event: WebhookEvent<Order>) {
   await sendEmail({
     to: order.email,
     subject: `${STORE_NAME} Order Confirmation #${order.number}`,
+    idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(OrderConfirmationEmail, {
       orderNumber: order.number,
       customerName,
@@ -86,15 +63,12 @@ export async function handleOrderCompleted(event: WebhookEvent<Order>) {
       deliveryMethodName,
     }),
   });
-
-  markProcessed(event.id);
 }
 
 /**
  * Handle order.canceled webhook — send cancellation email.
  */
 export async function handleOrderCanceled(event: WebhookEvent<Order>) {
-  if (isAlreadyProcessed(event.id)) return;
   const order = event.data;
   if (!order.email) return;
 
@@ -104,6 +78,7 @@ export async function handleOrderCanceled(event: WebhookEvent<Order>) {
   await sendEmail({
     to: order.email,
     subject: `${STORE_NAME} Order Canceled #${order.number}`,
+    idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(OrderCanceledEmail, {
       orderNumber: order.number,
       customerName,
@@ -118,8 +93,6 @@ export async function handleOrderCanceled(event: WebhookEvent<Order>) {
       displayTotal: order.display_total,
     }),
   });
-
-  markProcessed(event.id);
 }
 
 /**
@@ -129,7 +102,6 @@ export async function handleOrderCanceled(event: WebhookEvent<Order>) {
  * payload includes the email, customer name, and all shipment details.
  */
 export async function handleOrderShipped(event: WebhookEvent<Order>) {
-  if (isAlreadyProcessed(event.id)) return;
   const order = event.data;
   if (!order.email) return;
 
@@ -170,14 +142,13 @@ export async function handleOrderShipped(event: WebhookEvent<Order>) {
   await sendEmail({
     to: order.email,
     subject: `${STORE_NAME} Shipment Notification #${order.number}`,
+    idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(ShipmentShippedEmail, {
       orderNumber: order.number,
       customerName,
       shipments,
     }),
   });
-
-  markProcessed(event.id);
 }
 
 /**
@@ -196,7 +167,6 @@ interface PasswordResetData {
 export async function handlePasswordReset(
   event: WebhookEvent<PasswordResetData>,
 ) {
-  if (isAlreadyProcessed(event.id)) return;
   const { email, reset_token, redirect_url } = event.data;
   if (!email || !reset_token) return;
 
@@ -215,10 +185,9 @@ export async function handlePasswordReset(
   await sendEmail({
     to: email,
     subject: `${STORE_NAME} Password Reset`,
+    idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(PasswordResetEmail, {
       resetUrl,
     }),
   });
-
-  markProcessed(event.id);
 }
