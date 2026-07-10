@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import { CartButton } from "@/components/layout/CartButton";
-import { CategoryNav } from "@/components/layout/CategoryNav";
 import { PromoBar } from "@/components/layout/PromoBar";
 import { SearchToggle } from "@/components/layout/SearchToggle";
 import { Button } from "@/components/ui/button";
@@ -89,9 +88,7 @@ export async function Header({
             </Link>
           </div>
         }
-        center={
-          <CategoryNav rootCategories={rootCategories} basePath={basePath} />
-        }
+        center={null}
         rightStart={
           <div className="hidden items-center gap-1 lg:flex">
             <LazyCountrySwitcher />
