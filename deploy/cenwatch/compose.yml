@@ -1,7 +1,12 @@
 name: cenwatch
 
 x-spree: &spree
-  image: ghcr.io/spree/spree:${SPREE_VERSION_TAG:-5.4.3.1}
+  image: cenwatch-spree:local
+  build:
+    context: ../..
+    dockerfile: deploy/cenwatch/spree.Dockerfile
+    args:
+      SPREE_VERSION_TAG: ${SPREE_VERSION_TAG:-5.4.3.1}
   restart: unless-stopped
   environment: &spree-environment
     RAILS_ENV: production

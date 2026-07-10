@@ -235,8 +235,11 @@ fi
 log "Validating Docker Compose configuration"
 compose config --quiet
 
-log "Pulling backend images"
-compose pull postgres redis web worker
+log "Pulling infrastructure images"
+compose pull postgres redis
+
+log "Building the CenWatch Spree locale-fix image"
+compose build --pull web worker
 
 log "Starting PostgreSQL, Redis, Spree, and Sidekiq"
 compose up -d --wait postgres redis web worker
@@ -255,8 +258,8 @@ configure_stripe
 log "Building the CenWatch storefront"
 compose build --pull storefront
 
-log "Starting the complete CenWatch stack"
-compose up -d --wait
+log "Starting the storefront with a fresh catalog cache"
+compose up -d --wait --force-recreate storefront
 
 admin_email="$(env_value ADMIN_EMAIL)"
 admin_password="$(env_value ADMIN_PASSWORD)"

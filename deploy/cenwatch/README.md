@@ -20,7 +20,8 @@ sudo bash deploy/cenwatch/deploy.sh
 ```
 
 The script generates database and application secrets, starts Spree, seeds the
-administrator, creates a storefront publishable key, builds the storefront,
+administrator, creates a storefront publishable key, builds the pinned Spree
+base image with the CenWatch locale-isolation backport, builds the storefront,
 and starts the complete stack. At completion it prints the generated admin
 credentials.
 
@@ -88,3 +89,31 @@ sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
 
 Do not remove the named volumes. They contain the production database,
 Redis data, and local Active Storage uploads.
+
+### Locale-content recovery
+
+The derived Spree image keeps the admin UI locale independent from the catalog
+content locale. This prevents an admin UI selection such as `zh-CN` from
+causing Store API responses in `en` or `zh` to return null product names,
+slugs, category names, or permalinks.
+
+Before applying any data repair, back up PostgreSQL and inspect the locale rows:
+
+```bash
+cd deploy/cenwatch
+sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
+  exec -T web bin/rails runner /rails/lib/cenwatch/audit_locale_content.rb
+```
+
+If the audit shows blank default-locale fields with valid `zh-CN` source
+content, run the repair once. It fills only blank default-locale fields and
+never overwrites existing translations:
+
+```bash
+sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
+  exec -T -e APPLY=true -e SOURCE_LOCALE=zh-CN web \
+  bin/rails runner /rails/lib/cenwatch/repair_locale_content.rb
+```
+
+Recreate the storefront container after the backend update or repair so its
+ten-minute catalog cache does not retain the old null response.

@@ -38,6 +38,8 @@ assert_file "$COMPOSE_FILE"
 assert_file "$ENV_EXAMPLE"
 assert_file "$DEPLOY_SCRIPT"
 assert_file "$DOCKERIGNORE"
+assert_file "$DEPLOY_DIR/spree.Dockerfile"
+assert_file "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb"
 
 bash -n "$DEPLOY_SCRIPT"
 
@@ -50,6 +52,13 @@ assert_contains "$DEPLOY_SCRIPT" 'public_api_url="https://api-shop.cenwatch.com"
 assert_contains "$DEPLOY_SCRIPT" 'Internal API URL: $api_url'
 assert_contains "$DEPLOY_SCRIPT" 'Public API URL: $public_api_url'
 assert_contains "$DEPLOY_SCRIPT" 'Admin URL: $public_api_url/admin'
+assert_contains "$COMPOSE_FILE" 'image: cenwatch-spree:local'
+assert_contains "$COMPOSE_FILE" 'dockerfile: deploy/cenwatch/spree.Dockerfile'
+assert_contains "$DEPLOY_SCRIPT" 'compose build --pull web worker'
+assert_contains "$DEPLOY_SCRIPT" 'compose pull postgres redis'
+assert_contains "$DEPLOY_SCRIPT" 'compose up -d --wait --force-recreate storefront'
+assert_contains "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb" 'Spree::Admin::BaseController'
+assert_contains "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb" 'Spree::Api::V3::BaseController'
 
 grep -Fxq '**/.env*' "$DOCKERIGNORE" ||
   fail ".dockerignore does not exclude environment files repo-wide"
