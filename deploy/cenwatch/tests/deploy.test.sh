@@ -40,23 +40,33 @@ assert_file "$DEPLOY_SCRIPT"
 assert_file "$DOCKERIGNORE"
 assert_file "$DEPLOY_DIR/spree.Dockerfile"
 assert_file "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb"
+assert_file "$DEPLOY_DIR/overrides/cenwatch_public_media.rb"
+assert_file "$DEPLOY_DIR/scripts/repair_product_media.rb"
 
 bash -n "$DEPLOY_SCRIPT"
 
 assert_contains "$ENV_EXAMPLE" "SPREE_API_URL=http://web:3000"
+assert_contains "$ENV_EXAMPLE" "SPREE_PUBLIC_URL=https://api-shop.cenwatch.com"
+assert_contains "$ENV_EXAMPLE" "SPREE_VERSION_TAG=5.5.2"
 assert_contains "$ENV_EXAMPLE" "SITE_URL=https://shop.cenwatch.com"
+assert_contains "$DEPLOY_DIR/spree.Dockerfile" "ARG SPREE_VERSION_TAG=5.5.2"
 assert_contains "$COMPOSE_FILE" '"127.0.0.1:30000:3000"'
 assert_contains "$COMPOSE_FILE" '"127.0.0.1:30001:3001"'
 assert_contains "$DEPLOY_SCRIPT" "docker compose --project-name cenwatch"
-assert_contains "$DEPLOY_SCRIPT" 'public_api_url="https://api-shop.cenwatch.com"'
+assert_contains "$DEPLOY_SCRIPT" 'public_api_url="$(env_value SPREE_PUBLIC_URL)"'
 assert_contains "$DEPLOY_SCRIPT" 'Internal API URL: $api_url'
 assert_contains "$DEPLOY_SCRIPT" 'Public API URL: $public_api_url'
 assert_contains "$DEPLOY_SCRIPT" 'Admin URL: $public_api_url/admin'
 assert_contains "$COMPOSE_FILE" 'image: cenwatch-spree:local'
 assert_contains "$COMPOSE_FILE" 'dockerfile: deploy/cenwatch/spree.Dockerfile'
+assert_contains "$COMPOSE_FILE" 'SPREE_VERSION_TAG: ${SPREE_VERSION_TAG:-5.5.2}'
+assert_contains "$COMPOSE_FILE" 'SPREE_PUBLIC_URL: ${SPREE_PUBLIC_URL}'
+assert_contains "$REPO_ROOT/apps/storefront/Dockerfile" 'ARG SPREE_PUBLIC_URL'
+assert_contains "$REPO_ROOT/apps/storefront/Dockerfile" 'SPREE_PUBLIC_URL=$SPREE_PUBLIC_URL'
 assert_contains "$DEPLOY_SCRIPT" 'compose build --pull web worker'
 assert_contains "$DEPLOY_SCRIPT" 'compose pull postgres redis'
 assert_contains "$DEPLOY_SCRIPT" 'compose up -d --wait --force-recreate storefront'
+assert_contains "$DEPLOY_SCRIPT" '/rails/cenwatch-scripts/repair_product_media.rb'
 assert_contains "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb" 'Spree::Admin::BaseController'
 assert_contains "$DEPLOY_DIR/overrides/cenwatch_locale_isolation.rb" 'Spree::Api::V3::BaseController'
 
@@ -122,7 +132,25 @@ PATH="$fake_bin:$PATH" DEPLOY_ENV_FILE="$test_env" \
   fail "admin password changed on rerun"
 
 assert_contains "$test_env" "SPREE_API_URL=http://web:3000"
+assert_contains "$test_env" "SPREE_PUBLIC_URL=https://api-shop.cenwatch.com"
 assert_contains "$test_env" "SITE_URL=https://shop.cenwatch.com"
+
+legacy_env="$tmp_dir/legacy.env"
+cp "$test_env" "$legacy_env"
+sed -i 's/^SPREE_VERSION_TAG=.*/SPREE_VERSION_TAG=5.4.3.1/' "$legacy_env"
+sed -i '/^SPREE_PUBLIC_URL=/d' "$legacy_env"
+
+PATH="$fake_bin:$PATH" DEPLOY_ENV_FILE="$legacy_env" \
+  bash "$DEPLOY_SCRIPT" --prepare-env >/dev/null
+
+assert_contains "$legacy_env" "SPREE_VERSION_TAG=5.5.2"
+assert_contains "$legacy_env" "SPREE_PUBLIC_URL=https://api-shop.cenwatch.com"
+[[ "$(grep '^POSTGRES_PASSWORD=' "$legacy_env")" == "$first_db_password" ]] ||
+  fail "database password changed while migrating legacy env"
+[[ "$(grep '^SECRET_KEY_BASE=' "$legacy_env")" == "$first_secret_key_base" ]] ||
+  fail "SECRET_KEY_BASE changed while migrating legacy env"
+[[ "$(grep '^ADMIN_PASSWORD=' "$legacy_env")" == "$first_admin_password" ]] ||
+  fail "admin password changed while migrating legacy env"
 
 for mode in deploy prepare; do
   missing_env="$tmp_dir/missing-$mode.env"

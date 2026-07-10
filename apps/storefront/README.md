@@ -24,6 +24,7 @@ Copy `.env.local.example` to `.env.local` and set the Spree and Stripe values:
 SITE_URL=https://shop.cenwatch.com
 NEXT_PUBLIC_SITE_URL=https://shop.cenwatch.com
 SPREE_API_URL=http://localhost:3000
+SPREE_PUBLIC_URL=http://localhost:3000
 SPREE_PUBLISHABLE_KEY=pk_live_or_test_publishable_key
 SPREE_CHANNEL_CODE=shop
 SPREE_VALIDATE_MARKETS=false
@@ -62,7 +63,8 @@ pnpm --filter @cenwatch/storefront dev
 ```
 
 The storefront runs at [http://localhost:3001](http://localhost:3001). Spree is
-expected at the configured `SPREE_API_URL`.
+expected at the configured `SPREE_API_URL`; product images must be reachable by
+the browser at `SPREE_PUBLIC_URL`.
 
 Useful checks:
 
@@ -100,6 +102,7 @@ docker build -f apps/storefront/Dockerfile \
   --build-arg SITE_URL=https://shop.cenwatch.com \
   --build-arg NEXT_PUBLIC_SITE_URL=https://shop.cenwatch.com \
   --build-arg SPREE_API_URL=http://web:3000 \
+  --build-arg SPREE_PUBLIC_URL=https://api-shop.cenwatch.com \
   --build-arg SPREE_PUBLISHABLE_KEY=pk_live_or_test_publishable_key \
   --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_or_test_key \
   -t cenwatch-storefront .

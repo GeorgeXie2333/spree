@@ -6,7 +6,7 @@ x-spree: &spree
     context: ../..
     dockerfile: deploy/cenwatch/spree.Dockerfile
     args:
-      SPREE_VERSION_TAG: ${SPREE_VERSION_TAG:-5.4.3.1}
+      SPREE_VERSION_TAG: ${SPREE_VERSION_TAG:-5.5.2}
   restart: unless-stopped
   environment: &spree-environment
     RAILS_ENV: production
@@ -19,6 +19,7 @@ x-spree: &spree
     ADMIN_EMAIL: ${ADMIN_EMAIL}
     ADMIN_PASSWORD: ${ADMIN_PASSWORD}
     STOREFRONT_ORIGIN: ${SITE_URL}
+    SPREE_PUBLIC_URL: ${SPREE_PUBLIC_URL}
     STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-}
     STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
   depends_on:
@@ -91,6 +92,7 @@ services:
         SITE_URL: ${SITE_URL}
         NEXT_PUBLIC_SITE_URL: ${SITE_URL}
         SPREE_API_URL: ${SPREE_API_URL}
+        SPREE_PUBLIC_URL: ${SPREE_PUBLIC_URL}
         SPREE_PUBLISHABLE_KEY: ${SPREE_PUBLISHABLE_KEY}
         SPREE_CHANNEL_CODE: shop
         SPREE_VALIDATE_MARKETS: "false"
@@ -108,6 +110,7 @@ services:
       SITE_URL: ${SITE_URL}
       NEXT_PUBLIC_SITE_URL: ${SITE_URL}
       SPREE_API_URL: ${SPREE_API_URL}
+      SPREE_PUBLIC_URL: ${SPREE_PUBLIC_URL}
       SPREE_PUBLISHABLE_KEY: ${SPREE_PUBLISHABLE_KEY}
       SPREE_CHANNEL_CODE: shop
       SPREE_VALIDATE_MARKETS: "false"

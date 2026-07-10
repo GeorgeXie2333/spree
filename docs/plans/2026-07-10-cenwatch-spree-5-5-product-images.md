@@ -1,6 +1,6 @@
 # CenWatch Spree 5.5 Product Image Recovery
 
-**Status:** Design Finalized
+**Status:** Complete
 **Target:** Spree 5.5.2
 **Depends on:** `2026-07-09-cenwatch-single-server-deployment.md`
 **Author:** George / Codex
@@ -46,10 +46,10 @@ volume operations.
 ### Public media origin
 
 The backend receives `SPREE_PUBLIC_URL`. A small CenWatch initializer validates
-that it is an absolute HTTP(S) URL and configures `Spree.cdn_host` from its
-host. `RAILS_FORCE_SSL` and `RAILS_ASSUME_SSL` continue to force HTTPS URL
-generation. Invalid public URLs fail application startup instead of silently
-emitting unusable media URLs.
+that it is an absolute HTTP(S) URL using its standard port and configures
+`Spree.cdn_host` from its host. `RAILS_FORCE_SSL` and `RAILS_ASSUME_SSL`
+continue to force HTTPS URL generation. Invalid public URLs fail application
+startup instead of silently emitting unusable media URLs.
 
 The storefront receives the same variable at build and runtime. Its Next.js
 image configuration derives an HTTPS remote pattern from `SPREE_PUBLIC_URL`.
@@ -105,6 +105,20 @@ Storage files are preserved independently and must not be deleted.
   Next.js storefront.
 - Do not claim success until API data, the media URL, and the rendered product
   card are all verified.
+
+## Verification
+
+- Deployment shell contract passes, including legacy `.env` migration without
+  secret changes.
+- CenWatch deployment Node tests pass (`7/7`).
+- Storefront Vitest passes (`145/145`) and TypeScript emits no errors.
+- Locale parity, changed-file Biome checks, and Docker Compose expansion pass.
+- Next.js production build completes and generates all 123 static pages.
+- Independent code review found no Critical or Important issues. Its two
+  actionable minor findings (non-default public ports and inspected counts)
+  were addressed before completion.
+- Live production API/media/card verification remains a rollout step because
+  this workspace has no access to the production Docker host.
 
 ## Open Questions
 

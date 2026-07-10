@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-# Spree 5.4.3.1 lets the Rails admin UI locale overwrite the process-wide
+# The previous Spree 5.4 deployment let the Rails admin UI locale overwrite
+# the process-wide
 # I18n.default_locale. Mobility then treats Store API requests in another
 # locale as translations-only and can serialize product/category names and
 # slugs as null. Keep the admin UI locale separate from catalog content, and

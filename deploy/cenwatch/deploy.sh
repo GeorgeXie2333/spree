@@ -58,6 +58,15 @@ ensure_generated_value() {
   fi
 }
 
+ensure_default_value() {
+  local key="$1"
+  local value="$2"
+
+  if [[ -z "$(env_value "$key")" ]]; then
+    set_env_value "$key" "$value"
+  fi
+}
+
 prepare_env() {
   require_command openssl
   require_command grep
@@ -68,6 +77,8 @@ prepare_env() {
     cp "$ENV_EXAMPLE" "$ENV_FILE"
   fi
 
+  set_env_value SPREE_VERSION_TAG "5.5.2"
+  ensure_default_value SPREE_PUBLIC_URL "https://api-shop.cenwatch.com"
   ensure_generated_value POSTGRES_PASSWORD 32
   ensure_generated_value SECRET_KEY_BASE 64
   ensure_generated_value ADMIN_PASSWORD 20
@@ -147,6 +158,10 @@ ensure_allowed_origin() {
     store.allowed_origins.find_or_create_by!(origin: origin)
     puts "Allowed storefront origin: #{origin}"
   '
+}
+
+repair_product_media() {
+  compose exec -T web bin/rails runner /rails/cenwatch-scripts/repair_product_media.rb
 }
 
 configure_stripe() {
@@ -255,6 +270,9 @@ ensure_allowed_origin
 
 configure_stripe
 
+log "Repairing missing product primary media"
+repair_product_media
+
 log "Building the CenWatch storefront"
 compose build --pull storefront
 
@@ -264,7 +282,7 @@ compose up -d --wait --force-recreate storefront
 admin_email="$(env_value ADMIN_EMAIL)"
 admin_password="$(env_value ADMIN_PASSWORD)"
 api_url="$(env_value SPREE_API_URL)"
-public_api_url="https://api-shop.cenwatch.com"
+public_api_url="$(env_value SPREE_PUBLIC_URL)"
 site_url="$(env_value SITE_URL)"
 
 cat <<EOF

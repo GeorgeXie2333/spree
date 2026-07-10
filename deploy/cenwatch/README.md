@@ -19,17 +19,21 @@ sudo bash deploy/cenwatch/deploy.sh --check
 sudo bash deploy/cenwatch/deploy.sh
 ```
 
-The script generates database and application secrets, starts Spree, seeds the
-administrator, creates a storefront publishable key, builds the pinned Spree
-base image with the CenWatch locale-isolation backport, builds the storefront,
-and starts the complete stack. At completion it prints the generated admin
+The script generates database and application secrets, starts the pinned Spree
+`5.5.2` image, seeds the administrator, creates a storefront publishable key,
+repairs missing product primary-media pointers, builds the storefront, and
+starts the complete stack. At completion it prints the generated admin
 credentials.
 
 The storefront talks to Spree over the Docker network:
 
 ```text
 SPREE_API_URL=http://web:3000
+SPREE_PUBLIC_URL=https://api-shop.cenwatch.com
 ```
+
+`SPREE_API_URL` is private server-to-server traffic. `SPREE_PUBLIC_URL` is the
+browser-reachable API and Active Storage origin used in generated image URLs.
 
 The configured public domains are:
 
@@ -68,6 +72,13 @@ storefront image or environment.
 
 Run the deployment script again after pulling updates. Existing secrets,
 database contents, uploads, and Docker volumes are preserved.
+When upgrading an existing CenWatch `.env`, the script pins
+`SPREE_VERSION_TAG=5.5.2` and adds the default `SPREE_PUBLIC_URL` if missing;
+generated secrets and any existing public URL are left unchanged.
+
+Before the first upgrade from Spree 5.4 to 5.5.2, back up PostgreSQL and the
+`cenwatch_spree_storage` volume. A safe application rollback after 5.5 database
+migrations requires restoring the matching pre-upgrade database backup.
 
 ```bash
 git pull --ff-only
@@ -89,6 +100,25 @@ sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
 
 Do not remove the named volumes. They contain the production database,
 Redis data, and local Active Storage uploads.
+
+### Product-media recovery
+
+Every deployment runs an idempotent reconciliation before rebuilding the
+storefront. It inspects only products whose `primary_media_id` is blank, skips
+products without media, and selects the existing first product or variant
+image as the primary media. It never deletes or replaces an uploaded file.
+
+Run it manually for auditing or recovery:
+
+```bash
+cd deploy/cenwatch
+sudo docker compose --project-name cenwatch --env-file .env -f compose.yml \
+  exec -T web bin/rails runner /rails/cenwatch-scripts/repair_product_media.rb
+```
+
+The JSON output reports inspected, repaired, no-media, and concurrent-update
+counts. Recreate the storefront afterward so its catalog cache cannot retain a
+previous `thumbnail_url: null` response.
 
 ### Locale-content recovery
 

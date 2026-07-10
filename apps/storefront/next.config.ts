@@ -6,11 +6,11 @@ const withNextIntl = createNextIntlPlugin();
 const allowLocalImages = process.env.NODE_ENV !== "production";
 const workspaceRoot = path.resolve(__dirname, "../..");
 
-const spreeApiImagePattern = (() => {
-  if (!process.env.SPREE_API_URL) return [];
+const spreePublicImagePattern = (() => {
+  if (!process.env.SPREE_PUBLIC_URL) return [];
 
   try {
-    const url = new URL(process.env.SPREE_API_URL);
+    const url = new URL(process.env.SPREE_PUBLIC_URL);
     if (url.protocol !== "http:" && url.protocol !== "https:") return [];
 
     return [
@@ -55,7 +55,7 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     remotePatterns: [
-      ...spreeApiImagePattern,
+      ...spreePublicImagePattern,
       ...(allowLocalImages
         ? [
             {

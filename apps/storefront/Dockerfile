@@ -6,6 +6,7 @@
 #   docker build -f apps/storefront/Dockerfile \
 #     --build-arg SITE_URL=https://shop.cenwatch.com \
 #     --build-arg SPREE_API_URL=https://api.example.com \
+#     --build-arg SPREE_PUBLIC_URL=https://api.example.com \
 #     --build-arg SPREE_PUBLISHABLE_KEY=your_spree_publishable_key \
 #     --build-arg NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key \
 #     -t cenwatch-storefront .
@@ -52,6 +53,7 @@ ENV NODE_ENV=production
 ARG SITE_URL=https://shop.cenwatch.com
 ARG NEXT_PUBLIC_SITE_URL=https://shop.cenwatch.com
 ARG SPREE_API_URL
+ARG SPREE_PUBLIC_URL
 ARG SPREE_PUBLISHABLE_KEY
 ARG SPREE_CHANNEL_CODE=shop
 ARG SPREE_VALIDATE_MARKETS=false
@@ -64,6 +66,7 @@ ARG CONTACT_TO_EMAIL=hello@cenwatch.com
 ENV SITE_URL=$SITE_URL \
     NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
     SPREE_API_URL=$SPREE_API_URL \
+    SPREE_PUBLIC_URL=$SPREE_PUBLIC_URL \
     SPREE_PUBLISHABLE_KEY=$SPREE_PUBLISHABLE_KEY \
     SPREE_CHANNEL_CODE=$SPREE_CHANNEL_CODE \
     SPREE_VALIDATE_MARKETS=$SPREE_VALIDATE_MARKETS \
