@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import { HomeCategoryRail } from "@/components/home/HomeCategoryRail";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeProductRail } from "@/components/home/HomeProductRail";
 import { HomePromos } from "@/components/home/HomePromos";
-import {
-  HomeCategoryRailSkeleton,
-  HomeProductRailSkeleton,
-} from "@/components/home/HomeSkeletons";
+import { HomeProductRailSkeleton } from "@/components/home/HomeSkeletons";
 import { HomeTrust } from "@/components/home/HomeTrust";
 import { generateHomeMetadata } from "@/lib/metadata/home";
 
@@ -38,10 +34,6 @@ export default async function HomePage({ params }: HomePageProps) {
     <div className="space-y-16 pb-20 md:space-y-20">
       <HomeHero locale={locale as Locale} />
 
-      <Suspense fallback={<HomeCategoryRailSkeleton />}>
-        <HomeCategoryRail basePath={basePath} />
-      </Suspense>
-
       <Suspense fallback={<HomeProductRailSkeleton />}>
         <HomeProductRail
           title={t("newArrivalsTitle")}
@@ -53,20 +45,6 @@ export default async function HomePage({ params }: HomePageProps) {
           sort="-available_on"
           listId="home-new-arrivals"
           listName="Home New Arrivals"
-        />
-      </Suspense>
-
-      <Suspense fallback={<HomeProductRailSkeleton />}>
-        <HomeProductRail
-          title={t("bestSellersTitle")}
-          subtitle={t("bestSellersSubtitle")}
-          viewAllHref={`${basePath}/products?sort=best_selling`}
-          viewAllLabel={t("viewAll")}
-          basePath={basePath}
-          country={country}
-          sort="best_selling"
-          listId="home-best-sellers"
-          listName="Home Best Sellers"
         />
       </Suspense>
 
