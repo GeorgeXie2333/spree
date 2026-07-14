@@ -6,8 +6,10 @@
 export function FilterBarSkeleton() {
   return (
     <div className="flex items-center justify-between border-b border-border/60 pb-3">
-      <div className="h-5 w-24 animate-pulse rounded-full bg-card" />
-      <div className="h-9 w-32 animate-pulse rounded-full bg-card" />
+      <Skeleton className="h-5 w-24 rounded-full" />
+      <Skeleton className="h-9 w-32 rounded-full" />
     </div>
   );
 }
+
+import { Skeleton } from "@/components/ui/skeleton";

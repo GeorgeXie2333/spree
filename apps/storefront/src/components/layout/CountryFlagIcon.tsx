@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 const FLAG_ICON_BASE_URL =
@@ -16,6 +17,7 @@ export function CountryFlagIcon({
   countryCode,
   className,
 }: CountryFlagIconProps) {
+  const t = useTranslations("accessibility");
   const normalized = countryCode.toLowerCase();
   if (!/^[a-z]{2}$/.test(normalized)) return null;
 
@@ -23,7 +25,7 @@ export function CountryFlagIcon({
     // biome-ignore lint/performance/noImgElement: flag icons are tiny CDN SVGs and should not require Next image optimization config.
     <img
       src={flagIconUrl(normalized)}
-      alt={`${normalized.toUpperCase()} flag`}
+      alt={t("countryFlag", { country: normalized.toUpperCase() })}
       width={20}
       height={15}
       loading="lazy"

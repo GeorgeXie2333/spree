@@ -1,5 +1,6 @@
 import type { Category, Media, Product } from "@spree/sdk";
 import type { MetadataRoute } from "next";
+import { unstable_cache } from "next/cache";
 import { getCenwatchLaunchCountryLocales } from "@/lib/cenwatch/markets";
 import { isSupportedLocale } from "@/lib/i18n/routing";
 import { getClient } from "@/lib/spree";
@@ -16,9 +17,16 @@ type CategoryWithTimestamp = Category & {
   updated_at?: string;
 };
 
+type CatalogResource = "products" | "categories";
+
 interface CountryLocale {
   country: string;
   locale: string;
+}
+
+interface CountryLocaleCatalog extends CountryLocale {
+  productCount: number;
+  categoryCount: number;
 }
 
 interface LocaleOptions {
@@ -29,15 +37,8 @@ interface LocaleOptions {
 const URLS_PER_SITEMAP = 50_000;
 const STATIC_PAGES_PER_LOCALE = 5;
 const ITEMS_PER_PAGE = 100;
-const MAX_PAGES = 1000;
-const MAX_FETCHABLE_ITEMS = ITEMS_PER_PAGE * MAX_PAGES;
-
-const cachedProductsByLocale = new Map<string, Promise<ProductWithMedia[]>>();
-const cachedCategoriesByLocale = new Map<
-  string,
-  Promise<CategoryWithTimestamp[]>
->();
-let cachedCountryLocales: Promise<CountryLocale[]> | null = null;
+const PAGE_FETCH_CONCURRENCY = 10;
+const SITEMAP_CACHE_REVALIDATE_SECONDS = 300;
 
 function getDefaultLocaleOptions(): LocaleOptions {
   return {
@@ -46,70 +47,84 @@ function getDefaultLocaleOptions(): LocaleOptions {
   };
 }
 
-function localeCacheKey(locale: string, country: string): string {
-  return `${locale}:${country}`;
-}
-
-function getCachedProducts(
-  localeOpts: LocaleOptions,
-): Promise<ProductWithMedia[]> {
-  const key = localeCacheKey(localeOpts.locale, localeOpts.country);
-  let cached = cachedProductsByLocale.get(key);
-  if (!cached) {
-    cached = fetchAllProducts(localeOpts).catch((err) => {
-      cachedProductsByLocale.delete(key);
-      throw err;
-    });
-    cachedProductsByLocale.set(key, cached);
-  }
-  return cached;
-}
-
-function getCachedCategories(
-  localeOpts: LocaleOptions,
-): Promise<CategoryWithTimestamp[]> {
-  const key = localeCacheKey(localeOpts.locale, localeOpts.country);
-  let cached = cachedCategoriesByLocale.get(key);
-  if (!cached) {
-    cached = fetchAllCategories(localeOpts).catch((err) => {
-      cachedCategoriesByLocale.delete(key);
-      throw err;
-    });
-    cachedCategoriesByLocale.set(key, cached);
-  }
-  return cached;
-}
-
 function getCachedCountryLocales(): Promise<CountryLocale[]> {
-  if (!cachedCountryLocales) {
-    cachedCountryLocales = resolveCountryLocales().catch((err) => {
-      cachedCountryLocales = null;
-      throw err;
-    });
-  }
-  return cachedCountryLocales;
+  return unstable_cache(resolveCountryLocales, ["sitemap-country-locales"], {
+    revalidate: SITEMAP_CACHE_REVALIDATE_SECONDS,
+    tags: ["sitemap", "markets"],
+  })();
+}
+
+function getCachedTotalCount(
+  resource: CatalogResource,
+  localeOptions: LocaleOptions,
+): Promise<number> {
+  return unstable_cache(
+    () => fetchTotalCount(resource, localeOptions),
+    [`sitemap-${resource}-count`, localeOptions.locale, localeOptions.country],
+    {
+      revalidate: SITEMAP_CACHE_REVALIDATE_SECONDS,
+      tags: ["sitemap", resource],
+    },
+  )();
+}
+
+function getCachedProductsPage(
+  localeOptions: LocaleOptions,
+  page: number,
+): Promise<ProductWithMedia[]> {
+  return unstable_cache(
+    async () => {
+      const response = await getClient().products.list(
+        { page, limit: ITEMS_PER_PAGE, expand: ["media"] },
+        localeOptions,
+      );
+      return response.data as ProductWithMedia[];
+    },
+    [
+      "sitemap-products-page",
+      localeOptions.locale,
+      localeOptions.country,
+      String(page),
+    ],
+    {
+      revalidate: SITEMAP_CACHE_REVALIDATE_SECONDS,
+      tags: ["sitemap", "products"],
+    },
+  )();
+}
+
+function getCachedCategoriesPage(
+  localeOptions: LocaleOptions,
+  page: number,
+): Promise<CategoryWithTimestamp[]> {
+  return unstable_cache(
+    async () => {
+      const response = await getClient().categories.list(
+        { page, limit: ITEMS_PER_PAGE },
+        localeOptions,
+      );
+      return response.data as CategoryWithTimestamp[];
+    },
+    [
+      "sitemap-categories-page",
+      localeOptions.locale,
+      localeOptions.country,
+      String(page),
+    ],
+    {
+      revalidate: SITEMAP_CACHE_REVALIDATE_SECONDS,
+      tags: ["sitemap", "categories"],
+    },
+  )();
 }
 
 export async function generateSitemaps(): Promise<Array<{ id: number }>> {
   try {
-    const countryLocales = await getCachedCountryLocales();
-    const catalogCounts = await Promise.all(
-      countryLocales.map(async ({ country, locale }) => {
-        const localeOptions: LocaleOptions = { country, locale };
-        const [productCount, categoryCount] = await Promise.all([
-          fetchTotalCount("products", localeOptions),
-          fetchTotalCount("categories", localeOptions),
-        ]);
-
-        return (
-          Math.min(productCount, MAX_FETCHABLE_ITEMS) +
-          Math.min(categoryCount, MAX_FETCHABLE_ITEMS)
-        );
-      }),
+    const catalogs = await getSitemapCatalogs();
+    const totalUrls = catalogs.reduce(
+      (total, catalog) => total + getCatalogUrlCount(catalog),
+      0,
     );
-    const totalUrls =
-      STATIC_PAGES_PER_LOCALE * countryLocales.length +
-      catalogCounts.reduce((total, count) => total + count, 0);
     const sitemapCount = Math.max(1, Math.ceil(totalUrls / URLS_PER_SITEMAP));
 
     return Array.from({ length: sitemapCount }, (_, i) => ({ id: i }));
@@ -122,6 +137,8 @@ export default async function sitemap(props: {
   id: Promise<string>;
 }): Promise<MetadataRoute.Sitemap> {
   const id = Number(await props.id);
+  if (!Number.isSafeInteger(id) || id < 0) return [];
+
   const candidate = (getStoreUrl() || "").replace(/\/$/, "");
 
   let baseUrl: string;
@@ -138,68 +155,218 @@ export default async function sitemap(props: {
     return [];
   }
 
-  const countryLocales = await getCachedCountryLocales().catch((err) => {
-    console.error("Sitemap: using CenWatch launch URLs only.", err);
-    return getCenwatchLaunchCountryLocales();
+  const catalogs = await getSitemapCatalogs().catch((error) => {
+    console.error("Sitemap: using CenWatch launch URLs only.", error);
+    return getCenwatchLaunchCountryLocales().map((countryLocale) => ({
+      ...countryLocale,
+      productCount: 0,
+      categoryCount: 0,
+    }));
   });
 
+  return getShardEntries(catalogs, baseUrl, id);
+}
+
+async function getSitemapCatalogs(): Promise<CountryLocaleCatalog[]> {
+  const countryLocales = await getCachedCountryLocales();
+
+  return Promise.all(
+    countryLocales.map(async ({ country, locale }) => {
+      const localeOptions: LocaleOptions = { country, locale };
+      try {
+        const [productCount, categoryCount] = await Promise.all([
+          getCachedTotalCount("products", localeOptions),
+          getCachedTotalCount("categories", localeOptions),
+        ]);
+
+        return {
+          country,
+          locale,
+          productCount: normalizeCount(productCount),
+          categoryCount: normalizeCount(categoryCount),
+        };
+      } catch (error) {
+        console.error(
+          `Sitemap: skipping ${country}/${locale} API data.`,
+          error,
+        );
+        return { country, locale, productCount: 0, categoryCount: 0 };
+      }
+    }),
+  );
+}
+
+function getCatalogUrlCount(catalog: CountryLocaleCatalog): number {
+  return STATIC_PAGES_PER_LOCALE + catalog.productCount + catalog.categoryCount;
+}
+
+async function getShardEntries(
+  catalogs: CountryLocaleCatalog[],
+  baseUrl: string,
+  id: number,
+): Promise<MetadataRoute.Sitemap> {
+  const shardStart = id * URLS_PER_SITEMAP;
+  const shardEnd = shardStart + URLS_PER_SITEMAP;
   const entries: MetadataRoute.Sitemap = [];
+  let offset = 0;
 
-  for (const { country, locale } of countryLocales) {
-    const basePath = `${baseUrl}/${country}/${locale}`;
-    const localeOpts: LocaleOptions = { locale, country };
+  for (const catalog of catalogs) {
+    const catalogUrlCount = getCatalogUrlCount(catalog);
+    const catalogEnd = offset + catalogUrlCount;
 
-    entries.push(...getStaticPageEntries(basePath));
-
-    let products: ProductWithMedia[];
-    let categories: CategoryWithTimestamp[];
-
-    try {
-      [products, categories] = await Promise.all([
-        getCachedProducts(localeOpts),
-        getCachedCategories(localeOpts),
-      ]);
-    } catch (err) {
-      console.error(`Sitemap: skipping ${country}/${locale} API data.`, err);
+    if (catalogEnd <= shardStart) {
+      offset = catalogEnd;
       continue;
     }
+    if (offset >= shardEnd) break;
 
-    for (const product of products) {
-      entries.push({
-        url: `${basePath}/products/${product.slug}`,
-        ...(product.updated_at
-          ? { lastModified: new Date(product.updated_at) }
-          : {}),
-        changeFrequency: "weekly",
-        priority: 0.6,
-        ...(product.media && product.media.length > 0
-          ? {
-              images: product.media
-                .map((img: Media) => img.original_url || img.large_url)
-                .filter((url: string | null): url is string => url != null),
-            }
-          : {}),
-      });
+    const localStart = Math.max(0, shardStart - offset);
+    const localEnd = Math.min(catalogUrlCount, shardEnd - offset);
+    const basePath = `${baseUrl}/${catalog.country}/${catalog.locale}`;
+    const localeOptions: LocaleOptions = {
+      country: catalog.country,
+      locale: catalog.locale,
+    };
+
+    const staticEnd = Math.min(localEnd, STATIC_PAGES_PER_LOCALE);
+    if (localStart < staticEnd) {
+      entries.push(
+        ...getStaticPageEntries(basePath).slice(localStart, staticEnd),
+      );
     }
 
-    for (const category of categories) {
-      entries.push({
-        url: `${basePath}/c/${category.permalink}`,
-        ...(category.updated_at
-          ? { lastModified: new Date(category.updated_at) }
-          : {}),
-        changeFrequency: "weekly",
-        priority: 0.5,
-      });
+    const productStart = Math.max(0, localStart - STATIC_PAGES_PER_LOCALE);
+    const productEnd = Math.min(
+      catalog.productCount,
+      localEnd - STATIC_PAGES_PER_LOCALE,
+    );
+    if (productStart < productEnd) {
+      try {
+        const products = await fetchProductsInRange(
+          localeOptions,
+          productStart,
+          productEnd,
+        );
+        entries.push(
+          ...products.map((product) => getProductEntry(product, basePath)),
+        );
+      } catch (error) {
+        console.error(
+          `Sitemap: skipping ${catalog.country}/${catalog.locale} product data.`,
+          error,
+        );
+      }
     }
+
+    const categoryOffset = STATIC_PAGES_PER_LOCALE + catalog.productCount;
+    const categoryStart = Math.max(0, localStart - categoryOffset);
+    const categoryEnd = Math.min(
+      catalog.categoryCount,
+      localEnd - categoryOffset,
+    );
+    if (categoryStart < categoryEnd) {
+      try {
+        const categories = await fetchCategoriesInRange(
+          localeOptions,
+          categoryStart,
+          categoryEnd,
+        );
+        entries.push(
+          ...categories.map((category) => getCategoryEntry(category, basePath)),
+        );
+      } catch (error) {
+        console.error(
+          `Sitemap: skipping ${catalog.country}/${catalog.locale} category data.`,
+          error,
+        );
+      }
+    }
+
+    offset = catalogEnd;
   }
 
-  if (id === 0 && entries.length <= URLS_PER_SITEMAP) {
-    return entries;
+  return entries;
+}
+
+function getProductEntry(
+  product: ProductWithMedia,
+  basePath: string,
+): MetadataRoute.Sitemap[number] {
+  return {
+    url: `${basePath}/products/${product.slug}`,
+    ...(product.updated_at
+      ? { lastModified: new Date(product.updated_at) }
+      : {}),
+    changeFrequency: "weekly",
+    priority: 0.6,
+    ...(product.media && product.media.length > 0
+      ? {
+          images: product.media
+            .map((image) => image.original_url || image.large_url)
+            .filter((url): url is string => url != null),
+        }
+      : {}),
+  };
+}
+
+function getCategoryEntry(
+  category: CategoryWithTimestamp,
+  basePath: string,
+): MetadataRoute.Sitemap[number] {
+  return {
+    url: `${basePath}/c/${category.permalink}`,
+    ...(category.updated_at
+      ? { lastModified: new Date(category.updated_at) }
+      : {}),
+    changeFrequency: "weekly",
+    priority: 0.5,
+  };
+}
+
+async function fetchProductsInRange(
+  localeOptions: LocaleOptions,
+  start: number,
+  end: number,
+): Promise<ProductWithMedia[]> {
+  return fetchPaginatedRange(start, end, (page) =>
+    getCachedProductsPage(localeOptions, page),
+  );
+}
+
+async function fetchCategoriesInRange(
+  localeOptions: LocaleOptions,
+  start: number,
+  end: number,
+): Promise<CategoryWithTimestamp[]> {
+  return fetchPaginatedRange(start, end, (page) =>
+    getCachedCategoriesPage(localeOptions, page),
+  );
+}
+
+async function fetchPaginatedRange<T>(
+  start: number,
+  end: number,
+  fetchPage: (page: number) => Promise<T[]>,
+): Promise<T[]> {
+  if (end <= start) return [];
+
+  const firstPage = Math.floor(start / ITEMS_PER_PAGE) + 1;
+  const lastPage = Math.ceil(end / ITEMS_PER_PAGE);
+  const pages = Array.from(
+    { length: lastPage - firstPage + 1 },
+    (_, index) => firstPage + index,
+  );
+  const firstPageOffset = (firstPage - 1) * ITEMS_PER_PAGE;
+  const pageItems: T[] = [];
+
+  for (let index = 0; index < pages.length; index += PAGE_FETCH_CONCURRENCY) {
+    const batch = pages.slice(index, index + PAGE_FETCH_CONCURRENCY);
+    const results = await Promise.all(batch.map((page) => fetchPage(page)));
+    pageItems.push(...results.flat());
   }
 
-  const start = id * URLS_PER_SITEMAP;
-  return entries.slice(start, start + URLS_PER_SITEMAP);
+  const rangeStart = start - firstPageOffset;
+  return pageItems.slice(rangeStart, rangeStart + (end - start));
 }
 
 async function resolveCountryLocales(): Promise<CountryLocale[]> {
@@ -266,7 +433,7 @@ function getStaticPageEntries(basePath: string): MetadataRoute.Sitemap {
 }
 
 async function fetchTotalCount(
-  resource: "products" | "categories",
+  resource: CatalogResource,
   localeOptions: LocaleOptions,
 ): Promise<number> {
   const client = getClient();
@@ -285,46 +452,6 @@ async function fetchTotalCount(
   return response.meta.count;
 }
 
-async function fetchAllProducts(
-  localeOptions: LocaleOptions,
-): Promise<ProductWithMedia[]> {
-  const allProducts: ProductWithMedia[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const response = await getClient().products.list(
-      {
-        page,
-        limit: ITEMS_PER_PAGE,
-        expand: ["media"],
-      },
-      localeOptions,
-    );
-    allProducts.push(...(response.data as ProductWithMedia[]));
-    totalPages = response.meta.pages;
-    page++;
-  } while (page <= totalPages && page <= MAX_PAGES);
-
-  return allProducts;
-}
-
-async function fetchAllCategories(
-  localeOptions: LocaleOptions,
-): Promise<CategoryWithTimestamp[]> {
-  const allCategories: CategoryWithTimestamp[] = [];
-  let page = 1;
-  let totalPages = 1;
-
-  do {
-    const response = await getClient().categories.list(
-      { page, limit: ITEMS_PER_PAGE },
-      localeOptions,
-    );
-    allCategories.push(...response.data);
-    totalPages = response.meta.pages;
-    page++;
-  } while (page <= totalPages && page <= MAX_PAGES);
-
-  return allCategories;
+function normalizeCount(count: number): number {
+  return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
 }

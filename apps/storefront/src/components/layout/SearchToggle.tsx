@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const SearchBar = dynamic(
   () =>
@@ -13,9 +14,7 @@ const SearchBar = dynamic(
       default: mod.SearchBar,
     })),
   {
-    loading: () => (
-      <div className="h-10 w-full bg-muted rounded-full animate-pulse" />
-    ),
+    loading: () => <Skeleton className="h-10 w-full rounded-full" />,
   },
 );
 
@@ -49,7 +48,7 @@ export function SearchToggle({
   }, []);
 
   return (
-    <div className="relative h-12 border-b border-border/40 bg-white/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
+    <div className="relative h-12 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       {/* Normal header content */}
       <div
         className={`absolute inset-0 transition-all duration-300 ease-in-out ${

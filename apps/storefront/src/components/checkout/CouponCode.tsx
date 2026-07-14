@@ -4,8 +4,12 @@ import type { Cart } from "@spree/sdk";
 import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 interface CouponCodeProps {
   cart: Cart;
@@ -75,7 +79,7 @@ export function CouponCode({
           {couponPromotions.map((promotion) => (
             <div
               key={promotion.id}
-              className="flex items-center justify-between rounded-full border border-border bg-white px-4 py-2"
+              className="flex items-center justify-between rounded-full border border-border bg-background px-4 py-2"
             >
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium text-foreground">
@@ -99,22 +103,31 @@ export function CouponCode({
         </div>
       )}
 
-      <form onSubmit={handleApply} className="flex gap-2">
-        <Input
-          type="text"
-          value={code}
-          onChange={(event) => {
-            setCode(event.target.value);
-            setError(null);
-          }}
-          placeholder={t("placeholder")}
-          aria-label={t("placeholder")}
-          aria-invalid={Boolean(error)}
-          className="flex-1 rounded-full bg-white px-4"
-        />
-        <Button type="submit" disabled={applying || !code.trim()}>
-          {applying ? t("applying") : t("apply")}
-        </Button>
+      <form onSubmit={handleApply}>
+        <InputGroup className="rounded-full bg-background">
+          <InputGroupInput
+            type="text"
+            value={code}
+            onChange={(event) => {
+              setCode(event.target.value);
+              setError(null);
+            }}
+            placeholder={t("placeholder")}
+            aria-label={t("placeholder")}
+            aria-invalid={Boolean(error)}
+            className="px-4"
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton
+              type="submit"
+              variant="default"
+              size="sm"
+              disabled={applying || !code.trim()}
+            >
+              {applying ? t("applying") : t("apply")}
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
       </form>
 
       {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}

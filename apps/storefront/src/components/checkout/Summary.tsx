@@ -27,11 +27,11 @@ export function Summary({ cart }: SummaryProps) {
                   alt={item.name}
                   fill
                   className="object-cover"
-                  iconClassName="w-6 h-6"
+                  iconClassName="size-6"
                 />
               </div>
               {/* Quantity badge */}
-              <div className="absolute -top-2 -right-2 w-5 h-5 bg-muted-foreground/90 text-white text-[11px] font-medium rounded-full flex items-center justify-center">
+              <div className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full bg-muted-foreground/90 text-[11px] font-medium text-primary-foreground">
                 {item.quantity}
               </div>
             </div>

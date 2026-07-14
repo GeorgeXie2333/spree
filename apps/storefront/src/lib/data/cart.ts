@@ -1,6 +1,6 @@
 "use server";
 
-import type { Cart, CreateCartParams } from "@spree/sdk";
+import { type Cart, type CreateCartParams, SpreeError } from "@spree/sdk";
 import { updateTag } from "next/cache";
 import {
   clearCartCookies,
@@ -16,7 +16,7 @@ import {
 import { actionResult } from "./utils";
 
 /**
- * Get the current cart. Returns null if no cart exists.
+ * Get the current cart. Returns null only when no cart exists or is complete.
  */
 export async function getCart(explicitCartId?: string): Promise<Cart | null> {
   const spreeToken = await getCartToken();
@@ -27,7 +27,16 @@ export async function getCart(explicitCartId?: string): Promise<Cart | null> {
 
   try {
     if (cartId) {
-      return await getClient().carts.get(cartId, { spreeToken, token });
+      const cart = await getClient().carts.get(cartId, { spreeToken, token });
+      if (!explicitCartId && cart.current_step === "complete") {
+        try {
+          await clearCartCookies();
+        } catch {
+          // Cookie mutation is unavailable in Server Components.
+        }
+        return null;
+      }
+      return cart;
     }
 
     // Authenticated user without stored cart ID — find their most recent cart
@@ -41,7 +50,10 @@ export async function getCart(explicitCartId?: string): Promise<Cart | null> {
     }
 
     return null;
-  } catch {
+  } catch (error) {
+    if (!(error instanceof SpreeError && error.status === 404)) {
+      throw error;
+    }
     // Cart not found (e.g., order was completed) — clear stale cookies.
     // Wrapped in try/catch because clearCartCookies sets cookies, which
     // is not allowed in Server Components (only in Server Actions).

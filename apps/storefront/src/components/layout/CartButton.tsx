@@ -25,7 +25,7 @@ export function CartButton() {
     >
       <ShoppingBag className="size-5" />
       {mounted && itemCount > 0 && (
-        <span className="absolute top-0 right-0 bg-primary text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
+        <span className="absolute top-0 right-0 flex size-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
           {itemCount}
         </span>
       )}

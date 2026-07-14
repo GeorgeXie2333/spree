@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getLocaleMessage } from "@/lib/i18n/messages";
 import { buildCanonicalUrl } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 
@@ -11,18 +12,23 @@ export async function generateCategoriesMetadata({
   country,
   locale,
 }: CategoriesMetadataParams): Promise<Metadata> {
+  const title = getLocaleMessage(locale, "metadata.categoriesTitle");
+  const description = getLocaleMessage(
+    locale,
+    "metadata.categoriesDescription",
+  );
   const storeUrl = getStoreUrl();
   const canonicalUrl = storeUrl
     ? buildCanonicalUrl(storeUrl, `/${country}/${locale}/c`)
     : undefined;
 
   return {
-    title: "Categories",
-    description: "Browse all product categories.",
+    title,
+    description,
     ...(canonicalUrl ? { alternates: { canonical: canonicalUrl } } : {}),
     openGraph: {
-      title: "Categories",
-      description: "Browse all product categories.",
+      title,
+      description,
       ...(canonicalUrl ? { url: canonicalUrl } : {}),
       type: "website",
     },

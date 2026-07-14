@@ -45,7 +45,7 @@ export async function CategoryBanner({
               <Link
                 key={child.id}
                 href={`${basePath}/c/${child.permalink}`}
-                className="rounded-full bg-card px-4 py-2 text-sm text-foreground transition-colors duration-200 hover:bg-[#e8e8ed]"
+                className="rounded-full bg-card px-4 py-2 text-sm text-foreground transition-colors duration-200 hover:bg-secondary-hover"
               >
                 {child.name}
               </Link>

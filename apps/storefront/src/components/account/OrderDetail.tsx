@@ -7,6 +7,7 @@ import { LineItemCard } from "@/components/order/LineItemCard";
 import { OrderTotals } from "@/components/order/OrderTotals";
 import { PaymentInfo } from "@/components/order/PaymentInfo";
 import { formatDateTime } from "@/lib/utils/format";
+import { buildFulfillmentLineItems } from "@/lib/utils/fulfillment";
 
 interface OrderDetailProps {
   order: Order;
@@ -24,6 +25,7 @@ export async function OrderDetail({
     namespace: "orders",
   });
   const hasFulfillments = order.fulfillments && order.fulfillments.length > 0;
+  const fulfillmentLineItems = buildFulfillmentLineItems(order, locale);
 
   return (
     <div>
@@ -44,23 +46,13 @@ export async function OrderDetail({
 
       {hasFulfillments ? (
         order.fulfillments.map((fulfillment) => {
-          const manifestItemIds = new Set(
-            fulfillment.items?.map((i) => i.item_id) ?? [],
-          );
-          const fulfillmentLineItems =
-            manifestItemIds.size > 0
-              ? (order.items || []).filter((item) =>
-                  manifestItemIds.has(item.id),
-                )
-              : order.items || [];
-
           return (
             <FulfillmentBlock
               key={fulfillment.id}
               fulfillment={fulfillment}
               shipAddress={order.shipping_address}
               basePath={basePath}
-              lineItems={fulfillmentLineItems}
+              lineItems={fulfillmentLineItems.get(fulfillment.id) ?? []}
             />
           );
         })

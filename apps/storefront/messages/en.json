@@ -100,7 +100,8 @@
     "amountDue": "Amount due",
     "failedToAddItem": "Could not add this item to your cart. Please try again.",
     "failedToUpdateItem": "Could not update your cart. Please try again.",
-    "failedToRemoveItem": "Could not remove this item from your cart. Please try again."
+    "failedToRemoveItem": "Could not remove this item from your cart. Please try again.",
+    "failedToRefreshCart": "We could not refresh your cart. Please try again."
   },
   "products": {
     "allProducts": "CenWatch",
@@ -245,6 +246,10 @@
     "stripeNotLoaded": "Stripe has not loaded yet",
     "paymentProcessingError": "An error occurred during payment.",
     "failedToCompletePaymentSession": "Failed to complete payment session",
+    "failedToCreatePayment": "Failed to create payment",
+    "unableToVerifyOrderCompletion": "Unable to verify that the order was completed.",
+    "paymentWasNotSuccessful": "Payment was not successful. Please try again.",
+    "failedToConfirmPayment": "Failed to confirm payment. Please try again.",
     "noOrder": "No order",
     "confirmingPayment": "Confirming your payment...",
     "selectPaymentMethod": "Please select a payment method.",
@@ -390,7 +395,11 @@
     "orderTitle": "Order #{number}",
     "shipmentCanceledRefund": "Shipment canceled — a refund has been issued.",
     "shippingMethodUnavailable": "Unavailable",
-    "totalColumn": "Total"
+    "totalColumn": "Total",
+    "pagination": "Order history pagination",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "pageNumber": "Page {page}"
   },
   "orderPlaced": {
     "thanksForOrder": "Thanks for your order, {name}!",
@@ -504,6 +513,16 @@
   "expressCheckout": {
     "shipping": "Shipping",
     "finalizingPayment": "Finalizing your payment...",
+    "orderCompletionUnconfirmed": "Order completion could not be confirmed.",
+    "finalizationFailed": "We could not finalize your order. Please try again.",
+    "missingAddress": "Enter a shipping and billing address to continue.",
+    "paymentSubmissionFailed": "Payment submission failed. Please try again.",
+    "failedToCreatePaymentMethod": "Failed to create a payment method. Please try again.",
+    "noPaymentMethodAvailable": "No payment method is available for this order.",
+    "failedToCreatePaymentSession": "Failed to create payment session.",
+    "failedToInitializePayment": "Failed to initialize payment. Please try again.",
+    "paymentConfirmationFailed": "Payment confirmation failed. Please try again.",
+    "unexpectedError": "An unexpected error occurred. Please try again.",
     "or": "or"
   },
   "contact": {
@@ -572,6 +591,71 @@
     "relatedTitle": "More CenWatch models.",
     "relatedSubtitle": "Compare other watches in the CenWatch collection.",
     "goToMedia": "Show media {index}",
-    "playVideo": "Play video"
+    "playVideo": "Play video",
+    "mediaImage": "{productName} image {index}"
+  },
+  "metadata": {
+    "productNotFound": "Product Not Found",
+    "productDescription": "Shop {name}",
+    "categoryNotFound": "Category Not Found",
+    "categoryDescription": "Browse {name} products.",
+    "productsTitle": "Products",
+    "productsDescription": "Browse our full collection of products.",
+    "categoriesTitle": "Categories",
+    "categoriesDescription": "Browse all product categories."
+  },
+  "accessibility": {
+    "countryFlag": "{country} flag"
+  },
+  "emails": {
+    "common": {
+      "customer": "there",
+      "quantity": "Qty: {quantity}",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "discount": "Discount",
+      "tax": "Tax",
+      "total": "Total",
+      "item": "Item",
+      "standardShipping": "Standard Shipping",
+      "footerSeparator": " - "
+    },
+    "orderConfirmation": {
+      "subject": "{storeName} Order Confirmation #{orderNumber}",
+      "preview": "Order {orderNumber} confirmed - {storeName}",
+      "heading": "Thanks for your order, {firstName}!",
+      "body": "Your order {orderNumber} has been confirmed. We'll send you another email when it ships.",
+      "orderSummary": "Order Summary",
+      "shippingAddress": "Shipping Address",
+      "billingAddress": "Billing Address",
+      "deliveryMethod": "Delivery Method"
+    },
+    "orderCanceled": {
+      "subject": "{storeName} Order Canceled #{orderNumber}",
+      "preview": "Order {orderNumber} has been canceled - {storeName}",
+      "heading": "Order Canceled",
+      "body": "Hi {firstName}, your order {orderNumber} has been canceled. If you paid for this order, a refund will be issued to your original payment method.",
+      "canceledItems": "Canceled Items",
+      "orderTotal": "Order Total",
+      "support": "If you have any questions, please don't hesitate to contact us."
+    },
+    "shipmentShipped": {
+      "subject": "{storeName} Shipment Notification #{orderNumber}",
+      "preview": "Your order {orderNumber} has shipped - {storeName}",
+      "heading": "Your order is on its way!",
+      "body": "Hi {firstName}, great news! Your order {orderNumber} has been shipped.",
+      "shipment": "Shipment {shipmentNumber}",
+      "shippedVia": "Shipped via {deliveryMethodName}",
+      "trackingNumber": "Tracking Number"
+    },
+    "passwordReset": {
+      "subject": "{storeName} Password Reset",
+      "preview": "Reset your password - {storeName}",
+      "heading": "Reset your password",
+      "body": "We received a request to reset your password. Click the button below to choose a new one.",
+      "button": "Reset Password",
+      "linkInstructions": "If the button doesn't work, copy and paste this link into your browser:",
+      "disclaimer": "This link will expire shortly. If you didn't request a password reset, you can safely ignore this email."
+    }
   }
 }

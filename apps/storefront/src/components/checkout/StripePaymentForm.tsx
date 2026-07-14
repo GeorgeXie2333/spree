@@ -7,6 +7,7 @@ import {
   useStripe,
 } from "@stripe/react-stripe-js";
 import { CircleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { stripePromise } from "@/lib/utils/stripe";
@@ -14,6 +15,11 @@ import { stripePromise } from "@/lib/utils/stripe";
 export interface StripePaymentFormHandle {
   confirmPayment: (returnUrl: string) => Promise<{ error?: string }>;
   fetchUpdates: () => Promise<void>;
+}
+
+export interface StripePaymentFallbackMessages {
+  stripeNotLoaded: string;
+  paymentProcessingError: string;
 }
 
 interface StripePaymentFormProps {
@@ -26,6 +32,7 @@ function StripePaymentFormInner({
 }: {
   onReady: (handle: StripePaymentFormHandle) => void;
 }) {
+  const t = useTranslations("checkout");
   const stripe = useStripe();
   const elements = useElements();
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +40,7 @@ function StripePaymentFormInner({
   const confirmPayment = useCallback(
     async (returnUrl: string) => {
       if (!stripe || !elements) {
-        return { error: "Stripe has not loaded yet" };
+        return { error: t("stripeNotLoaded") };
       }
 
       setError(null);
@@ -47,15 +54,14 @@ function StripePaymentFormInner({
       });
 
       if (result.error) {
-        const message =
-          result.error.message || "An error occurred during payment.";
+        const message = result.error.message || t("paymentProcessingError");
         setError(message);
         return { error: message };
       }
 
       return {};
     },
-    [stripe, elements],
+    [stripe, elements, t],
   );
 
   const fetchUpdates = useCallback(async () => {
@@ -126,10 +132,11 @@ export async function confirmWithSavedCard(
   clientSecret: string,
   paymentMethodId: string,
   returnUrl: string,
+  fallbackMessages: StripePaymentFallbackMessages,
 ): Promise<{ error?: string }> {
   const stripe = await stripePromise;
   if (!stripe) {
-    return { error: "Stripe has not loaded yet" };
+    return { error: fallbackMessages.stripeNotLoaded };
   }
 
   const result = await stripe.confirmCardPayment(clientSecret, {
@@ -139,7 +146,7 @@ export async function confirmWithSavedCard(
 
   if (result.error) {
     return {
-      error: result.error.message || "An error occurred during payment.",
+      error: result.error.message || fallbackMessages.paymentProcessingError,
     };
   }
 

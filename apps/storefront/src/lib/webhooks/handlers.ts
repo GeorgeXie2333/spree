@@ -6,6 +6,7 @@ import { OrderConfirmationEmail } from "@/lib/emails/order-confirmation";
 import { PasswordResetEmail } from "@/lib/emails/password-reset";
 import { sendEmail } from "@/lib/emails/send";
 import { ShipmentShippedEmail } from "@/lib/emails/shipment-shipped";
+import { getEmailTranslations } from "@/lib/emails/translations";
 import { getStoreName, getStoreUrl } from "@/lib/store";
 
 const STORE_NAME = getStoreName();
@@ -23,6 +24,7 @@ if (!SITE_URL && process.env.NODE_ENV === "production") {
 export async function handleOrderCompleted(event: WebhookEvent<Order>) {
   const order = event.data;
   if (!order.email) return;
+  const t = getEmailTranslations(order.locale);
 
   const customerName =
     order.shipping_address?.full_name || order.billing_address?.full_name || "";
@@ -39,7 +41,10 @@ export async function handleOrderCompleted(event: WebhookEvent<Order>) {
 
   await sendEmail({
     to: order.email,
-    subject: `${STORE_NAME} Order Confirmation #${order.number}`,
+    subject: t("orderConfirmation.subject", {
+      storeName: STORE_NAME,
+      orderNumber: order.number,
+    }),
     idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(OrderConfirmationEmail, {
       orderNumber: order.number,
@@ -61,6 +66,7 @@ export async function handleOrderCompleted(event: WebhookEvent<Order>) {
       shippingAddress: order.shipping_address ?? undefined,
       billingAddress: order.billing_address ?? undefined,
       deliveryMethodName,
+      translations: t,
     }),
   });
 }
@@ -71,13 +77,17 @@ export async function handleOrderCompleted(event: WebhookEvent<Order>) {
 export async function handleOrderCanceled(event: WebhookEvent<Order>) {
   const order = event.data;
   if (!order.email) return;
+  const t = getEmailTranslations(order.locale);
 
   const customerName =
     order.shipping_address?.full_name || order.billing_address?.full_name || "";
 
   await sendEmail({
     to: order.email,
-    subject: `${STORE_NAME} Order Canceled #${order.number}`,
+    subject: t("orderCanceled.subject", {
+      storeName: STORE_NAME,
+      orderNumber: order.number,
+    }),
     idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(OrderCanceledEmail, {
       orderNumber: order.number,
@@ -91,6 +101,7 @@ export async function handleOrderCanceled(event: WebhookEvent<Order>) {
         thumbnail_url: item.thumbnail_url,
       })),
       displayTotal: order.display_total,
+      translations: t,
     }),
   });
 }
@@ -104,6 +115,7 @@ export async function handleOrderCanceled(event: WebhookEvent<Order>) {
 export async function handleOrderShipped(event: WebhookEvent<Order>) {
   const order = event.data;
   if (!order.email) return;
+  const t = getEmailTranslations(order.locale);
 
   const customerName =
     order.shipping_address?.full_name || order.billing_address?.full_name || "";
@@ -118,7 +130,7 @@ export async function handleOrderShipped(event: WebhookEvent<Order>) {
           (li) => li.id === fi.item_id || li.variant_id === fi.variant_id,
         );
         return {
-          name: lineItem?.name || "Item",
+          name: lineItem?.name || t("common.item"),
           slug: lineItem?.slug,
           quantity: fi.quantity,
           options_text: lineItem?.options_text,
@@ -131,7 +143,7 @@ export async function handleOrderShipped(event: WebhookEvent<Order>) {
         tracking: fulfillment.tracking,
         tracking_url: fulfillment.tracking_url,
         delivery_method_name:
-          fulfillment.delivery_method?.name || "Standard Shipping",
+          fulfillment.delivery_method?.name || t("common.standardShipping"),
         display_cost: fulfillment.display_cost,
         items: shippedItems,
       };
@@ -141,12 +153,16 @@ export async function handleOrderShipped(event: WebhookEvent<Order>) {
 
   await sendEmail({
     to: order.email,
-    subject: `${STORE_NAME} Shipment Notification #${order.number}`,
+    subject: t("shipmentShipped.subject", {
+      storeName: STORE_NAME,
+      orderNumber: order.number,
+    }),
     idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(ShipmentShippedEmail, {
       orderNumber: order.number,
       customerName,
       shipments,
+      translations: t,
     }),
   });
 }
@@ -164,11 +180,26 @@ interface PasswordResetData {
   redirect_url?: string;
 }
 
+function getLocaleFromResetUrl(redirectUrl?: string): string | undefined {
+  if (!redirectUrl) return undefined;
+
+  try {
+    const { pathname } = new URL(
+      redirectUrl,
+      SITE_URL ?? "https://example.com",
+    );
+    return pathname.split("/")[2];
+  } catch {
+    return undefined;
+  }
+}
+
 export async function handlePasswordReset(
   event: WebhookEvent<PasswordResetData>,
 ) {
   const { email, reset_token, redirect_url } = event.data;
   if (!email || !reset_token) return;
+  const t = getEmailTranslations(getLocaleFromResetUrl(redirect_url));
 
   // Build the reset URL by appending the token to the redirect_url.
   // If no redirect_url was provided (e.g. no allowed origins configured),
@@ -184,10 +215,11 @@ export async function handlePasswordReset(
 
   await sendEmail({
     to: email,
-    subject: `${STORE_NAME} Password Reset`,
+    subject: t("passwordReset.subject", { storeName: STORE_NAME }),
     idempotencyKey: `spree-webhook-${event.id}`,
     react: createElement(PasswordResetEmail, {
       resetUrl,
+      translations: t,
     }),
   });
 }

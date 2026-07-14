@@ -27,6 +27,7 @@ vi.mock("@/lib/spree", () => ({
     token: undefined,
   }),
   requireCartId: vi.fn().mockResolvedValue("cart-1"),
+  getLocaleOptions: vi.fn().mockResolvedValue({ locale: "en", country: "US" }),
 }));
 
 vi.mock("next/cache", () => ({
@@ -289,7 +290,13 @@ describe("payment server actions", () => {
     });
 
     it("returns failure when neither cart nor completed order can be found", async () => {
-      mockClient.carts.get.mockRejectedValue(new Error("Not found"));
+      const { SpreeError } = await import("@spree/sdk");
+      mockClient.carts.get.mockRejectedValue(
+        new SpreeError(
+          { error: { code: "not_found", message: "Not found" } },
+          404,
+        ),
+      );
       mockClient.orders.get.mockResolvedValue(null);
 
       const result = await confirmPaymentAndCompleteCart("cart-1", "session-1");
@@ -342,7 +349,7 @@ describe("payment server actions", () => {
 
       expect(result).toEqual({
         success: false,
-        error: "Unable to verify that the order was completed.",
+        error: "Failed to confirm payment. Please try again.",
       });
     });
   });

@@ -182,9 +182,14 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
     }
 
     setLoading(true);
-    await addItem(variantId, quantity);
-    setLoading(false);
-    trackAddToCart(product, selectedVariant, quantity, currency);
+    try {
+      const result = await addItem(variantId, quantity);
+      if (result.success) {
+        trackAddToCart(product, selectedVariant, quantity, currency);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const skuOrOptionRows =
@@ -263,10 +268,10 @@ export function ProductDetails({ product, basePath }: ProductDetailsProps) {
                   : tPdp("preorder")}
               </span>
             ) : inStock ? (
-              <span className="inline-flex items-center gap-2 text-[#1a7f37]">
+              <span className="inline-flex items-center gap-2 text-success">
                 <span
                   aria-hidden="true"
-                  className="size-2 rounded-full bg-[#1a7f37]"
+                  className="size-2 rounded-full bg-success"
                 />
                 {tPdp("inStock")}
               </span>

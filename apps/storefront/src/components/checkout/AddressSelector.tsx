@@ -5,6 +5,7 @@ import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import { AddressFormFields } from "@/components/checkout/AddressFormFields";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { User } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -101,66 +102,92 @@ export function AddressSelector({
           value={selectedAddressId}
           onValueChange={handleSelectAddress}
           className="gap-3"
+          aria-label={t("shippingAddress")}
         >
-          {savedAddresses.map((address) => (
-            <label
-              key={address.id}
-              className={cn(
-                "flex items-start gap-3 rounded-xl border p-4 cursor-pointer transition-colors duration-200",
-                selectedAddressId === address.id
-                  ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
-                  : "border-border bg-background hover:bg-card",
-              )}
-            >
-              <RadioGroupItem value={address.id} className="mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="text-sm text-foreground">
-                  {address.full_name}
-                  {address.company && (
-                    <span className="text-muted-foreground">
-                      , {address.company}
-                    </span>
-                  )}
-                </span>
-                <p className="text-sm text-muted-foreground">
-                  {address.address1}
-                  {address.address2 && `, ${address.address2}`}, {address.city},{" "}
-                  {address.state_text || address.state_name}{" "}
-                  {address.postal_code}, {address.country_name}
-                </p>
-              </div>
-              {onEditAddress && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onEditAddress(address);
-                  }}
-                  className="text-xs text-link hover:underline underline-offset-2 flex-shrink-0"
+          {savedAddresses.map((address) => {
+            const radioId = `${idPrefix}-saved-${address.id}`;
+            return (
+              <Field
+                key={address.id}
+                orientation="horizontal"
+                className={cn(
+                  "relative cursor-pointer items-start rounded-xl border p-4 transition-colors duration-200",
+                  selectedAddressId === address.id
+                    ? "border-2 border-primary bg-primary/[0.04]"
+                    : "border-border bg-background hover:bg-card",
+                )}
+              >
+                <RadioGroupItem
+                  id={radioId}
+                  value={address.id}
+                  className="relative z-10 mt-0.5"
+                />
+                <FieldLabel
+                  htmlFor={radioId}
+                  className="absolute inset-0 cursor-pointer"
                 >
-                  {tc("edit")}
-                </button>
-              )}
-            </label>
-          ))}
+                  <span className="sr-only">{address.full_name}</span>
+                </FieldLabel>
+                <FieldContent className="min-w-0">
+                  <span className="text-sm text-foreground">
+                    {address.full_name}
+                    {address.company && (
+                      <span className="text-muted-foreground">
+                        , {address.company}
+                      </span>
+                    )}
+                  </span>
+                  <p className="text-sm text-muted-foreground">
+                    {address.address1}
+                    {address.address2 && `, ${address.address2}`},{" "}
+                    {address.city}, {address.state_text || address.state_name}{" "}
+                    {address.postal_code}, {address.country_name}
+                  </p>
+                </FieldContent>
+                {onEditAddress && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onEditAddress(address);
+                    }}
+                    className="relative z-10 shrink-0 text-xs text-link underline-offset-2 hover:underline"
+                  >
+                    {tc("edit")}
+                  </button>
+                )}
+              </Field>
+            );
+          })}
 
-          <label
+          <Field
+            orientation="horizontal"
             className={cn(
-              "flex items-center gap-3 rounded-xl border p-4 cursor-pointer transition-colors duration-200",
+              "relative cursor-pointer items-center rounded-xl border p-4 transition-colors duration-200",
               selectedAddressId === "new"
-                ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
+                ? "border-2 border-primary bg-primary/[0.04]"
                 : "border-border bg-background hover:bg-card",
             )}
           >
-            <RadioGroupItem value="new" />
+            <RadioGroupItem
+              id={`${idPrefix}-new`}
+              value="new"
+              className="relative z-10"
+            />
+            <FieldLabel
+              htmlFor={`${idPrefix}-new`}
+              className="absolute inset-0 cursor-pointer"
+            >
+              <span className="sr-only">{t("useDifferentAddress")}</span>
+            </FieldLabel>
             <MapPin
-              className="w-5 h-5 text-muted-foreground"
+              className="size-5 text-muted-foreground"
               strokeWidth={1.5}
             />
             <span className="text-sm text-foreground">
               {t("useDifferentAddress")}
             </span>
-          </label>
+          </Field>
         </RadioGroup>
       )}
 

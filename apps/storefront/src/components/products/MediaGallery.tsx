@@ -26,7 +26,10 @@ const LazyMediaLightbox = dynamic(
     // Minimal fullscreen overlay so the zoom click gives immediate
     // feedback on slow networks while the chunk downloads.
     loading: () => (
-      <div className="fixed inset-0 z-50 bg-black/90" aria-hidden="true" />
+      <div
+        className="fixed inset-0 z-50 bg-media-backdrop/90"
+        aria-hidden="true"
+      />
     ),
   },
 );
@@ -72,7 +75,7 @@ function VideoTile({ media, title }: { media: Media; title: string }) {
   const fileUrl = embedUrl ? null : externalUrl || media.original_url;
 
   return (
-    <div className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-black">
+    <div className="relative aspect-square w-full overflow-hidden rounded-[18px] bg-media-backdrop">
       {embedUrl ? (
         <iframe
           src={embedUrl}
@@ -204,7 +207,7 @@ function MediaGalleryInner({
         className={cn(
           "relative size-16 shrink-0 overflow-hidden rounded-xl bg-card transition-shadow duration-200",
           index === safeIndex
-            ? "ring-2 ring-[#0071e3] ring-offset-2"
+            ? "ring-2 ring-primary ring-offset-2"
             : "hover:ring-1 hover:ring-border",
         )}
       >
@@ -219,14 +222,16 @@ function MediaGalleryInner({
                 sizes="64px"
               />
             )}
-            <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-              <Play className="size-5 fill-white text-white" />
+            <span className="absolute inset-0 flex items-center justify-center bg-media-backdrop/40">
+              <Play className="size-5 fill-media-foreground text-media-foreground" />
             </span>
           </>
         ) : (
           <ProductImage
             src={thumbUrl}
-            alt={media.alt || `${productName} ${index + 1}`}
+            alt={
+              media.alt || t("mediaImage", { productName, index: index + 1 })
+            }
             fill
             className="object-cover"
             sizes="64px"
@@ -282,7 +287,7 @@ function MediaGalleryInner({
               onError={() => mainImageUrl && setMainImageErrorUrl(mainImageUrl)}
             />
             {showMainImage && (
-              <div className="absolute right-4 bottom-4 flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
+              <div className="absolute right-4 bottom-4 flex items-center gap-1.5 rounded-full bg-background/80 px-3 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
                 <ZoomIn className="size-3.5" />
                 {t("clickToZoom")}
               </div>

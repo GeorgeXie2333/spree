@@ -100,7 +100,8 @@
     "amountDue": "应付金额",
     "failedToAddItem": "无法将此商品加入购物车，请重试。",
     "failedToUpdateItem": "无法更新购物车，请重试。",
-    "failedToRemoveItem": "无法移除此商品，请重试。"
+    "failedToRemoveItem": "无法移除此商品，请重试。",
+    "failedToRefreshCart": "无法刷新购物车，请重试。"
   },
   "products": {
     "allProducts": "CenWatch",
@@ -245,6 +246,10 @@
     "stripeNotLoaded": "Stripe 尚未加载",
     "paymentProcessingError": "付款处理过程中发生错误。",
     "failedToCompletePaymentSession": "无法完成付款会话",
+    "failedToCreatePayment": "创建付款失败",
+    "unableToVerifyOrderCompletion": "无法确认订单是否已完成。",
+    "paymentWasNotSuccessful": "付款未成功，请重试。",
+    "failedToConfirmPayment": "确认付款失败，请重试。",
     "noOrder": "无订单",
     "confirmingPayment": "正在确认付款...",
     "selectPaymentMethod": "请选择付款方式。",
@@ -390,7 +395,11 @@
     "orderTitle": "订单 #{number}",
     "shipmentCanceledRefund": "包裹已取消，退款已发起。",
     "shippingMethodUnavailable": "不可用",
-    "totalColumn": "合计"
+    "totalColumn": "合计",
+    "pagination": "订单历史分页",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
+    "pageNumber": "第 {page} 页"
   },
   "orderPlaced": {
     "thanksForOrder": "感谢你的订单，{name}！",
@@ -504,6 +513,16 @@
   "expressCheckout": {
     "shipping": "配送",
     "finalizingPayment": "正在完成付款...",
+    "orderCompletionUnconfirmed": "无法确认订单已完成。",
+    "finalizationFailed": "暂时无法完成订单，请重试。",
+    "missingAddress": "请填写收货地址和账单地址后继续。",
+    "paymentSubmissionFailed": "提交付款失败，请重试。",
+    "failedToCreatePaymentMethod": "无法创建付款方式，请重试。",
+    "noPaymentMethodAvailable": "此订单没有可用的付款方式。",
+    "failedToCreatePaymentSession": "无法创建付款会话。",
+    "failedToInitializePayment": "无法初始化付款，请重试。",
+    "paymentConfirmationFailed": "确认付款失败，请重试。",
+    "unexpectedError": "发生意外错误，请重试。",
     "or": "或"
   },
   "contact": {
@@ -572,6 +591,71 @@
     "relatedTitle": "更多 CenWatch 型号。",
     "relatedSubtitle": "比较 CenWatch 系列中的其他手表。",
     "goToMedia": "查看第 {index} 项媒体",
-    "playVideo": "播放视频"
+    "playVideo": "播放视频",
+    "mediaImage": "{productName} 图片 {index}"
+  },
+  "metadata": {
+    "productNotFound": "未找到商品",
+    "productDescription": "选购 {name}",
+    "categoryNotFound": "未找到分类",
+    "categoryDescription": "浏览 {name} 商品。",
+    "productsTitle": "商品",
+    "productsDescription": "浏览我们的全部商品。",
+    "categoriesTitle": "分类",
+    "categoriesDescription": "浏览全部商品分类。"
+  },
+  "accessibility": {
+    "countryFlag": "{country} 国旗"
+  },
+  "emails": {
+    "common": {
+      "customer": "您好",
+      "quantity": "数量：{quantity}",
+      "subtotal": "小计",
+      "shipping": "配送",
+      "discount": "优惠",
+      "tax": "税费",
+      "total": "合计",
+      "item": "商品",
+      "standardShipping": "标准配送",
+      "footerSeparator": " - "
+    },
+    "orderConfirmation": {
+      "subject": "{storeName} 订单确认 #{orderNumber}",
+      "preview": "订单 {orderNumber} 已确认 - {storeName}",
+      "heading": "感谢您的订单，{firstName}！",
+      "body": "您的订单 {orderNumber} 已确认。发货后我们会再次发送邮件通知您。",
+      "orderSummary": "订单摘要",
+      "shippingAddress": "收货地址",
+      "billingAddress": "账单地址",
+      "deliveryMethod": "配送方式"
+    },
+    "orderCanceled": {
+      "subject": "{storeName} 订单已取消 #{orderNumber}",
+      "preview": "订单 {orderNumber} 已取消 - {storeName}",
+      "heading": "订单已取消",
+      "body": "您好，{firstName}，您的订单 {orderNumber} 已取消。如您已付款，退款将退回原付款方式。",
+      "canceledItems": "已取消的商品",
+      "orderTotal": "订单合计",
+      "support": "如有任何问题，请随时联系我们。"
+    },
+    "shipmentShipped": {
+      "subject": "{storeName} 发货通知 #{orderNumber}",
+      "preview": "您的订单 {orderNumber} 已发货 - {storeName}",
+      "heading": "您的订单正在配送中！",
+      "body": "您好，{firstName}，好消息！您的订单 {orderNumber} 已发货。",
+      "shipment": "包裹 {shipmentNumber}",
+      "shippedVia": "配送方式：{deliveryMethodName}",
+      "trackingNumber": "物流单号"
+    },
+    "passwordReset": {
+      "subject": "{storeName} 重置密码",
+      "preview": "重置您的密码 - {storeName}",
+      "heading": "重置您的密码",
+      "body": "我们收到了重置您密码的请求。请点击下方按钮设置新密码。",
+      "button": "重置密码",
+      "linkInstructions": "如果按钮无法使用，请将此链接复制并粘贴到浏览器中：",
+      "disclaimer": "此链接将很快过期。如果这不是您本人发起的重置请求，您可以忽略此邮件。"
+    }
   }
 }

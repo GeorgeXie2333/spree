@@ -8,9 +8,16 @@ import { ProductImage } from "@/components/ui/product-image";
 interface LineItemCardProps {
   item: Order["items"][number];
   basePath: string;
+  quantity?: number;
+  displayTotal?: string;
 }
 
-export function LineItemCard({ item, basePath }: LineItemCardProps) {
+export function LineItemCard({
+  item,
+  basePath,
+  quantity = item.quantity,
+  displayTotal = item.display_total,
+}: LineItemCardProps) {
   const t = useTranslations("orders");
   return (
     <div className="flex gap-4">
@@ -41,7 +48,7 @@ export function LineItemCard({ item, basePath }: LineItemCardProps) {
           </p>
         )}
         <p className="mt-1 text-xs text-muted-foreground">
-          {t("qty", { quantity: item.quantity })}
+          {t("qty", { quantity })}
         </p>
         <Link
           href={`${basePath}/products/${item.slug}`}
@@ -51,9 +58,7 @@ export function LineItemCard({ item, basePath }: LineItemCardProps) {
         </Link>
       </div>
 
-      <div className="text-sm font-medium text-foreground">
-        {item.display_total}
-      </div>
+      <div className="text-sm font-medium text-foreground">{displayTotal}</div>
     </div>
   );
 }

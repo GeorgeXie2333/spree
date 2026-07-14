@@ -99,6 +99,24 @@ describe("CartContext", () => {
     expect(result.current.itemCount).toBe(0);
   });
 
+  it("keeps the current cart and shows a retryable error when refresh fails", async () => {
+    const { result } = renderHook(() => useCart(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.cart).toBe(mockCart);
+    });
+
+    mockGetCart.mockRejectedValueOnce(new Error("Network error"));
+    await act(async () => {
+      await result.current.refreshCart();
+    });
+
+    expect(result.current.cart).toBe(mockCart);
+    expect(result.current.itemCount).toBe(3);
+    expect(mockToastError).toHaveBeenCalledWith("failedToRefreshCart");
+  });
+
   describe("addItem", () => {
     it("updates cart and opens drawer on success", async () => {
       mockAddToCart.mockResolvedValue({
@@ -112,11 +130,15 @@ describe("CartContext", () => {
         expect(result.current.loading).toBe(false);
       });
 
+      let actionResult:
+        | Awaited<ReturnType<typeof result.current.addItem>>
+        | undefined;
       await act(async () => {
-        await result.current.addItem("variant-1", 2);
+        actionResult = await result.current.addItem("variant-1", 2);
       });
 
       expect(mockAddToCart).toHaveBeenCalledWith("variant-1", 2);
+      expect(actionResult).toEqual({ success: true, cart: updatedCart });
       expect(result.current.cart).toBe(updatedCart);
       expect(result.current.isOpen).toBe(true);
       expect(result.current.updating).toBe(false);
@@ -134,10 +156,14 @@ describe("CartContext", () => {
         expect(result.current.loading).toBe(false);
       });
 
+      let actionResult:
+        | Awaited<ReturnType<typeof result.current.addItem>>
+        | undefined;
       await act(async () => {
-        await result.current.addItem("variant-1");
+        actionResult = await result.current.addItem("variant-1");
       });
 
+      expect(actionResult).toEqual({ success: false, error: "Out of stock" });
       expect(result.current.cart).toBe(mockCart); // unchanged
       expect(mockToastError).toHaveBeenCalledWith("Out of stock");
     });

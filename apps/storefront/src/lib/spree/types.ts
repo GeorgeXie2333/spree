@@ -3,6 +3,8 @@ export interface SpreeNextConfig {
   baseUrl: string;
   /** Publishable API key for Store API access */
   publishableKey: string;
+  /** Default sales-channel code sent as X-Spree-Channel */
+  channel?: string;
   /** Cookie name for the cart order token (default: '_spree_cart_token') */
   cartCookieName?: string;
   /** Cookie name for the JWT access token (default: '_spree_jwt') */

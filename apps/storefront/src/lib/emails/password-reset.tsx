@@ -11,55 +11,53 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import {
+  type EmailTranslations,
+  getEmailTranslations,
+} from "@/lib/emails/translations";
 import { getStoreName, getStoreUrl } from "@/lib/store";
 
 interface PasswordResetEmailProps {
   resetUrl: string;
   storeName?: string;
   storeUrl?: string;
+  translations?: EmailTranslations;
 }
 
 export function PasswordResetEmail({
   resetUrl,
   storeName = getStoreName(),
   storeUrl = getStoreUrl(),
+  translations = getEmailTranslations(),
 }: PasswordResetEmailProps) {
+  const t = translations;
   return (
     <Html>
       <Head />
-      <Preview>Reset your password - {storeName}</Preview>
+      <Preview>{t("passwordReset.preview", { storeName })}</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={heading}>Reset your password</Heading>
-          <Text style={paragraph}>
-            We received a request to reset your password. Click the button below
-            to choose a new one.
-          </Text>
+          <Heading style={heading}>{t("passwordReset.heading")}</Heading>
+          <Text style={paragraph}>{t("passwordReset.body")}</Text>
 
           <Section style={buttonSection}>
             <Button href={resetUrl} style={button}>
-              Reset Password
+              {t("passwordReset.button")}
             </Button>
           </Section>
 
-          <Text style={paragraph}>
-            If the button doesn't work, copy and paste this link into your
-            browser:
-          </Text>
+          <Text style={paragraph}>{t("passwordReset.linkInstructions")}</Text>
           <Text style={linkText}>{resetUrl}</Text>
 
           <Hr style={hr} />
 
-          <Text style={disclaimer}>
-            This link will expire shortly. If you didn't request a password
-            reset, you can safely ignore this email.
-          </Text>
+          <Text style={disclaimer}>{t("passwordReset.disclaimer")}</Text>
 
           <Text style={footer}>
             {storeName}
             {storeUrl && (
               <>
-                {" - "}
+                {t("common.footerSeparator")}
                 <Link href={storeUrl} style={footerLink}>
                   {storeUrl.replace(/^https?:\/\//, "")}
                 </Link>

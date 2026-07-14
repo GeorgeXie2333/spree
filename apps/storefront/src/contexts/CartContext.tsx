@@ -10,6 +10,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -20,6 +21,12 @@ import {
   updateCartItem as updateCartItemAction,
 } from "@/lib/data/cart";
 
+type CartMutationResult = {
+  success: boolean;
+  cart?: Cart | null;
+  error?: string;
+};
+
 interface CartContextType {
   cart: Cart | null;
   loading: boolean;
@@ -28,7 +35,10 @@ interface CartContextType {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (variantId: string, quantity?: number) => Promise<void>;
+  addItem: (
+    variantId: string,
+    quantity?: number,
+  ) => Promise<CartMutationResult>;
   updateItem: (lineItemId: string, quantity: number) => Promise<void>;
   removeItem: (lineItemId: string) => Promise<void>;
   refreshCart: () => Promise<void>;
@@ -44,6 +54,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations("cart");
+  const tRef = useRef(t);
+  tRef.current = t;
 
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
@@ -53,7 +65,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const cartData = await getCartAction();
       setCart(cartData);
     } catch {
-      setCart(null);
+      toast.error(tRef.current("failedToRefreshCart"));
     } finally {
       setLoading(false);
     }
@@ -68,7 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }>,
       fallbackMessage: string,
       onSuccess?: () => void,
-    ) => {
+    ): Promise<CartMutationResult> => {
       setUpdating(true);
       try {
         const result = await action();
@@ -79,8 +91,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
         } else {
           toast.error(result.error || fallbackMessage);
         }
+        return result;
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : fallbackMessage);
+        const message =
+          error instanceof Error ? error.message : fallbackMessage;
+        toast.error(message);
+        return { success: false, error: message };
       } finally {
         setUpdating(false);
       }
@@ -89,13 +105,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const addItem = useCallback(
-    async (variantId: string, quantity = 1) => {
-      await mutateCart(
+    (variantId: string, quantity = 1) =>
+      mutateCart(
         () => addToCartAction(variantId, quantity),
         t("failedToAddItem"),
         () => setIsOpen(true),
-      );
-    },
+      ),
     [mutateCart, t],
   );
 
@@ -119,12 +134,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [mutateCart, t],
   );
 
-  // Re-fetch cart on navigation (e.g., after checkout completes, the stale
-  // cart token will be cleared by getCart and the cart state will update).
+  // Re-fetch cart on navigation (e.g., after checkout completes, a confirmed
+  // stale cart clears its token and the cart state updates).
   // On the order-placed page, skip refreshCart to avoid a race condition:
-  // getCart() auto-clears the cart token cookie on error (completed order
-  // is no longer a cart), which removes the only auth token guest users
-  // have before getCheckoutOrder() can use it.
+  // getCart() can clear a completed cart token, which removes the only auth
+  // token guest users have before getCheckoutOrder() can use it.
   useEffect(() => {
     if (pathname.includes("/order-placed/")) {
       setCart(null);

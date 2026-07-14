@@ -10,8 +10,8 @@ interface ProductBadgeProps {
 
 // Apple-style: small colored text labels rather than pill overlays.
 const variantClasses: Record<BadgeVariant, string> = {
-  new: "text-[#b64400]",
-  sale: "text-[#e30000]",
+  new: "text-product-new",
+  sale: "text-product-sale",
   preorder: "text-link",
   outOfStock: "text-muted-foreground",
 };

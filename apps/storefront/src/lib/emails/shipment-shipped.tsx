@@ -14,6 +14,10 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import {
+  type EmailTranslations,
+  getEmailTranslations,
+} from "@/lib/emails/translations";
 import { getStoreName, getStoreUrl } from "@/lib/store";
 
 interface ShippedItem {
@@ -39,6 +43,7 @@ interface ShipmentShippedEmailProps {
   storeName?: string;
   storeUrl?: string;
   shipments: Shipment[];
+  translations?: EmailTranslations;
 }
 
 export function ShipmentShippedEmail({
@@ -47,21 +52,22 @@ export function ShipmentShippedEmail({
   storeName = getStoreName(),
   storeUrl = getStoreUrl(),
   shipments,
+  translations = getEmailTranslations(),
 }: ShipmentShippedEmailProps) {
-  const firstName = customerName.split(" ")[0] || "there";
+  const t = translations;
+  const firstName = customerName.split(" ")[0] || t("common.customer");
 
   return (
     <Html>
       <Head />
       <Preview>
-        Your order {orderNumber} has shipped - {storeName}
+        {t("shipmentShipped.preview", { orderNumber, storeName })}
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={heading}>Your order is on its way!</Heading>
+          <Heading style={heading}>{t("shipmentShipped.heading")}</Heading>
           <Text style={paragraph}>
-            Hi {firstName}, great news! Your order{" "}
-            <strong>{orderNumber}</strong> has been shipped.
+            {t("shipmentShipped.body", { firstName, orderNumber })}
           </Text>
 
           {shipments.map((shipment) => (
@@ -69,16 +75,22 @@ export function ShipmentShippedEmail({
               <Hr style={hr} />
 
               <Heading as="h2" style={subheading}>
-                Shipment {shipment.number}
+                {t("shipmentShipped.shipment", {
+                  shipmentNumber: shipment.number,
+                })}
               </Heading>
 
               <Text style={paragraph}>
-                Shipped via {shipment.delivery_method_name}
+                {t("shipmentShipped.shippedVia", {
+                  deliveryMethodName: shipment.delivery_method_name,
+                })}
               </Text>
 
               {shipment.tracking && (
                 <Section style={trackingSection}>
-                  <Text style={trackingLabel}>Tracking Number</Text>
+                  <Text style={trackingLabel}>
+                    {t("shipmentShipped.trackingNumber")}
+                  </Text>
                   {shipment.tracking_url ? (
                     <Button href={shipment.tracking_url} style={trackingButton}>
                       {shipment.tracking}
@@ -127,7 +139,9 @@ export function ShipmentShippedEmail({
                       {item.options_text && (
                         <Text style={itemOptions}>{item.options_text}</Text>
                       )}
-                      <Text style={itemOptions}>Qty: {item.quantity}</Text>
+                      <Text style={itemOptions}>
+                        {t("common.quantity", { quantity: item.quantity })}
+                      </Text>
                     </Column>
                   </Row>
                 ))}
@@ -141,7 +155,7 @@ export function ShipmentShippedEmail({
             {storeName}
             {storeUrl && (
               <>
-                {" - "}
+                {t("common.footerSeparator")}
                 <Link href={storeUrl} style={footerLink}>
                   {storeUrl.replace(/^https?:\/\//, "")}
                 </Link>

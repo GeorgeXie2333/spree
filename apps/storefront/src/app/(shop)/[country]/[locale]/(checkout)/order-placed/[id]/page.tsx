@@ -11,6 +11,7 @@ import { OrderTotals } from "@/components/order/OrderTotals";
 import { PaymentInfo } from "@/components/order/PaymentInfo";
 import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/ui/product-image";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCheckout } from "@/contexts/CheckoutContext";
 import { trackPurchase } from "@/lib/analytics/gtm";
 import { getCompletedOrder } from "@/lib/data/checkout";
@@ -91,11 +92,11 @@ export default function OrderPlacedPage({ params }: OrderPlacedPageProps) {
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-6 py-12">
-        <div className="h-12 w-12 bg-card rounded-full mx-auto" />
-        <div className="h-8 bg-card rounded-lg w-1/2 mx-auto" />
-        <div className="h-4 bg-card rounded-lg w-1/3 mx-auto" />
-        <div className="h-64 bg-card rounded-[18px] mt-8" />
+      <div className="flex flex-col gap-6 py-12">
+        <Skeleton className="mx-auto size-12 rounded-full" />
+        <Skeleton className="mx-auto h-8 w-1/2 rounded-lg" />
+        <Skeleton className="mx-auto h-4 w-1/3 rounded-lg" />
+        <Skeleton className="mt-2 h-64 rounded-[18px]" />
       </div>
     );
   }
@@ -121,7 +122,7 @@ export default function OrderPlacedPage({ params }: OrderPlacedPageProps) {
       {/* Success Header */}
       <div className="text-center mb-10">
         <CircleCheckBig
-          className="w-16 h-16 text-[#0071e3] mx-auto mb-4"
+          className="mx-auto mb-4 size-16 text-primary"
           strokeWidth={1.5}
         />
         <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">

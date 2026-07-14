@@ -2,6 +2,7 @@
 
 import type { Fulfillment } from "@spree/sdk";
 import { useTranslations } from "next-intl";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +45,7 @@ export function DeliveryMethodSection({
           {t("enterShippingAddressForMethods")}
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           {fulfillments.map((fulfillment, index) => {
             const selectedRate = fulfillment.delivery_rates.find(
               (r) => r.selected,
@@ -75,28 +76,41 @@ export function DeliveryMethodSection({
                   }
                   disabled={processing}
                   className="gap-3"
+                  aria-label={t("shippingMethod")}
                 >
-                  {fulfillment.delivery_rates.map((rate) => (
-                    <label
-                      key={rate.id}
-                      className={cn(
-                        "flex items-center justify-between rounded-xl border p-4 cursor-pointer transition-colors duration-200",
-                        rate.selected
-                          ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
-                          : "border-border bg-background hover:bg-card",
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <RadioGroupItem value={rate.id} />
+                  {fulfillment.delivery_rates.map((rate) => {
+                    const radioId = `delivery-rate-${fulfillment.id}-${rate.id}`;
+                    return (
+                      <Field
+                        key={rate.id}
+                        orientation="horizontal"
+                        className={cn(
+                          "relative cursor-pointer items-center justify-between rounded-xl border p-4 transition-colors duration-200",
+                          rate.selected
+                            ? "border-2 border-primary bg-primary/[0.04]"
+                            : "border-border bg-background hover:bg-card",
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem
+                            id={radioId}
+                            value={rate.id}
+                            className="relative z-10"
+                          />
+                          <FieldLabel
+                            htmlFor={radioId}
+                            className="absolute inset-0 cursor-pointer"
+                          >
+                            <span className="sr-only">{rate.name}</span>
+                          </FieldLabel>
+                          <span>{rate.name}</span>
+                        </div>
                         <span className="text-sm text-foreground">
-                          {rate.name}
+                          {rate.display_cost}
                         </span>
-                      </div>
-                      <span className="text-sm text-foreground">
-                        {rate.display_cost}
-                      </span>
-                    </label>
-                  ))}
+                      </Field>
+                    );
+                  })}
                 </RadioGroup>
               </div>
             );

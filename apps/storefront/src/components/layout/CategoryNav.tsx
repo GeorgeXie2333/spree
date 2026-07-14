@@ -53,7 +53,7 @@ export function CategoryNav({ rootCategories, basePath }: CategoryNavProps) {
 
             {hasChildren && isOpen && (
               <div className="absolute top-full left-1/2 z-50 -translate-x-1/2 pt-4">
-                <div className="min-w-56 rounded-2xl border border-border/40 bg-white/95 p-5 shadow-xl backdrop-blur-xl">
+                <div className="min-w-56 rounded-2xl border border-border/40 bg-background/95 p-5 shadow-xl backdrop-blur-xl">
                   <ul className="flex flex-col gap-2.5">
                     {category.children?.map((child) => (
                       <li key={child.id}>

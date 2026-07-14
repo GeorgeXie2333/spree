@@ -16,5 +16,6 @@ set -a
 source .env.e2e
 set +a
 
-# Reuse the canonical dev command (port + flags) from package.json.
-exec pnpm --filter @cenwatch/storefront dev
+# Use the already-installed local binary so E2E never triggers a package
+# manager install or lockfile rewrite before starting the app.
+exec ./node_modules/.bin/next dev -p 3001 --turbopack

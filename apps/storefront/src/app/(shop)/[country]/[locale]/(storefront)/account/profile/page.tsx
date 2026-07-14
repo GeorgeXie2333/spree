@@ -6,12 +6,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { updateCustomer } from "@/lib/data/customer";
 
-const inputClassName = "rounded-xl border-border bg-white";
+const inputClassName = "rounded-xl border-border bg-background";
 
 function ProfileForm({
   user,
@@ -76,7 +76,7 @@ function ProfileForm({
 
       <div className="overflow-hidden rounded-[18px] bg-card">
         <form onSubmit={handleSubmit}>
-          <div className="space-y-6 p-6 sm:p-8">
+          <FieldGroup className="gap-6 p-6 sm:p-8">
             {error && (
               <Alert variant="destructive">
                 <CircleAlert />
@@ -178,7 +178,7 @@ function ProfileForm({
                 </p>
               </Field>
             )}
-          </div>
+          </FieldGroup>
 
           <div className="flex justify-end border-t border-border px-6 py-4 sm:px-8">
             <Button type="submit" disabled={saving}>

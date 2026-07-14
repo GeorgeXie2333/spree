@@ -7,12 +7,12 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { requestPasswordReset } from "@/lib/data/customer";
 import { extractBasePath } from "@/lib/utils/path";
 
-const inputClassName = "rounded-xl border-border bg-white";
+const inputClassName = "rounded-xl border-border bg-background";
 
 export default function ForgotPasswordPage() {
   const t = useTranslations("forgotPassword");
@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
         <div className="rounded-[18px] bg-card p-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-background">
             <CircleCheck className="h-6 w-6 text-green-600" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -105,37 +105,39 @@ export default function ForgotPasswordPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <form onSubmit={handleSubmit} className="mt-8">
+          <FieldGroup className="gap-4">
+            {error && (
+              <Alert variant="destructive">
+                <CircleAlert />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <Field>
-            <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
-            <Input
-              type="email"
-              id="email"
-              name="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-              className={inputClassName}
-            />
-          </Field>
+            <Field>
+              <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
+              <Input
+                type="email"
+                id="email"
+                name="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="you@example.com"
+                className={inputClassName}
+              />
+            </Field>
 
-          <Button
-            type="submit"
-            disabled={submitting}
-            size="lg"
-            className="w-full"
-          >
-            {submitting ? t("sending") : t("sendResetLink")}
-          </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              size="lg"
+              className="w-full"
+            >
+              {submitting ? t("sending") : t("sendResetLink")}
+            </Button>
+          </FieldGroup>
         </form>
 
         <p className="mt-8 text-center">

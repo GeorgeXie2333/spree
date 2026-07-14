@@ -15,12 +15,13 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { extractBasePath, getSafeRedirectPath } from "@/lib/utils/path";
 
-const inputClassName = "rounded-xl border-border bg-white";
+const inputClassName = "rounded-xl border-border bg-background";
 
 interface OverviewTile {
   href: string;
@@ -65,10 +66,10 @@ export default function AccountPage() {
   if (authLoading) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
-        <div className="animate-pulse space-y-4 rounded-[18px] bg-card p-8">
-          <div className="mx-auto h-8 w-1/2 rounded-xl bg-white/60" />
-          <div className="mx-auto h-4 w-3/4 rounded-xl bg-white/60" />
-          <div className="h-40 rounded-xl bg-white/60" />
+        <div className="flex flex-col gap-4 rounded-[18px] bg-card p-8">
+          <Skeleton className="mx-auto h-8 w-1/2 rounded-xl bg-primary-foreground/60" />
+          <Skeleton className="mx-auto h-4 w-3/4 rounded-xl bg-primary-foreground/60" />
+          <Skeleton className="h-40 rounded-xl bg-primary-foreground/60" />
         </div>
       </div>
     );
@@ -85,80 +86,82 @@ export default function AccountPage() {
             {t("signInDescription")}
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          <form onSubmit={handleSubmit} className="mt-8">
+            <FieldGroup className="gap-4">
+              {error && (
+                <Alert variant="destructive">
+                  <CircleAlert />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <Field>
-              <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
-              <Input
-                type="email"
-                id="email"
-                name="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                placeholder="you@example.com"
-                className={inputClassName}
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
-              <div className="relative">
+              <Field>
+                <FieldLabel htmlFor="email">{t("email")}</FieldLabel>
                 <Input
-                  type={showPassword ? "text" : "password"}
-                  id="password"
-                  name="current-password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  type="email"
+                  id="email"
+                  name="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="••••••••"
-                  className={`${inputClassName} pr-10`}
+                  placeholder="you@example.com"
+                  className={inputClassName}
                 />
-                <div className="absolute top-1/2 right-1 -translate-y-1/2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? t("hidePassword") : t("showPassword")
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </Button>
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="password">{t("password")}</FieldLabel>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="current-password"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    placeholder="••••••••"
+                    className={`${inputClassName} pr-10`}
+                  />
+                  <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword ? t("hidePassword") : t("showPassword")
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
+              </Field>
+
+              <div className="flex justify-end">
+                <Link
+                  href={`${basePath}/account/forgot-password`}
+                  className="text-sm text-link hover:underline"
+                >
+                  {t("forgotPassword")}
+                </Link>
               </div>
-            </Field>
 
-            <div className="flex justify-end">
-              <Link
-                href={`${basePath}/account/forgot-password`}
-                className="text-sm text-link hover:underline"
+              <Button
+                type="submit"
+                disabled={loading}
+                size="lg"
+                className="w-full"
               >
-                {t("forgotPassword")}
-              </Link>
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              size="lg"
-              className="w-full"
-            >
-              {loading ? t("signingIn") : t("signIn")}
-            </Button>
+                {loading ? t("signingIn") : t("signIn")}
+              </Button>
+            </FieldGroup>
           </form>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
@@ -215,7 +218,7 @@ export default function AccountPage() {
           <Link
             key={tile.href}
             href={tile.href}
-            className="group rounded-[18px] bg-card p-6 transition-colors duration-200 hover:bg-[#eeeef0]"
+            className="group rounded-[18px] bg-card p-6 transition-colors duration-200 hover:bg-card-hover"
           >
             <div className="text-foreground">{tile.icon}</div>
             <h2 className="mt-4 font-semibold tracking-tight text-foreground">

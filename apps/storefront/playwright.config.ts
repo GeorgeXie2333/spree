@@ -1,4 +1,18 @@
+import { existsSync, readFileSync } from "node:fs";
+import { parseEnv } from "node:util";
 import { defineConfig, devices } from "@playwright/test";
+
+const e2eEnv: Record<string, string> = {};
+
+if (existsSync(".env.e2e")) {
+  for (const [key, value] of Object.entries(
+    parseEnv(readFileSync(".env.e2e", "utf8")),
+  )) {
+    if (value !== undefined) {
+      e2eEnv[key] = value;
+    }
+  }
+}
 
 /**
  * Playwright config for the storefront E2E suite.
@@ -36,7 +50,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "./scripts/e2e/dev-with-env.sh",
+    command: "node node_modules/next/dist/bin/next dev -p 3001 --turbopack",
+    env: e2eEnv,
     url: "http://localhost:3001/us/en",
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

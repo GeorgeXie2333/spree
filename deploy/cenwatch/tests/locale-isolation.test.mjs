@@ -17,16 +17,19 @@ function read(path) {
   return readFileSync(path, 'utf8')
 }
 
-test('builds web and worker from the pinned Spree base image', () => {
-  assert.ok(existsSync(dockerfilePath), 'expected the derived Spree Dockerfile')
+test('derives web and worker from the pinned official Spree image', () => {
+  assert.ok(existsSync(dockerfilePath), 'expected the official-image Dockerfile')
 
   const dockerfile = read(dockerfilePath)
   const compose = read(composePath)
 
-  assert.match(dockerfile, /ARG SPREE_VERSION_TAG/)
+  assert.match(dockerfile, /ARG SPREE_VERSION_TAG=5\.5\.2/)
   assert.match(dockerfile, /FROM ghcr\.io\/spree\/spree:\$\{SPREE_VERSION_TAG\}/)
+  assert.doesNotMatch(dockerfile, /COPY spree\//)
+  assert.doesNotMatch(dockerfile, /COPY apps\/backend/)
   assert.match(compose, /image: cenwatch-spree:local/)
   assert.match(compose, /dockerfile: deploy\/cenwatch\/spree\.Dockerfile/)
+  assert.match(compose, /SPREE_VERSION_TAG: \$\{SPREE_VERSION_TAG:-5\.5\.2\}/)
 })
 
 test('isolates admin UI locale and Store API content locale', () => {
@@ -44,7 +47,7 @@ test('isolates admin UI locale and Store API content locale', () => {
   )
 })
 
-test('builds the derived backend before replacing Rails services', () => {
+test('builds the thin official-image layer before replacing Rails services', () => {
   const deployScript = read(deployScriptPath)
 
   assert.match(deployScript, /compose build --pull web worker/)

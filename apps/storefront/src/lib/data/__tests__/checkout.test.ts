@@ -82,7 +82,13 @@ describe("checkout server actions", () => {
 
     it("falls back to getOrder when cart is null (completed)", async () => {
       const completedOrder = { ...mockOrder, current_step: "complete" };
-      mockClient.carts.get.mockRejectedValue(new Error("Not found"));
+      const { SpreeError } = await import("@spree/sdk");
+      mockClient.carts.get.mockRejectedValue(
+        new SpreeError(
+          { error: { code: "not_found", message: "Not found" } },
+          404,
+        ),
+      );
       mockClient.orders.get.mockResolvedValue(completedOrder);
 
       const result = await getCheckoutOrder("order-1");
@@ -92,7 +98,13 @@ describe("checkout server actions", () => {
     });
 
     it("returns null when both cart and order fail", async () => {
-      mockClient.carts.get.mockRejectedValue(new Error("Not found"));
+      const { SpreeError } = await import("@spree/sdk");
+      mockClient.carts.get.mockRejectedValue(
+        new SpreeError(
+          { error: { code: "not_found", message: "Not found" } },
+          404,
+        ),
+      );
       mockClient.orders.get.mockRejectedValue(new Error("Not found"));
 
       const result = await getCheckoutOrder("bad-id");

@@ -73,7 +73,7 @@ export function ProductRail({
           size="icon-lg"
           onClick={() => scrollBy(-1)}
           aria-label={t("carouselPrev")}
-          className="absolute top-1/3 left-1 hidden -translate-y-1/2 bg-white/90 shadow-md backdrop-blur transition-opacity md:inline-flex"
+          className="absolute top-1/3 left-1 hidden -translate-y-1/2 bg-background/90 shadow-md backdrop-blur transition-opacity md:inline-flex"
         >
           <ChevronLeft className="size-5" />
         </Button>
@@ -84,7 +84,7 @@ export function ProductRail({
           size="icon-lg"
           onClick={() => scrollBy(1)}
           aria-label={t("carouselNext")}
-          className="absolute top-1/3 right-1 hidden -translate-y-1/2 bg-white/90 shadow-md backdrop-blur transition-opacity md:inline-flex"
+          className="absolute top-1/3 right-1 hidden -translate-y-1/2 bg-background/90 shadow-md backdrop-blur transition-opacity md:inline-flex"
         >
           <ChevronRight className="size-5" />
         </Button>

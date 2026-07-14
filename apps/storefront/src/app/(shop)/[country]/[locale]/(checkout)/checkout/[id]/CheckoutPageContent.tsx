@@ -24,6 +24,7 @@ import {
 import { PolicyConsent } from "@/components/policy/PolicyConsent";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useCheckout } from "@/contexts/CheckoutContext";
@@ -580,8 +581,16 @@ function CheckoutPageContentInner({
     }
 
     setProcessing(true);
-    await paymentRef.current.submit();
-    // PaymentSection handles setProcessing(false) on error internally
+    try {
+      const result = await paymentRef.current.submit();
+      if (result.error) {
+        setError(result.error);
+        setProcessing(false);
+      }
+    } catch {
+      setError(t("paymentError"));
+      setProcessing(false);
+    }
   };
 
   // Loading state — only shown when no initial data (client-side navigation).
@@ -589,13 +598,13 @@ function CheckoutPageContentInner({
   // we already know isAuthenticated from the server.
   if (loading || (!initialData && authLoading)) {
     return (
-      <div className="animate-pulse space-y-6">
-        <div className="h-8 bg-card rounded-lg w-1/3" />
-        <div className="h-4 bg-card rounded-lg w-1/4" />
-        <div className="space-y-4 mt-8">
-          <div className="h-12 bg-card rounded-xl" />
-          <div className="h-12 bg-card rounded-xl" />
-          <div className="h-12 bg-card rounded-xl" />
+      <div className="flex flex-col gap-6">
+        <Skeleton className="h-8 w-1/3 rounded-lg" />
+        <Skeleton className="h-4 w-1/4 rounded-lg" />
+        <div className="mt-2 flex flex-col gap-4">
+          <Skeleton className="h-12 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
+          <Skeleton className="h-12 rounded-xl" />
         </div>
       </div>
     );
@@ -645,6 +654,19 @@ function CheckoutPageContentInner({
         </Alert>
       )}
 
+      {!isAuthenticated && (
+        <div className="mb-4">
+          <PolicyConsent
+            checked={policyConsent}
+            onCheckedChange={(checked) => {
+              setPolicyConsent(checked);
+              if (checked) setPolicyError(false);
+            }}
+            error={policyError}
+          />
+        </div>
+      )}
+
       {/* Express checkout for guests */}
       {!isAuthenticated && parseFloat(cart.total) > 0 && (
         <div className={expressAvailable ? "mb-4" : ""}>
@@ -663,6 +685,9 @@ function CheckoutPageContentInner({
             onAvailabilityChange={setExpressAvailable}
             maxColumns={2}
             showDivider
+            requiresPolicyConsent={!isAuthenticated}
+            policyConsent={policyConsent}
+            showPolicyConsent={false}
           />
         </div>
       )}
@@ -680,6 +705,7 @@ function CheckoutPageContentInner({
           <AddressSection
             cart={cart}
             countries={countries}
+            marketCountryIso={urlCountry}
             savedAddresses={savedAddresses}
             isAuthenticated={isAuthenticated}
             signInUrl={`${basePath}/account?redirect=${encodeURIComponent(pathname)}`}
@@ -730,25 +756,12 @@ function CheckoutPageContentInner({
         </div>
 
         {/* Policy consent — guests only, authenticated users accepted at registration */}
-        {!isAuthenticated && (
-          <div className="mt-8">
-            <PolicyConsent
-              checked={policyConsent}
-              onCheckedChange={(checked) => {
-                setPolicyConsent(checked);
-                if (checked) setPolicyError(false);
-              }}
-              error={policyError}
-            />
-          </div>
-        )}
-
         {/* Pay now button */}
         <button
           type="button"
           onClick={validateAndPay}
           disabled={processing}
-          className="w-full mt-8 h-13 bg-primary text-primary-foreground text-base font-medium rounded-full hover:bg-[#0077ed] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+          className="mt-8 flex h-13 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary text-base font-medium text-primary-foreground transition-all duration-200 hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
         >
           {processing ? (
             <>

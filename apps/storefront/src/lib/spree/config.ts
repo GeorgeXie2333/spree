@@ -14,6 +14,7 @@ export function initSpreeNext(config: SpreeNextConfig): void {
   _client = createClient({
     baseUrl: config.baseUrl,
     publishableKey: config.publishableKey,
+    channel: config.channel,
   });
 }
 
@@ -25,7 +26,11 @@ export function getClient(): Client {
     const baseUrl = process.env.SPREE_API_URL;
     const publishableKey = process.env.SPREE_PUBLISHABLE_KEY;
     if (baseUrl && publishableKey) {
-      initSpreeNext({ baseUrl, publishableKey });
+      initSpreeNext({
+        baseUrl,
+        publishableKey,
+        channel: process.env.SPREE_CHANNEL_CODE || undefined,
+      });
     } else {
       throw new Error(
         "Spree client is not configured. Either call initSpreeNext() or set SPREE_API_URL and SPREE_PUBLISHABLE_KEY environment variables.",

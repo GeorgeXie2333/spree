@@ -119,10 +119,9 @@ test("guest can complete a checkout with a Stripe test card", async ({
 });
 
 async function fillAddress(page: Page) {
-  // The Country dropdown defaults alphabetically (Canada before US) — pick
-  // United States explicitly so the rest of the test data (NY state, ZIP
-  // 10001, US phone) is valid for the selected country.
-  await page.getByLabel(/country/i).selectOption({ label: "United States" });
+  // The /us/en market must preselect United States so the test data (NY
+  // state, ZIP 10001, US phone) is valid without correcting the form.
+  await expect(page.getByLabel(/country/i)).toHaveValue("US");
 
   await page
     .getByLabel(/first name/i)
@@ -143,7 +142,7 @@ async function fillAddress(page: Page) {
     .fill("10001");
   await page.getByLabel(/phone/i).first().fill("5555550100");
 
-  // With the country pinned to US the state field is always a <select>
+  // With the US market default the state field is always a <select>
   // (disabled while the states list loads). selectOption auto-waits for
   // the control to enable and for the option to be present.
   await page

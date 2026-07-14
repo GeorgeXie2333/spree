@@ -26,7 +26,7 @@ export function QuantityPicker({
       : "px-3 py-2 text-sm font-medium min-w-[2rem] text-center tabular-nums";
 
   return (
-    <div className="flex items-center border border-gray-300 rounded-lg px-0.5">
+    <div className="flex items-center rounded-lg border border-border px-0.5">
       <Button
         type="button"
         variant="ghost"

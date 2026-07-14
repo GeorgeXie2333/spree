@@ -26,8 +26,8 @@ export function LanguageSwitcher() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400">
-        <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted-foreground">
+        <div className="size-4 animate-spin rounded-full border-2 border-border border-t-transparent" />
       </div>
     );
   }
@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
           aria-label={`${tc("selectLanguage")}: ${currentLanguage.label}`}
         >
           <span className="font-medium">{currentLanguage.shortLabel}</span>
-          <ChevronDown className="w-4 h-4 text-gray-400" />
+          <ChevronDown className="size-4 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
 
@@ -58,7 +58,7 @@ export function LanguageSwitcher() {
               <span className="text-xs uppercase text-muted-foreground">
                 {option.locale}
               </span>
-              {isSelected && <Check className="w-4 h-4" />}
+              {isSelected && <Check className="size-4" />}
             </DropdownMenuItem>
           );
         })}

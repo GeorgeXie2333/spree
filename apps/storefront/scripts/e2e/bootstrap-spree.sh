@@ -19,6 +19,14 @@ readonly REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 readonly BACKEND_DIR="$REPO_ROOT/e2e-backend"
 readonly ENV_FILE="$REPO_ROOT/.env.e2e"
 readonly SPREE_URL="http://localhost:4000"
+readonly SKIP_STRIPE="${E2E_SKIP_STRIPE:-false}"
+readonly SPREE_CLI="$REPO_ROOT/node_modules/.bin/spree"
+
+if [[ ! -x "$SPREE_CLI" ]]; then
+  echo "Local @spree/cli executable not found at $SPREE_CLI." >&2
+  echo "Install the Storefront dependencies before running E2E bootstrap." >&2
+  exit 1
+fi
 
 # Stripe test-mode API keys. Both must come from the SAME Stripe sandbox
 # account — a mismatched pair makes Stripe.js fail to confirm the
@@ -35,25 +43,27 @@ readonly SPREE_URL="http://localhost:4000"
 # STRIPE_SECRET_KEY is a repository secret and STRIPE_PUBLISHABLE_KEY a
 # repository variable, both injected via the workflow env (see
 # .github/workflows/ci.yml).
-if [[ -z "${STRIPE_PUBLISHABLE_KEY:-}" || -z "${STRIPE_SECRET_KEY:-}" ]]; then
-  echo "STRIPE_PUBLISHABLE_KEY and STRIPE_SECRET_KEY must both be set." >&2
-  echo "Use a pk_test_.../sk_test_... pair from your own Stripe sandbox." >&2
-  echo "See script header for details." >&2
-  exit 1
-fi
+if [[ "$SKIP_STRIPE" != "true" ]]; then
+  if [[ -z "${STRIPE_PUBLISHABLE_KEY:-}" || -z "${STRIPE_SECRET_KEY:-}" ]]; then
+    echo "STRIPE_PUBLISHABLE_KEY and STRIPE_SECRET_KEY must both be set." >&2
+    echo "Use a pk_test_.../sk_test_... pair from your own Stripe sandbox." >&2
+    echo "For non-payment E2E only, set E2E_SKIP_STRIPE=true." >&2
+    exit 1
+  fi
 
-# Full-shape checks (not just prefix): a stray quote, space, or other
-# copy-paste artifact would otherwise flow into .env.e2e and break parsing.
-if [[ ! "$STRIPE_PUBLISHABLE_KEY" =~ ^pk_test_[A-Za-z0-9_]+$ ]]; then
-  echo "STRIPE_PUBLISHABLE_KEY must be a test-mode key (pk_test_...)." >&2
-  echo "Got: ${STRIPE_PUBLISHABLE_KEY:0:8}..." >&2
-  exit 1
-fi
+  # Full-shape checks (not just prefix): a stray quote, space, or other
+  # copy-paste artifact would otherwise flow into .env.e2e and break parsing.
+  if [[ ! "$STRIPE_PUBLISHABLE_KEY" =~ ^pk_test_[A-Za-z0-9_]+$ ]]; then
+    echo "STRIPE_PUBLISHABLE_KEY must be a test-mode key (pk_test_...)." >&2
+    echo "Got: ${STRIPE_PUBLISHABLE_KEY:0:8}..." >&2
+    exit 1
+  fi
 
-if [[ ! "$STRIPE_SECRET_KEY" =~ ^sk_test_[A-Za-z0-9_]+$ ]]; then
-  echo "STRIPE_SECRET_KEY must be a test-mode key (sk_test_...)." >&2
-  echo "Got: ${STRIPE_SECRET_KEY:0:8}..." >&2
-  exit 1
+  if [[ ! "$STRIPE_SECRET_KEY" =~ ^sk_test_[A-Za-z0-9_]+$ ]]; then
+    echo "STRIPE_SECRET_KEY must be a test-mode key (sk_test_...)." >&2
+    echo "Got: ${STRIPE_SECRET_KEY:0:8}..." >&2
+    exit 1
+  fi
 fi
 
 # @spree/cli looks for docker-compose.yml in the cwd, so all CLI calls
@@ -70,13 +80,13 @@ if ! curl -fsS --retry 60 --retry-delay 2 --retry-all-errors "$SPREE_URL/up" >/d
 fi
 
 echo "==> Seeding default Spree data (spree seed)"
-pnpm exec spree seed
+"$SPREE_CLI" seed
 
 echo "==> Creating the CenWatch E2E catalog"
 docker compose exec -T web bin/rails runner - <<'RUBY'
 store = Spree::Store.default
-taxonomy = Spree::Taxonomy.find_or_create_by!(name: 'CenWatch')
-category = Spree::Taxon.find_or_initialize_by(permalink: 'cenwatch')
+taxonomy = store.taxonomies.find_or_create_by!(name: 'CenWatch')
+category = Spree::Taxon.find_or_initialize_by(permalink: 'cenwatch-products')
 category.assign_attributes(
   name: 'CenWatch',
   taxonomy: taxonomy,
@@ -112,17 +122,18 @@ stock_item.set_count_on_hand(100)
 puts "OK: #{product.name} / #{variant.sku} in #{category.permalink}"
 RUBY
 
-# Vanilla Spree ships without any payment gateway configured. The Admin API
-# can create one declaratively, but that endpoint only exists from Spree 5.5
-# onward — this E2E targets the stable 5.4.3.1 image, so we fall back to a
-# `bin/rails runner` snippet that creates a SpreeStripe::Gateway row directly.
+# Vanilla Spree ships without any payment gateway configured. Use a direct
+# runner fixture so the E2E setup remains explicit and idempotent.
 # The script is idempotent: re-running matches the existing row by name
 # (where(...).first_or_initialize) and reapplies the same attributes.
 # The keys reach Ruby via the container environment (-e pass-through from
 # this script's env) rather than heredoc interpolation, so the Ruby source
 # never embeds them — the heredoc delimiter is quoted on purpose.
-echo "==> Configuring Stripe payment gateway on the default store"
-docker compose exec -T -e STRIPE_PUBLISHABLE_KEY -e STRIPE_SECRET_KEY web bin/rails runner - <<'RUBY'
+if [[ "$SKIP_STRIPE" == "true" ]]; then
+  echo "==> Skipping Stripe gateway setup (non-payment E2E mode)"
+else
+  echo "==> Configuring Stripe payment gateway on the default store"
+  docker compose exec -T -e STRIPE_PUBLISHABLE_KEY -e STRIPE_SECRET_KEY web bin/rails runner - <<'RUBY'
 store = Spree::Store.default
 gateway = Spree::PaymentMethod.where(type: 'SpreeStripe::Gateway', name: 'E2E Stripe').first_or_initialize
 gateway.assign_attributes(
@@ -141,9 +152,10 @@ gateway.assign_attributes(
 gateway.save!(validate: false)
 puts "OK: gateway #{gateway.id} (#{gateway.name})"
 RUBY
+fi
 
 echo "==> Creating publishable API key (spree api-key create)"
-api_key_output=$(pnpm exec spree api-key create --name E2E --type publishable)
+api_key_output=$("$SPREE_CLI" api-key create --name E2E --type publishable)
 
 publishable_key=$(printf '%s\n' "$api_key_output" | grep -oE 'pk_[A-Za-z0-9_-]+' | head -n 1)
 if [[ -z "$publishable_key" ]]; then
@@ -156,7 +168,7 @@ cat >"$ENV_FILE" <<EOF
 # Generated by scripts/e2e/bootstrap-spree.sh — DO NOT EDIT
 SPREE_API_URL=$SPREE_URL
 SPREE_PUBLISHABLE_KEY=$publishable_key
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$STRIPE_PUBLISHABLE_KEY
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
 EOF
 
 echo

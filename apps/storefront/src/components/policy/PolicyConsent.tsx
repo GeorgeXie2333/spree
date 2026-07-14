@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { CONSENT_POLICIES } from "@/lib/constants/policies";
 import { cn } from "@/lib/utils";
 import { extractBasePath } from "@/lib/utils/path";
@@ -12,29 +13,38 @@ interface PolicyConsentProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   error?: boolean;
+  disabled?: boolean;
+  id?: string;
 }
 
 export function PolicyConsent({
   checked,
   onCheckedChange,
   error,
+  disabled = false,
+  id = "policy-consent",
 }: PolicyConsentProps) {
   const pathname = usePathname();
   const basePath = extractBasePath(pathname);
   const t = useTranslations("checkout");
   const tp = useTranslations("policies");
+
   return (
-    <div className="flex items-start gap-2.5">
+    <Field
+      className="items-start"
+      orientation="horizontal"
+      data-invalid={error}
+      data-disabled={disabled}
+    >
       <Checkbox
-        id="policy-consent"
+        id={id}
         checked={checked}
         onCheckedChange={(value) => onCheckedChange(value === true)}
-        className={cn("mt-0.5", error && "border-red-500")}
+        disabled={disabled}
+        aria-invalid={error}
+        className="mt-0.5"
       />
-      <label
-        htmlFor="policy-consent"
-        className={cn("text-sm", error ? "text-red-500" : "text-gray-900")}
-      >
+      <FieldLabel htmlFor={id} className="text-sm">
         {t("iAgreeToThe")}{" "}
         {CONSENT_POLICIES.map((policy, index) => (
           <span key={policy.slug}>
@@ -50,7 +60,7 @@ export function PolicyConsent({
               className={cn(
                 "underline",
                 error
-                  ? "text-red-500 hover:text-red-700"
+                  ? "text-destructive hover:text-destructive/70"
                   : "text-primary hover:text-primary/70",
               )}
             >
@@ -58,7 +68,7 @@ export function PolicyConsent({
             </Link>
           </span>
         ))}
-      </label>
-    </div>
+      </FieldLabel>
+    </Field>
   );
 }

@@ -28,10 +28,12 @@ import {
 } from "@/components/checkout/StripePaymentForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCountryStates } from "@/hooks/useCountryStates";
 import { getCreditCards } from "@/lib/data/credit-cards";
 import { createCheckoutPaymentSession } from "@/lib/data/payment";
+import { cn } from "@/lib/utils";
 import {
   type AddressFormData,
   addressToFormData,
@@ -395,7 +397,13 @@ export function PaymentSection({
           }
 
           if (!selectedMethod) {
-            return { error: t("selectPaymentMethod") };
+            setProcessing(false);
+            return {
+              error:
+                paymentMethods.length === 0
+                  ? t("stripeUnavailable")
+                  : t("selectPaymentMethod"),
+            };
           }
 
           setProcessing(true);
@@ -448,6 +456,10 @@ export function PaymentSection({
                   clientSecret!,
                   selectedCardId!,
                   returnUrl,
+                  {
+                    stripeNotLoaded: t("stripeNotLoaded"),
+                    paymentProcessingError: t("paymentProcessingError"),
+                  },
                 );
                 error = result.error;
               } else {
@@ -487,6 +499,7 @@ export function PaymentSection({
     [
       isZeroAmount,
       selectedMethod,
+      paymentMethods.length,
       paymentSessionId,
       sessionExternalData,
       selectedCardId,
@@ -511,7 +524,7 @@ export function PaymentSection({
         </h2>
         <div className="mt-3 rounded-xl border border-border bg-card px-4 py-6 text-center">
           <Info
-            className="w-8 h-8 text-muted-foreground mx-auto mb-2"
+            className="mx-auto mb-2 size-8 text-muted-foreground"
             strokeWidth={1.5}
           />
           <p className="text-sm text-muted-foreground">
@@ -521,17 +534,21 @@ export function PaymentSection({
 
         {/* Billing address */}
         <div className="mt-4">
-          <label className="flex items-center gap-2.5 cursor-pointer">
+          <Field orientation="horizontal" className="items-center">
             <Checkbox
+              id="zero-use-shipping-for-billing"
               checked={useShippingForBilling}
               onCheckedChange={(checked) =>
                 handleUseShippingChange(checked === true)
               }
             />
-            <span className="text-sm text-foreground">
+            <FieldLabel
+              htmlFor="zero-use-shipping-for-billing"
+              className="cursor-pointer"
+            >
               {t("sameAsShipping")}
-            </span>
-          </label>
+            </FieldLabel>
+          </Field>
           {!useShippingForBilling && (
             <div className="mt-4">
               <AddressFormFields
@@ -558,7 +575,7 @@ export function PaymentSection({
         </h2>
         <div className="mt-3 rounded-xl border border-border bg-card px-4 py-8 text-center">
           <CreditCard
-            className="w-10 h-10 text-muted-foreground mx-auto mb-3"
+            className="mx-auto mb-3 size-10 text-muted-foreground"
             strokeWidth={1.5}
           />
           <p className="text-sm text-muted-foreground">
@@ -596,34 +613,44 @@ export function PaymentSection({
         value={effectiveSelectedMethodId}
         onValueChange={handleMethodSelect}
         className="gap-3 mt-3"
+        aria-label={t("paymentMethod")}
       >
         {paymentMethods.map((pm) => {
           const isSelected = pm.id === effectiveSelectedMethodId;
 
           return (
-            <div
+            <Field
               key={pm.id}
-              className={
+              className={cn(
                 isSelected
-                  ? "rounded-xl border-2 border-[#0071e3] bg-[#0071e3]/[0.04] overflow-hidden"
-                  : "rounded-xl border border-border bg-background overflow-hidden"
-              }
+                  ? "rounded-xl border-2 border-primary bg-primary/[0.04] overflow-hidden"
+                  : "rounded-xl border border-border bg-background overflow-hidden",
+              )}
             >
               {/* Method header row */}
               {hasMultipleMethods && (
-                <label className="flex items-center gap-3 px-4 py-3.5 cursor-pointer">
-                  <RadioGroupItem value={pm.id} />
+                <FieldLabel
+                  htmlFor={`payment-method-${pm.id}`}
+                  className="flex items-center gap-3 px-4 py-3.5 cursor-pointer"
+                >
+                  <RadioGroupItem
+                    id={`payment-method-${pm.id}`}
+                    value={pm.id}
+                  />
                   <span className="text-sm font-medium text-foreground">
                     {pm.name}
                   </span>
-                </label>
+                </FieldLabel>
               )}
 
               {/* Single method header (no radio, like current behavior) */}
               {!hasMultipleMethods && (
                 <div className="flex items-center justify-between px-4 py-3.5">
                   <div className="flex items-center gap-3">
-                    <RadioGroupItem value={pm.id} />
+                    <RadioGroupItem
+                      id={`payment-method-${pm.id}`}
+                      value={pm.id}
+                    />
                     <span className="text-sm font-medium text-foreground">
                       {pm.name}
                     </span>
@@ -655,61 +682,96 @@ export function PaymentSection({
                           handleCardSelect(val === "__new__" ? null : val)
                         }
                         className="gap-2"
+                        aria-label={t("paymentMethod")}
                       >
-                        {savedCards.map((card) => (
-                          <label
-                            key={card.id}
-                            className={
-                              selectedCardId === card.gateway_payment_profile_id
-                                ? "flex items-center gap-3 rounded-xl border-2 border-[#0071e3] bg-[#0071e3]/[0.04] px-4 py-3 cursor-pointer"
-                                : "flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 cursor-pointer hover:bg-card"
-                            }
-                          >
-                            <RadioGroupItem
-                              value={card.gateway_payment_profile_id ?? card.id}
-                            />
-                            <PaymentIcon
-                              type={getCardIconType(card.brand)}
-                              format="flatRounded"
-                              width={34}
-                            />
-                            <span className="text-sm text-foreground flex-1">
-                              {t("savedCardLabel", {
-                                brand: getCardLabel(card.brand),
-                                digits: card.last4,
-                              })}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {t("cardExpiry", {
-                                month: String(card.month).padStart(2, "0"),
-                                year: String(card.year),
-                              })}
-                            </span>
-                            {card.default && (
-                              <span className="text-[11px] font-medium text-muted-foreground bg-card px-1.5 py-0.5 rounded">
-                                {t("default")}
+                        {savedCards.map((card) => {
+                          const cardId =
+                            card.gateway_payment_profile_id ?? card.id;
+                          return (
+                            <Field
+                              key={card.id}
+                              orientation="horizontal"
+                              className={cn(
+                                "relative cursor-pointer items-center rounded-xl border px-4 py-3",
+                                selectedCardId ===
+                                  card.gateway_payment_profile_id
+                                  ? "border-2 border-primary bg-primary/[0.04]"
+                                  : "border-border bg-background hover:bg-card",
+                              )}
+                            >
+                              <RadioGroupItem
+                                id={`saved-card-${cardId}`}
+                                value={cardId}
+                                className="relative z-10"
+                              />
+                              <PaymentIcon
+                                type={getCardIconType(card.brand)}
+                                format="flatRounded"
+                                width={34}
+                              />
+                              <FieldLabel
+                                htmlFor={`saved-card-${cardId}`}
+                                className="absolute inset-0 cursor-pointer"
+                              >
+                                <span className="sr-only">
+                                  {t("savedCardLabel", {
+                                    brand: getCardLabel(card.brand),
+                                    digits: card.last4,
+                                  })}
+                                </span>
+                              </FieldLabel>
+                              <span className="flex-1 text-sm text-foreground">
+                                {t("savedCardLabel", {
+                                  brand: getCardLabel(card.brand),
+                                  digits: card.last4,
+                                })}
                               </span>
-                            )}
-                          </label>
-                        ))}
+                              <span className="text-xs text-muted-foreground">
+                                {t("cardExpiry", {
+                                  month: String(card.month).padStart(2, "0"),
+                                  year: String(card.year),
+                                })}
+                              </span>
+                              {card.default && (
+                                <span className="text-[11px] font-medium text-muted-foreground bg-card px-1.5 py-0.5 rounded">
+                                  {t("default")}
+                                </span>
+                              )}
+                            </Field>
+                          );
+                        })}
 
                         {/* Add new card */}
-                        <label
-                          className={
+                        <Field
+                          orientation="horizontal"
+                          className={cn(
+                            "relative cursor-pointer items-center rounded-xl border px-4 py-3",
                             isAddingNew
-                              ? "flex items-center gap-3 rounded-xl border-2 border-[#0071e3] bg-[#0071e3]/[0.04] px-4 py-3 cursor-pointer"
-                              : "flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-3 cursor-pointer hover:bg-card"
-                          }
+                              ? "border-2 border-primary bg-primary/[0.04]"
+                              : "border-border bg-background hover:bg-card",
+                          )}
                         >
-                          <RadioGroupItem value="__new__" />
+                          <RadioGroupItem
+                            id="saved-card-new"
+                            value="__new__"
+                            className="relative z-10"
+                          />
+                          <FieldLabel
+                            htmlFor="saved-card-new"
+                            className="absolute inset-0 cursor-pointer"
+                          >
+                            <span className="sr-only">
+                              {t("addNewPaymentMethod")}
+                            </span>
+                          </FieldLabel>
                           <CreditCard
-                            className="w-5 h-5 text-muted-foreground"
+                            className="size-5 text-muted-foreground"
                             strokeWidth={1.5}
                           />
                           <span className="text-sm text-foreground">
                             {t("addNewPaymentMethod")}
                           </span>
-                        </label>
+                        </Field>
                       </RadioGroup>
                     </div>
                   )}
@@ -717,7 +779,7 @@ export function PaymentSection({
                   {/* Shared: loading spinner */}
                   {loading && (
                     <div className="flex items-center justify-center py-10">
-                      <Loader2 className="animate-spin h-5 w-5 text-muted-foreground" />
+                      <Loader2 className="size-5 animate-spin text-muted-foreground" />
                       <span className="ml-2 text-sm text-muted-foreground">
                         {t("loadingPaymentForm")}
                       </span>
@@ -729,7 +791,7 @@ export function PaymentSection({
                     <div className="px-4 py-3">
                       <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3">
                         <p className="text-sm text-destructive flex items-center gap-2">
-                          <CircleAlert className="h-4 w-4 flex-shrink-0" />
+                          <CircleAlert className="size-4 shrink-0" />
                           {gatewayError}
                         </p>
                       </div>
@@ -758,22 +820,28 @@ export function PaymentSection({
                     })()}
                 </div>
               )}
-            </div>
+            </Field>
           );
         })}
       </RadioGroup>
 
       {/* Billing address — below payment box */}
       <div className="mt-4">
-        <label className="flex items-center gap-2.5 cursor-pointer">
+        <Field orientation="horizontal" className="items-center">
           <Checkbox
+            id="use-shipping-for-billing"
             checked={useShippingForBilling}
             onCheckedChange={(checked) =>
               handleUseShippingChange(checked === true)
             }
           />
-          <span className="text-sm text-foreground">{t("sameAsShipping")}</span>
-        </label>
+          <FieldLabel
+            htmlFor="use-shipping-for-billing"
+            className="cursor-pointer"
+          >
+            {t("sameAsShipping")}
+          </FieldLabel>
+        </Field>
 
         {!useShippingForBilling && (
           <div className="mt-4">

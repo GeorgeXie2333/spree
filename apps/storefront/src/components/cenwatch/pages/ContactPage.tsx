@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { siteConfig } from "@/lib/site-config";
@@ -30,53 +30,55 @@ export function ContactPage() {
         encType="text/plain"
         className="mx-auto mt-10 max-w-xl rounded-[18px] bg-card p-6 sm:p-8"
       >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="contact-name">{t("nameLabel")}</FieldLabel>
-            <Input
-              id="contact-name"
-              name="name"
-              autoComplete="name"
-              className="rounded-xl border-border bg-white"
-            />
-          </Field>
-          <Field>
-            <FieldLabel htmlFor="contact-email">{t("emailLabel")}</FieldLabel>
-            <Input
-              id="contact-email"
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              className="rounded-xl border-border bg-white"
-            />
-          </Field>
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="contact-phone">{t("phoneLabel")}</FieldLabel>
-            <Input
-              id="contact-phone"
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              className="rounded-xl border-border bg-white"
-            />
-          </Field>
-          <Field className="sm:col-span-2">
-            <FieldLabel htmlFor="contact-message">
-              {t("messageLabel")}
-            </FieldLabel>
-            <Textarea
-              id="contact-message"
-              name="message"
-              required
-              rows={6}
-              className="rounded-xl border-border bg-white"
-            />
-          </Field>
-        </div>
-        <Button type="submit" size="lg" className="mt-6">
-          {t("submit")}
-        </Button>
+        <FieldGroup className="gap-6">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field>
+              <FieldLabel htmlFor="contact-name">{t("nameLabel")}</FieldLabel>
+              <Input
+                id="contact-name"
+                name="name"
+                autoComplete="name"
+                className="rounded-xl border-border bg-background"
+              />
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="contact-email">{t("emailLabel")}</FieldLabel>
+              <Input
+                id="contact-email"
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                className="rounded-xl border-border bg-background"
+              />
+            </Field>
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="contact-phone">{t("phoneLabel")}</FieldLabel>
+              <Input
+                id="contact-phone"
+                name="phone"
+                type="tel"
+                autoComplete="tel"
+                className="rounded-xl border-border bg-background"
+              />
+            </Field>
+            <Field className="sm:col-span-2">
+              <FieldLabel htmlFor="contact-message">
+                {t("messageLabel")}
+              </FieldLabel>
+              <Textarea
+                id="contact-message"
+                name="message"
+                required
+                rows={6}
+                className="rounded-xl border-border bg-background"
+              />
+            </Field>
+          </div>
+          <Button type="submit" size="lg">
+            {t("submit")}
+          </Button>
+        </FieldGroup>
       </form>
     </div>
   );

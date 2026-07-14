@@ -199,9 +199,9 @@ function MobileOptionSection({
               >
                 <span
                   className={cn(
-                    "size-7 shrink-0 rounded-full border border-black/10 bg-cover bg-center transition-all duration-200",
+                    "size-7 shrink-0 rounded-full border border-border bg-cover bg-center transition-all duration-200",
                     isSelected &&
-                      "ring-2 ring-[#0071e3] ring-offset-2 ring-offset-background",
+                      "ring-2 ring-primary ring-offset-2 ring-offset-background",
                   )}
                   style={
                     option.image_url

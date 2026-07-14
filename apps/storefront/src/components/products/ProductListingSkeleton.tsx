@@ -1,5 +1,6 @@
 import { FilterBarSkeleton } from "@/components/products/filters";
 import { ProductGridSkeleton } from "@/components/products/ProductGridSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Full PLP skeleton mirroring the layout rendered by ProductListing:
@@ -14,15 +15,12 @@ export function ProductListingSkeleton() {
         {[...Array(3)].map((_, groupIndex) => (
           <div
             key={groupIndex}
-            className="animate-pulse border-b border-border/60 pb-5 pt-5 first:pt-0"
+            className="border-b border-border/60 pb-5 pt-5 first:pt-0"
           >
-            <div className="h-4 w-20 rounded-full bg-card" />
-            <div className="mt-4 space-y-3">
+            <Skeleton className="h-4 w-20 rounded-full" />
+            <div className="mt-4 flex flex-col gap-3">
               {[...Array(4)].map((_, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className="h-4 w-full rounded-full bg-card"
-                />
+                <Skeleton key={rowIndex} className="h-4 w-full rounded-full" />
               ))}
             </div>
           </div>

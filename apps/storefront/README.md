@@ -47,11 +47,21 @@ Optional services:
 ```env
 ORDER_TRACKING_API_URL=
 ORDER_TRACKING_API_SECRET=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+# Optional; only trust a header injected by an edge that removes client values.
+ORDER_TRACKING_TRUSTED_IP_HEADER=
 SPREE_WEBHOOK_SECRET=
 RESEND_API_KEY=
 EMAIL_FROM=CenWatch <orders@cenwatch.com>
 GTM_ID=
 ```
+
+Order tracking requires the Upstash REST credentials whenever
+`ORDER_TRACKING_API_URL` is set. Requests fail closed if the shared limiter is
+unavailable, preventing per-instance limit bypasses. Leave
+`ORDER_TRACKING_TRUSTED_IP_HEADER` empty unless the deployment proxy strips any
+incoming value and injects its own trusted client address.
 
 ## Development
 

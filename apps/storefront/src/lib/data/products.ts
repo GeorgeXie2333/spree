@@ -8,25 +8,34 @@ import type {
 import { cacheLife, cacheTag } from "next/cache";
 import { getAccessToken, getClient, getLocaleOptions } from "@/lib/spree";
 
+type CatalogOptions = { locale?: string; country?: string };
+
+function withCatalogToken(options: CatalogOptions, token?: string) {
+  return token ? { ...options, token } : options;
+}
+
 /**
  * Cached product list fetch. Cache key is derived from all function
  * arguments by Next.js "use cache":
  *
  * - locale/country: determines language and market-specific pricing
- * - userToken: per-user cache segmentation (separate arg, NOT passed to
- *   SDK). Authenticated users may see different prices (B2B, loyalty).
- *   Each user's JWT is unique so the cache is segmented per user.
+ * - userToken: both segments the cache and authenticates the SDK request.
+ *   Authenticated users may see different prices (B2B, loyalty), while each
+ *   distinct JWT receives a separate cache entry.
  *   Guest users pass undefined.
  */
 export async function cachedListProducts(
   params: ProductListParams | undefined,
-  options: { locale?: string; country?: string },
-  _userToken?: string,
+  options: CatalogOptions,
+  userToken?: string,
 ) {
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("products");
-  return getClient().products.list(params, options);
+  return getClient().products.list(
+    params,
+    withCatalogToken(options, userToken),
+  );
 }
 
 export async function getProducts(params?: ProductListParams) {
@@ -40,20 +49,23 @@ export async function getProducts(params?: ProductListParams) {
  *
  * - slugOrId, expand: identify the product and response shape
  * - locale/country: determines language and market-specific pricing
- * - userToken: per-user cache segmentation (separate arg, NOT passed to
- *   SDK). Authenticated users may see different prices (B2B, loyalty).
+ * - userToken: both segments the cache and authenticates the SDK request.
  *   Guest users pass undefined, so all guests share one entry.
  */
 export async function cachedGetProduct(
   slugOrId: string,
   expand: string[],
-  options: { locale?: string; country?: string },
-  _userToken?: string,
+  options: CatalogOptions,
+  userToken?: string,
 ) {
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("products", `product:${slugOrId}`);
-  return getClient().products.get(slugOrId, { expand }, options);
+  return getClient().products.get(
+    slugOrId,
+    { expand },
+    withCatalogToken(options, userToken),
+  );
 }
 
 export async function getProduct(
@@ -79,13 +91,16 @@ export async function getProductOrNull(
 
 async function cachedGetProductFilters(
   params: ProductFiltersParams | undefined,
-  options: { locale?: string; country?: string },
-  _userToken?: string,
+  options: CatalogOptions,
+  userToken?: string,
 ) {
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("product-filters");
-  return getClient().products.filters(params, options);
+  return getClient().products.filters(
+    params,
+    withCatalogToken(options, userToken),
+  );
 }
 
 export async function getProductFilters(params?: ProductFiltersParams) {

@@ -21,9 +21,8 @@ export async function getCheckoutOrder(cartId: string): Promise<Cart | null> {
 
 export async function getCompletedOrder(cartId: string): Promise<Cart | null> {
   // Fetch order directly — used by the order-placed page.
-  // Does not call getCart() first because getCart() auto-clears
-  // the cart token cookie on failure, which breaks getOrder()
-  // for guest users.
+  // Does not call getCart() first because confirmed completed carts clear
+  // their cookie there, which breaks getOrder() for guest users.
   return withFallback(
     async () => (await getOrder(cartId)) as unknown as Cart,
     null,

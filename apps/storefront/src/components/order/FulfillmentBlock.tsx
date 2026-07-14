@@ -1,6 +1,6 @@
 "use client";
 
-import type { Address, Fulfillment, Order } from "@spree/sdk";
+import type { Address, Fulfillment } from "@spree/sdk";
 import { CircleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { AddressBlock } from "@/components/order/AddressBlock";
@@ -8,12 +8,13 @@ import { LineItemCard } from "@/components/order/LineItemCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { getFulfillmentStatusColor } from "@/lib/utils/format";
+import type { FulfillmentLineItem } from "@/lib/utils/fulfillment";
 
 interface FulfillmentBlockProps {
   fulfillment: Fulfillment;
   shipAddress: Address | null;
   basePath: string;
-  lineItems: Order["items"];
+  lineItems: FulfillmentLineItem[];
 }
 
 export function FulfillmentBlock({
@@ -92,9 +93,14 @@ export function FulfillmentBlock({
       </div>
 
       <div className="divide-y divide-border">
-        {lineItems.map((item) => (
+        {lineItems.map(({ item, quantity, displayTotal }) => (
           <div key={item.id} className="px-6 py-4">
-            <LineItemCard item={item} basePath={basePath} />
+            <LineItemCard
+              item={item}
+              basePath={basePath}
+              quantity={quantity}
+              displayTotal={displayTotal}
+            />
           </div>
         ))}
       </div>

@@ -11,6 +11,7 @@ import { CouponCode } from "@/components/checkout/CouponCode";
 import { EmptyState } from "@/components/commerce/EmptyState";
 import { Button } from "@/components/ui/button";
 import { ProductImage } from "@/components/ui/product-image";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/contexts/CartContext";
 import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
 import { applyCode, removeDiscountCode } from "@/lib/data/checkout";
@@ -82,11 +83,11 @@ export default function CartPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-9 bg-card rounded-lg w-40 mb-8"></div>
-          <div className="space-y-4">
+        <div>
+          <Skeleton className="mb-8 h-9 w-40 rounded-lg" />
+          <div className="flex flex-col gap-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-card rounded-[18px]"></div>
+              <Skeleton key={i} className="h-24 rounded-[18px]" />
             ))}
           </div>
         </div>

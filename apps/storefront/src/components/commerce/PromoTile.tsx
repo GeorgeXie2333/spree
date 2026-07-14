@@ -29,7 +29,9 @@ export function PromoTile({
     <div
       className={cn(
         "relative flex min-h-44 flex-col overflow-hidden rounded-[18px] p-6 md:p-8",
-        dark ? "bg-[#0b0b0c] text-white" : "bg-card text-foreground",
+        dark
+          ? "bg-promo-dark text-primary-foreground"
+          : "bg-card text-foreground",
         className,
       )}
     >
@@ -40,7 +42,7 @@ export function PromoTile({
         <p
           className={cn(
             "mt-2 max-w-none text-sm md:text-base",
-            dark ? "text-white/70" : "text-muted-foreground",
+            dark ? "text-primary-foreground/70" : "text-muted-foreground",
           )}
         >
           {text}
@@ -51,7 +53,7 @@ export function PromoTile({
           href={href}
           className={cn(
             "text-sm font-medium hover:underline md:text-base",
-            dark ? "text-[#2997ff]" : "text-link",
+            dark ? "text-promo-link" : "text-link",
           )}
         >
           {ctaLabel}

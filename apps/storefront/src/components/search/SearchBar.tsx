@@ -14,6 +14,7 @@ import { ProductImage } from "@/components/ui/product-image";
 import { useStore } from "@/contexts/StoreContext";
 import { trackQuickSearch, trackSelectItem } from "@/lib/analytics/gtm";
 import { getProducts } from "@/lib/data/products";
+import { cn } from "@/lib/utils";
 
 interface SearchBarProps {
   basePath: string;
@@ -187,12 +188,13 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
       {/* Suggestions dropdown */}
       {showSuggestions && (
         <div
-          className="fixed left-0 right-0 mt-1 bg-white border-b border-gray-200 z-50"
+          data-testid="search-suggestions"
+          className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-xl border border-border bg-background shadow-lg"
           onMouseDown={handleSuggestionsMouseDown}
         >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div>
             {loading ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
+              <div className="p-4 text-center text-sm text-muted-foreground">
                 {t("searching")}
               </div>
             ) : suggestions.length > 0 ? (
@@ -209,27 +211,28 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
                       type="button"
                       onClick={() => handleSuggestionClick(product, index)}
                       tabIndex={-1}
-                      className={`w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors ${
-                        index === selectedIndex ? "bg-gray-50" : ""
-                      }`}
+                      className={cn(
+                        "flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-muted",
+                        index === selectedIndex && "bg-muted",
+                      )}
                     >
                       {/* Thumbnail */}
-                      <div className="relative w-10 h-10 bg-gray-100 rounded flex-shrink-0 overflow-hidden">
+                      <div className="relative size-10 shrink-0 overflow-hidden rounded bg-muted">
                         <ProductImage
                           src={product.thumbnail_url}
                           alt={product.name}
                           fill
                           className="object-cover"
-                          iconClassName="w-5 h-5"
+                          iconClassName="size-5"
                         />
                       </div>
                       {/* Name and price */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground">
                           {product.name}
                         </p>
                         {product.price?.display_amount && (
-                          <p className="text-sm text-gray-500">
+                          <p className="text-sm text-muted-foreground">
                             {product.price.display_amount}
                           </p>
                         )}
@@ -239,7 +242,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
                 ))}
                 {/* View all results link */}
                 {query.trim() && (
-                  <li className="border-t border-gray-100">
+                  <li className="border-t border-border">
                     <button
                       type="button"
                       onClick={() => {
@@ -249,7 +252,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
                         setIsOpen(false);
                         onNavigate?.();
                       }}
-                      className="w-full p-3 text-sm text-primary hover:bg-gray-50 text-center font-medium"
+                      className="w-full p-3 text-center text-sm font-medium text-primary hover:bg-muted"
                     >
                       {t("viewAllResultsFor", { query: query.trim() })}
                     </button>
@@ -257,7 +260,7 @@ export function SearchBar({ basePath, autoFocus, onNavigate }: SearchBarProps) {
                 )}
               </ul>
             ) : query.length >= 2 ? (
-              <div className="p-4 text-center text-gray-500 text-sm">
+              <div className="p-4 text-center text-sm text-muted-foreground">
                 {t("noProductsFound")}
               </div>
             ) : null}

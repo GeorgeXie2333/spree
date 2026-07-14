@@ -21,6 +21,7 @@ import {
 interface AddressSectionProps {
   cart: Cart;
   countries: Country[];
+  marketCountryIso: string;
   savedAddresses: Address[];
   isAuthenticated: boolean;
   signInUrl: string;
@@ -70,6 +71,7 @@ function buildAutoSaveHash(
 export function AddressSection({
   cart,
   countries,
+  marketCountryIso,
   savedAddresses: initialSavedAddresses,
   isAuthenticated,
   signInUrl,
@@ -96,12 +98,17 @@ export function AddressSection({
       : undefined;
 
   const [email, setEmail] = useState(cart.email || "");
-  const defaultCountryIso = countries[0]?.iso ?? "";
+  const defaultCountryIso =
+    countries.find(
+      (country) => country.iso.toLowerCase() === marketCountryIso.toLowerCase(),
+    )?.iso ??
+    countries[0]?.iso ??
+    "";
 
   const [shipAddress, setShipAddress] = useState<AddressFormData>(() => {
     if (initialSavedAddress) return addressToFormData(initialSavedAddress);
     const formData = addressToFormData(cart.shipping_address);
-    // Pre-fill country from the market's first country when empty
+    // Pre-fill country from the URL market when empty.
     if (!formData.country_iso && defaultCountryIso) {
       formData.country_iso = defaultCountryIso;
     }
@@ -292,7 +299,7 @@ export function AddressSection({
           </h2>
           {saving && (
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="size-3 animate-spin" />
               {tc("saving")}
             </span>
           )}

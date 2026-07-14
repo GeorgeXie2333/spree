@@ -1,5 +1,5 @@
 import type { State } from "@spree/sdk";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Fetches states for a country ISO code, with cleanup on unmount/change.
@@ -11,28 +11,39 @@ export function useCountryStates(
   enabled = true,
 ): [State[], boolean] {
   const [states, setStates] = useState<State[]>([]);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
+    const requestId = ++requestIdRef.current;
+
     if (!enabled || !countryIso) {
       setStates([]);
+      setIsPending(false);
       return;
     }
 
-    let cancelled = false;
+    let active = true;
+    setStates([]);
+    setIsPending(true);
 
-    startTransition(() => {
-      fetchStates(countryIso)
-        .then((result) => {
-          if (!cancelled) setStates(result);
-        })
-        .catch(() => {
-          if (!cancelled) setStates([]);
-        });
-    });
+    const isCurrentRequest = () => active && requestId === requestIdRef.current;
+
+    const loadStates = async () => {
+      try {
+        const result = await fetchStates(countryIso);
+        if (isCurrentRequest()) setStates(result);
+      } catch {
+        if (isCurrentRequest()) setStates([]);
+      } finally {
+        if (isCurrentRequest()) setIsPending(false);
+      }
+    };
+
+    void loadStates();
 
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, [countryIso, fetchStates, enabled]);
 

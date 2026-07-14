@@ -112,11 +112,11 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
 
   // Shared link style
   const linkClass =
-    "text-left text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg px-3 py-2.5 text-base transition-colors";
+    "rounded-lg px-3 py-2.5 text-left text-base text-foreground transition-colors hover:bg-muted";
 
   // Shared button style for items with children (chevron)
   const categoryButtonClass =
-    "flex items-center justify-between w-full text-left text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-lg px-3 py-2.5 text-base transition-colors";
+    "flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-base text-foreground transition-colors hover:bg-muted";
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -131,7 +131,7 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
         aria-label={open ? t("closeMenu") : t("openMenu")}
         className="relative z-[60] cursor-pointer"
       >
-        <div className="relative w-5 h-5">
+        <div className="relative size-5">
           {/* Top line: phase 1 translates to center, phase 2 rotates 45° */}
           <span
             className={`absolute left-0 right-0 h-0.5 bg-current rounded-full top-[2px] ${
@@ -178,7 +178,7 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
       >
         <SheetTitle className="sr-only">{t("menu")}</SheetTitle>
         {/* Menu header — changes based on active panel */}
-        <div className="hidden md:flex items-center justify-between px-4 h-16 border-b border-gray-200 relative overflow-hidden">
+        <div className="relative hidden h-16 items-center justify-between overflow-hidden border-b border-border px-4 md:flex">
           {/* "Menu" title — visible when on main panel */}
           <span
             className={`text-base font-semibold transition-all duration-300 ease-in-out absolute left-4 ${
@@ -193,13 +193,13 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
           <button
             type="button"
             onClick={popPanel}
-            className={`flex items-center gap-2 text-gray-700 hover:text-gray-900 text-base font-semibold cursor-pointer transition-all duration-300 ease-in-out absolute left-4 ${
+            className={`absolute left-4 flex cursor-pointer items-center gap-2 text-base font-semibold text-foreground transition-all duration-300 ease-in-out ${
               currentPanel.kind !== "main"
                 ? "translate-x-0 opacity-100"
                 : "translate-x-8 opacity-0 pointer-events-none"
             }`}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="size-5" />
             <span>
               {currentPanel.kind === "category"
                 ? currentPanel.category.name
@@ -224,7 +224,7 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
         <div className="relative flex-1 overflow-hidden">
           {/* Main menu panel */}
           <div
-            className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col bg-background transition-transform duration-300 ease-in-out ${
               animatedIndex === 0 && currentPanel.kind === "main"
                 ? "translate-x-0"
                 : "-translate-x-full"
@@ -248,8 +248,8 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
                 </Link>
               ))}
               {rootCategories.length > 0 && (
-                <div className="mt-3 border-t border-gray-200 pt-3">
-                  <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-gray-500">
+                <div className="mt-3 border-t border-border pt-3">
+                  <p className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                     {t("categories")}
                   </p>
                   <div className="flex flex-col gap-1">
@@ -264,7 +264,7 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
                           className={categoryButtonClass}
                         >
                           <span>{category.name}</span>
-                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                          <ChevronRight className="size-4 text-muted-foreground" />
                         </button>
                       ) : (
                         <Link
@@ -283,33 +283,33 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
             </nav>
 
             {/* Footer: Country/language switchers + Account */}
-            <SheetFooter className="lg:hidden border-t border-gray-200 pt-4 gap-2">
+            <SheetFooter className="gap-2 border-t border-border pt-4 lg:hidden">
               <button
                 type="button"
                 onClick={() => pushPanel({ kind: "country" })}
-                className="flex items-center gap-2 px-4 py-2.5 text-base text-gray-700 hover:bg-gray-50 rounded-lg transition-colors w-full"
+                className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-base text-foreground transition-colors hover:bg-muted"
               >
                 <CountryFlagIcon countryCode={country} />
                 <span className="font-medium">{country.toUpperCase()}</span>
-                <span className="text-gray-400">|</span>
+                <span className="text-muted-foreground">|</span>
                 <span>{currency}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                <ChevronRight className="ml-auto size-4 text-muted-foreground" />
               </button>
               <button
                 type="button"
                 onClick={() => pushPanel({ kind: "language" })}
-                className="flex items-center gap-2 px-4 py-2.5 text-base text-gray-700 hover:bg-gray-50 rounded-lg transition-colors w-full"
+                className="flex w-full items-center gap-2 rounded-lg px-4 py-2.5 text-base text-foreground transition-colors hover:bg-muted"
               >
                 <span className="font-medium">{currentLanguage.label}</span>
-                <span className="text-gray-400">|</span>
+                <span className="text-muted-foreground">|</span>
                 <span>{currentLanguage.shortLabel}</span>
-                <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
+                <ChevronRight className="ml-auto size-4 text-muted-foreground" />
               </button>
 
               <SheetClose asChild className="md:hidden">
                 <Link
                   href={`${basePath}/account`}
-                  className="flex items-center justify-center gap-2 mx-4 mb-2 px-4 py-3 bg-black text-white rounded-lg text-base font-medium hover:bg-gray-800 transition-colors"
+                  className="mx-4 mb-2 flex items-center justify-center gap-2 rounded-lg bg-foreground px-4 py-3 text-base font-medium text-primary-foreground transition-colors hover:bg-foreground/90"
                 >
                   <User className="size-5" />
                   <span>{t("myAccount")}</span>
@@ -330,16 +330,16 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
             return (
               <div
                 key={`cat-${panel.category.id}-${index}`}
-                className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out ${translateClass}`}
+                className={`absolute inset-0 flex flex-col bg-background transition-transform duration-300 ease-in-out ${translateClass}`}
               >
                 {/* Back button (mobile only — desktop uses the global header) */}
-                <div className="md:hidden px-4 py-2 border-b border-gray-200">
+                <div className="border-b border-border px-4 py-2 md:hidden">
                   <button
                     type="button"
                     onClick={popPanel}
-                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 py-2 text-base font-medium"
+                    className="flex items-center gap-2 py-2 text-base font-medium text-foreground"
                   >
-                    <ArrowLeft className="w-5 h-5" />
+                    <ArrowLeft className="size-5" />
                     <span>{panel.category.name}</span>
                   </button>
                 </div>
@@ -357,7 +357,7 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
                         className={categoryButtonClass}
                       >
                         <span>{child.name}</span>
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
+                        <ChevronRight className="size-4 text-muted-foreground" />
                       </button>
                     ) : (
                       <Link
@@ -373,11 +373,11 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
                 </nav>
 
                 {/* "View all" at the bottom */}
-                <div className="border-t border-gray-200 px-4 py-3">
+                <div className="border-t border-border px-4 py-3">
                   <Link
                     href={`${basePath}/c/${panel.category.permalink}`}
                     onClick={() => handleOpenChange(false)}
-                    className="block w-full text-center text-sm text-gray-500 hover:text-gray-900 py-2 transition-colors"
+                    className="block w-full py-2 text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {t("viewAllCategory", { category: panel.category.name })}
                   </Link>
@@ -388,20 +388,20 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
 
           {/* Country selector panel */}
           <div
-            className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col bg-background transition-transform duration-300 ease-in-out ${
               currentPanel.kind === "country" &&
               animatedIndex === panelStack.length - 1
                 ? "translate-x-0"
                 : "translate-x-full"
             }`}
           >
-            <div className="md:hidden px-4 py-2 border-b border-gray-200">
+            <div className="border-b border-border px-4 py-2 md:hidden">
               <button
                 type="button"
                 onClick={popPanel}
-                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 py-2 text-base font-medium"
+                className="flex items-center gap-2 py-2 text-base font-medium text-foreground"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="size-5" />
                 <span>{t("selectCountry")}</span>
               </button>
             </div>
@@ -416,18 +416,18 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
                     type="button"
                     disabled={isCountryNavigating}
                     onClick={() => handleCountrySelect(c)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base transition-colors ${
-                      isSelected
-                        ? "bg-gray-100 font-medium"
-                        : "hover:bg-gray-50"
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base transition-colors ${
+                      isSelected ? "bg-muted font-medium" : "hover:bg-muted"
                     }`}
                   >
                     <CountryFlagIcon countryCode={c.iso} />
                     <span className="flex-1 text-left font-medium">
                       {c.name}
                     </span>
-                    <span className="text-sm text-gray-500">{c.currency}</span>
-                    {isSelected && <Check className="w-4 h-4 text-black" />}
+                    <span className="text-sm text-muted-foreground">
+                      {c.currency}
+                    </span>
+                    {isSelected && <Check className="size-4 text-foreground" />}
                   </button>
                 );
               })}
@@ -436,20 +436,20 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
 
           {/* Language selector panel */}
           <div
-            className={`absolute inset-0 flex flex-col bg-white transition-transform duration-300 ease-in-out ${
+            className={`absolute inset-0 flex flex-col bg-background transition-transform duration-300 ease-in-out ${
               currentPanel.kind === "language" &&
               animatedIndex === panelStack.length - 1
                 ? "translate-x-0"
                 : "translate-x-full"
             }`}
           >
-            <div className="md:hidden px-4 py-2 border-b border-gray-200">
+            <div className="border-b border-border px-4 py-2 md:hidden">
               <button
                 type="button"
                 onClick={popPanel}
-                className="flex items-center gap-2 text-gray-700 hover:text-gray-900 py-2 text-base font-medium"
+                className="flex items-center gap-2 py-2 text-base font-medium text-foreground"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="size-5" />
                 <span>{tc("selectLanguage")}</span>
               </button>
             </div>
@@ -463,19 +463,17 @@ export function MobileMenu({ rootCategories, basePath }: MobileMenuProps) {
                     type="button"
                     disabled={isLocaleNavigating}
                     onClick={() => handleLocaleSelect(option.locale)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-base transition-colors ${
-                      isSelected
-                        ? "bg-gray-100 font-medium"
-                        : "hover:bg-gray-50"
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-3 text-base transition-colors ${
+                      isSelected ? "bg-muted font-medium" : "hover:bg-muted"
                     }`}
                   >
                     <span className="flex-1 text-left font-medium">
                       {option.label}
                     </span>
-                    <span className="text-sm uppercase text-gray-500">
+                    <span className="text-sm uppercase text-muted-foreground">
                       {option.locale}
                     </span>
-                    {isSelected && <Check className="w-4 h-4 text-black" />}
+                    {isSelected && <Check className="size-4 text-foreground" />}
                   </button>
                 );
               })}

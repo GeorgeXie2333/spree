@@ -2,16 +2,28 @@
 
 import type { Order } from "@spree/sdk";
 import { updateTag } from "next/cache";
-import { getCartOptions, getClient, requireCartId } from "@/lib/spree";
+import { getLocaleMessage } from "@/lib/i18n/messages";
+import {
+  getCartOptions,
+  getClient,
+  getLocaleOptions,
+  requireCartId,
+} from "@/lib/spree";
 import { getCart } from "./cart";
 import { getOrder } from "./orders";
 import { actionResult } from "./utils";
+
+async function getCheckoutTranslations() {
+  const { locale } = await getLocaleOptions();
+  return (key: string) => getLocaleMessage(locale, `checkout.${key}`);
+}
 
 export async function createCheckoutPaymentSession(
   cartId: string,
   paymentMethodId: string,
   externalData?: Record<string, unknown>,
 ) {
+  const t = await getCheckoutTranslations();
   return actionResult(async () => {
     const options = await getCartOptions();
     const id = await requireCartId();
@@ -25,7 +37,7 @@ export async function createCheckoutPaymentSession(
     );
     updateTag("checkout");
     return { session };
-  }, "Failed to create payment session");
+  }, t("failedToCreateSession"));
 }
 
 /**
@@ -36,6 +48,7 @@ export async function createDirectPayment(
   cartId: string,
   paymentMethodId: string,
 ) {
+  const t = await getCheckoutTranslations();
   return actionResult(async () => {
     const options = await getCartOptions();
     const id = await requireCartId();
@@ -46,7 +59,7 @@ export async function createDirectPayment(
     );
     updateTag("checkout");
     return { payment };
-  }, "Failed to create payment");
+  }, t("failedToCreatePayment"));
 }
 
 export async function completeCheckoutPaymentSession(
@@ -54,6 +67,7 @@ export async function completeCheckoutPaymentSession(
   sessionId: string,
   params?: { session_result?: string; external_data?: Record<string, unknown> },
 ) {
+  const t = await getCheckoutTranslations();
   return actionResult(async () => {
     const options = await getCartOptions();
     const id = await requireCartId();
@@ -65,7 +79,7 @@ export async function completeCheckoutPaymentSession(
     );
     updateTag("checkout");
     return { session };
-  }, "Failed to complete payment session");
+  }, t("failedToCompletePaymentSession"));
 }
 
 /**
@@ -74,6 +88,7 @@ export async function completeCheckoutPaymentSession(
  * HTTP status alone is never proof that checkout completed.
  */
 export async function completeCheckoutOrder(cartId: string) {
+  const t = await getCheckoutTranslations();
   try {
     const options = await getCartOptions();
     const order: Order = await getClient().carts.complete(cartId, options);
@@ -91,7 +106,7 @@ export async function completeCheckoutOrder(cartId: string) {
     return {
       success: false as const,
       error:
-        error instanceof Error ? error.message : "Failed to complete order",
+        error instanceof Error ? error.message : t("failedToCompleteOrder"),
     };
   }
 }
@@ -107,6 +122,7 @@ export async function confirmPaymentAndCompleteCart(
 ): Promise<
   { success: true; order: unknown } | { success: false; error: string }
 > {
+  const t = await getCheckoutTranslations();
   try {
     // Use explicit cartId — cookies may have been cleared during offsite redirect
     const cart = await getCart(cartId);
@@ -118,7 +134,7 @@ export async function confirmPaymentAndCompleteCart(
         ? { success: true, order: completedOrder }
         : {
             success: false,
-            error: "Unable to verify that the order was completed.",
+            error: t("unableToVerifyOrderCompletion"),
           };
     }
 
@@ -138,7 +154,7 @@ export async function confirmPaymentAndCompleteCart(
       if (completeResult.status === "failed") {
         return {
           success: false,
-          error: "Payment was not successful. Please try again.",
+          error: t("paymentWasNotSuccessful"),
         };
       }
     }
@@ -152,9 +168,7 @@ export async function confirmPaymentAndCompleteCart(
     return {
       success: false,
       error:
-        error instanceof Error
-          ? error.message
-          : "Failed to confirm payment. Please try again.",
+        error instanceof Error ? error.message : t("failedToConfirmPayment"),
     };
   }
 }

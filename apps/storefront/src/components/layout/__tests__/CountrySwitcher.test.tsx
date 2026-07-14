@@ -4,9 +4,10 @@ import { CountrySwitcher } from "@/components/layout/CountrySwitcher";
 import { useCountrySwitch } from "@/hooks/useCountrySwitch";
 
 vi.mock("next-intl", () => ({
-  useTranslations: () => (key: string) =>
+  useTranslations: () => (key: string, values?: { country?: string }) =>
     ({
       selectCountry: "Select Country",
+      countryFlag: `${values?.country} flag`,
     })[key] ?? key,
 }));
 

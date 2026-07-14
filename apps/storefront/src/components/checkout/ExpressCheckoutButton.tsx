@@ -14,9 +14,12 @@ import type {
   StripeExpressCheckoutElementShippingAddressChangeEvent,
   StripeExpressCheckoutElementShippingRateChangeEvent,
 } from "@stripe/stripe-js";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PolicyConsent } from "@/components/policy/PolicyConsent";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   expressCheckoutCreateSession,
   expressCheckoutFinalize,
@@ -24,6 +27,8 @@ import {
   expressCheckoutResolveShipping,
   expressCheckoutSelectRates,
 } from "@/lib/data/express-checkout-flow";
+import { cn } from "@/lib/utils";
+import { cacheCompletedOrder } from "@/lib/utils/completed-order-cache";
 import {
   buildLineItems,
   buildShippingRateMap,
@@ -40,6 +45,16 @@ export interface ExpressCheckoutButtonProps {
   onAvailabilityChange?: (available: boolean) => void;
   maxColumns?: number;
   showDivider?: boolean;
+  requiresPolicyConsent?: boolean;
+  policyConsent?: boolean;
+  showPolicyConsent?: boolean;
+}
+
+interface ExpressCheckoutResolvedProps extends ExpressCheckoutButtonProps {
+  requiresPolicyConsent: boolean;
+  policyConsent: boolean;
+  onPolicyConsentChange: (checked: boolean) => void;
+  showPolicyConsent: boolean;
 }
 
 function ExpressCheckoutInner({
@@ -50,11 +65,16 @@ function ExpressCheckoutInner({
   onAvailabilityChange,
   maxColumns = 1,
   showDivider = true,
-}: ExpressCheckoutButtonProps) {
+  requiresPolicyConsent,
+  policyConsent,
+  onPolicyConsentChange,
+  showPolicyConsent,
+}: ExpressCheckoutResolvedProps) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
   const t = useTranslations("expressCheckout");
+  const tc = useTranslations("checkout");
   const [available, setAvailable] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
@@ -210,6 +230,12 @@ function ExpressCheckoutInner({
     async (event: StripeExpressCheckoutElementConfirmEvent) => {
       if (isConfirmingRef.current) return;
 
+      if (requiresPolicyConsent && !policyConsent) {
+        setError(tc("policyConsentRequired"));
+        event.paymentFailed({ reason: "fail" });
+        return;
+      }
+
       if (!stripe || !elements) {
         event.paymentFailed({ reason: "fail" });
         return;
@@ -252,7 +278,7 @@ function ExpressCheckoutInner({
         const billAddr = billing?.address || shipping?.address;
 
         if (!shipAddr || !billAddr) {
-          fail("invalid_shipping_address", "Missing address");
+          fail("invalid_shipping_address", t("missingAddress"));
           return;
         }
 
@@ -272,7 +298,7 @@ function ExpressCheckoutInner({
         if (submitResult.error) {
           fail(
             "fail",
-            submitResult.error.message || "Payment submission failed",
+            submitResult.error.message || t("paymentSubmissionFailed"),
           );
           return;
         }
@@ -282,7 +308,7 @@ function ExpressCheckoutInner({
         if (pmError || !paymentMethod) {
           fail(
             "invalid_payment_data",
-            pmError?.message || "Failed to create payment method",
+            pmError?.message || t("failedToCreatePaymentMethod"),
           );
           return;
         }
@@ -293,7 +319,7 @@ function ExpressCheckoutInner({
           (pm) => pm.session_required,
         );
         if (!sessionPaymentMethod) {
-          fail("fail", "No payment method available");
+          fail("fail", t("noPaymentMethodAvailable"));
           return;
         }
 
@@ -308,7 +334,7 @@ function ExpressCheckoutInner({
             "fail",
             !sessionResult.success
               ? sessionResult.error
-              : "Failed to create payment session",
+              : t("failedToCreatePaymentSession"),
           );
           return;
         }
@@ -318,7 +344,7 @@ function ExpressCheckoutInner({
         const sessionId = sessionResult.session.id;
 
         if (!clientSecret) {
-          fail("fail", "Failed to initialize payment");
+          fail("fail", t("failedToInitializePayment"));
           return;
         }
 
@@ -333,7 +359,7 @@ function ExpressCheckoutInner({
         });
 
         if (confirmError) {
-          fail("fail", confirmError.message || "Payment confirmation failed");
+          fail("fail", confirmError.message || t("paymentConfirmationFailed"));
           return;
         }
         stripePaymentConfirmed = true;
@@ -344,18 +370,22 @@ function ExpressCheckoutInner({
             sessionId,
           );
           if (!finalizeResult.success) {
-            console.warn(
-              "Express checkout finalization failed (payment confirmed, backend will reconcile):",
-              finalizeResult.error,
-            );
+            fail("fail", finalizeResult.error);
+            return;
           } else if (finalizeResult.order) {
-            const { cacheCompletedOrder } = await import(
-              "@/lib/utils/completed-order-cache"
-            );
             cacheCompletedOrder(orderId, finalizeResult.order);
+          } else {
+            fail("fail", t("orderCompletionUnconfirmed"));
+            return;
           }
-        } catch (_completeErr) {
-          /* non-blocking — backend will reconcile */
+        } catch (completeErr) {
+          fail(
+            "fail",
+            completeErr instanceof Error
+              ? completeErr.message
+              : t("finalizationFailed"),
+          );
+          return;
         }
 
         router.push(`${basePath}/order-placed/${orderId}`);
@@ -367,8 +397,7 @@ function ExpressCheckoutInner({
           isConfirmingRef.current = false;
         }
       } catch (err) {
-        const msg =
-          err instanceof Error ? err.message : "An unexpected error occurred";
+        const msg = err instanceof Error ? err.message : t("unexpectedError");
         fail("fail", msg);
       }
     },
@@ -381,6 +410,10 @@ function ExpressCheckoutInner({
       onComplete,
       router,
       updateProcessing,
+      t,
+      tc,
+      requiresPolicyConsent,
+      policyConsent,
     ],
   );
 
@@ -391,8 +424,19 @@ function ExpressCheckoutInner({
 
   if (available === false) return null;
 
+  const walletDisabled = requiresPolicyConsent && !policyConsent;
+
   return (
     <div className="w-full">
+      {available === true && requiresPolicyConsent && showPolicyConsent && (
+        <div className="mb-3">
+          <PolicyConsent
+            id={`express-policy-consent-${cart.id}`}
+            checked={policyConsent}
+            onCheckedChange={onPolicyConsentChange}
+          />
+        </div>
+      )}
       {/* Shared container — smoothly transitions between buttons and finalizing state */}
       <div className="relative overflow-hidden">
         {/* Finalizing overlay — fades in on top of the button area */}
@@ -401,7 +445,7 @@ function ExpressCheckoutInner({
             processing ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         >
-          <div className="w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          <Loader2 className="size-10 animate-spin text-primary" />
           <p className="mt-4 text-sm font-medium text-foreground">
             {t("finalizingPayment")}
           </p>
@@ -417,14 +461,18 @@ function ExpressCheckoutInner({
                 : "opacity-0 pointer-events-none"
             }`}
           >
-            <div className="w-5 h-5 border-2 border-border border-t-muted-foreground rounded-full animate-spin" />
+            <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
 
           {/* Buttons — always mounted so Stripe can init, fade in when ready */}
           <div
-            className={`transition-opacity duration-300 ease-out ${
-              available === true && !processing ? "opacity-100" : "opacity-0"
-            }`}
+            inert={walletDisabled ? true : undefined}
+            aria-disabled={walletDisabled}
+            className={cn(
+              "transition-opacity duration-300 ease-out",
+              available === true && !processing ? "opacity-100" : "opacity-0",
+              walletDisabled && "pointer-events-none opacity-50",
+            )}
           >
             <ExpressCheckoutElement
               options={{
@@ -484,7 +532,11 @@ function ExpressCheckoutWithElements({
   onAvailabilityChange,
   maxColumns,
   showDivider,
-}: ExpressCheckoutButtonProps) {
+  requiresPolicyConsent,
+  policyConsent,
+  onPolicyConsentChange,
+  showPolicyConsent,
+}: ExpressCheckoutResolvedProps) {
   const currency = cart.currency.toLowerCase();
 
   // Use refs for amount/currency so Elements options stays stable
@@ -518,6 +570,10 @@ function ExpressCheckoutWithElements({
         onAvailabilityChange={onAvailabilityChange}
         maxColumns={maxColumns}
         showDivider={showDivider}
+        requiresPolicyConsent={requiresPolicyConsent}
+        policyConsent={policyConsent}
+        onPolicyConsentChange={onPolicyConsentChange}
+        showPolicyConsent={showPolicyConsent}
       />
     </Elements>
   );
@@ -525,6 +581,19 @@ function ExpressCheckoutWithElements({
 
 export function ExpressCheckoutButton(props: ExpressCheckoutButtonProps) {
   const { onAvailabilityChange } = props;
+  const { user, loading } = useAuth();
+  const [internalPolicyConsent, setInternalPolicyConsent] = useState(false);
+  const requiresPolicyConsent = props.requiresPolicyConsent ?? !user;
+  const isControlled = props.policyConsent !== undefined;
+  const policyConsent = props.policyConsent ?? internalPolicyConsent;
+  const showPolicyConsent = props.showPolicyConsent ?? !isControlled;
+
+  const handlePolicyConsentChange = useCallback(
+    (checked: boolean) => {
+      if (!isControlled) setInternalPolicyConsent(checked);
+    },
+    [isControlled],
+  );
 
   useEffect(() => {
     if (!isStripeConfigured) {
@@ -536,5 +605,15 @@ export function ExpressCheckoutButton(props: ExpressCheckoutButtonProps) {
     return null;
   }
 
-  return <ExpressCheckoutWithElements {...props} />;
+  if (loading) return null;
+
+  return (
+    <ExpressCheckoutWithElements
+      {...props}
+      requiresPolicyConsent={requiresPolicyConsent}
+      policyConsent={policyConsent}
+      onPolicyConsentChange={handlePolicyConsentChange}
+      showPolicyConsent={showPolicyConsent}
+    />
+  );
 }

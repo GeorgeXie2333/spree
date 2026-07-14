@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/contexts/AuthContext";
 import { extractBasePath } from "@/lib/utils/path";
 
@@ -22,11 +23,11 @@ function getNavItems(t: ReturnType<typeof useTranslations<"account">>): {
 
 function ContentSkeleton() {
   return (
-    <div className="animate-pulse space-y-4">
-      <div className="h-8 w-1/3 rounded-xl bg-card" />
-      <div className="h-4 w-2/3 rounded-xl bg-card" />
-      <div className="h-32 rounded-[18px] bg-card" />
-      <div className="h-32 rounded-[18px] bg-card" />
+    <div className="flex flex-col gap-4">
+      <Skeleton className="h-8 w-1/3 rounded-xl" />
+      <Skeleton className="h-4 w-2/3 rounded-xl" />
+      <Skeleton className="h-32 rounded-[18px]" />
+      <Skeleton className="h-32 rounded-[18px]" />
     </div>
   );
 }
@@ -71,9 +72,9 @@ function AccountShell({
           <div className="sticky top-[100px] flex flex-col gap-6">
             <div>
               {isLoading ? (
-                <div className="animate-pulse space-y-2">
-                  <div className="h-4 w-24 rounded bg-card" />
-                  <div className="h-3 w-36 rounded bg-card" />
+                <div className="flex flex-col gap-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-3 w-36" />
                 </div>
               ) : (
                 <>
@@ -193,10 +194,10 @@ export default function AccountLayout({
     if (isAuthPage || isMainAccountPage) {
       return (
         <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
-          <div className="animate-pulse space-y-4 rounded-[18px] bg-card p-8">
-            <div className="mx-auto h-8 w-1/2 rounded-xl bg-white/60" />
-            <div className="mx-auto h-4 w-3/4 rounded-xl bg-white/60" />
-            <div className="h-40 rounded-xl bg-white/60" />
+          <div className="flex flex-col gap-4 rounded-[18px] bg-card p-8">
+            <Skeleton className="mx-auto h-8 w-1/2 rounded-xl bg-primary-foreground/60" />
+            <Skeleton className="mx-auto h-4 w-3/4 rounded-xl bg-primary-foreground/60" />
+            <Skeleton className="h-40 rounded-xl bg-primary-foreground/60" />
           </div>
         </div>
       );

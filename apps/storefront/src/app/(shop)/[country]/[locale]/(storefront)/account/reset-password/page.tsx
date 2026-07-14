@@ -7,12 +7,12 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { resetPassword } from "@/lib/data/customer";
 import { extractBasePath } from "@/lib/utils/path";
 
-const inputClassName = "rounded-xl border-border bg-white";
+const inputClassName = "rounded-xl border-border bg-background";
 
 export default function ResetPasswordPage() {
   const t = useTranslations("resetPassword");
@@ -87,7 +87,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="mx-auto max-w-md px-4 py-16 sm:px-6 lg:px-8">
         <div className="rounded-[18px] bg-card p-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white">
+          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-background">
             <CircleCheck className="h-6 w-6 text-green-600" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -120,96 +120,98 @@ export default function ResetPasswordPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-          {error && (
-            <Alert variant="destructive">
-              <CircleAlert />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+        <form onSubmit={handleSubmit} className="mt-8">
+          <FieldGroup className="gap-4">
+            {error && (
+              <Alert variant="destructive">
+                <CircleAlert />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          <Field>
-            <FieldLabel htmlFor="password">{t("newPassword")}</FieldLabel>
-            <div className="relative">
-              <Input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                placeholder="••••••••"
-                className={`${inputClassName} pr-10`}
-              />
-              <div className="absolute top-1/2 right-1 -translate-y-1/2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={
-                    showPassword ? ta("hidePassword") : ta("showPassword")
-                  }
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </Button>
+            <Field>
+              <FieldLabel htmlFor="password">{t("newPassword")}</FieldLabel>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  className={`${inputClassName} pr-10`}
+                />
+                <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword ? ta("hidePassword") : ta("showPassword")
+                    }
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Field>
+            </Field>
 
-          <Field>
-            <FieldLabel htmlFor="passwordConfirmation">
-              {t("confirmPassword")}
-            </FieldLabel>
-            <div className="relative">
-              <Input
-                type={showPasswordConfirmation ? "text" : "password"}
-                id="passwordConfirmation"
-                autoComplete="new-password"
-                value={passwordConfirmation}
-                onChange={(e) => setPasswordConfirmation(e.target.value)}
-                required
-                minLength={6}
-                placeholder="••••••••"
-                className={`${inputClassName} pr-10`}
-              />
-              <div className="absolute top-1/2 right-1 -translate-y-1/2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() =>
-                    setShowPasswordConfirmation(!showPasswordConfirmation)
-                  }
-                  aria-label={
-                    showPasswordConfirmation
-                      ? ta("hidePassword")
-                      : ta("showPassword")
-                  }
-                >
-                  {showPasswordConfirmation ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </Button>
+            <Field>
+              <FieldLabel htmlFor="passwordConfirmation">
+                {t("confirmPassword")}
+              </FieldLabel>
+              <div className="relative">
+                <Input
+                  type={showPasswordConfirmation ? "text" : "password"}
+                  id="passwordConfirmation"
+                  autoComplete="new-password"
+                  value={passwordConfirmation}
+                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  className={`${inputClassName} pr-10`}
+                />
+                <div className="absolute top-1/2 right-1 -translate-y-1/2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() =>
+                      setShowPasswordConfirmation(!showPasswordConfirmation)
+                    }
+                    aria-label={
+                      showPasswordConfirmation
+                        ? ta("hidePassword")
+                        : ta("showPassword")
+                    }
+                  >
+                    {showPasswordConfirmation ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </Field>
+            </Field>
 
-          <Button
-            type="submit"
-            disabled={submitting}
-            size="lg"
-            className="w-full"
-          >
-            {submitting ? t("resetting") : t("resetPassword")}
-          </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              size="lg"
+              className="w-full"
+            >
+              {submitting ? t("resetting") : t("resetPassword")}
+            </Button>
+          </FieldGroup>
         </form>
 
         <p className="mt-8 text-center">

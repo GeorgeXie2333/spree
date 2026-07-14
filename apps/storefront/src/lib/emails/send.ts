@@ -12,7 +12,18 @@ interface SendEmailOptions {
   idempotencyKey?: string;
 }
 
-const isDev = process.env.NODE_ENV === "development";
+export class EmailDeliveryError extends Error {
+  readonly retryable = true;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "EmailDeliveryError";
+  }
+}
+
+function isDevelopment(): boolean {
+  return process.env.NODE_ENV === "development";
+}
 
 export async function sendEmail({
   to,
@@ -21,12 +32,26 @@ export async function sendEmail({
   from,
   idempotencyKey,
 }: SendEmailOptions) {
-  if (isDev || !process.env.RESEND_API_KEY) {
+  if (isDevelopment()) {
     await sendEmailDev({ to, subject, react, from });
     return;
   }
 
-  await sendEmailResend({ to, subject, react, from, idempotencyKey });
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    throw new EmailDeliveryError(
+      "Email delivery is not configured: RESEND_API_KEY is required outside development",
+    );
+  }
+
+  await sendEmailResend({
+    to,
+    subject,
+    react,
+    from,
+    idempotencyKey,
+    resendApiKey,
+  });
 }
 
 /**
@@ -65,9 +90,10 @@ async function sendEmailResend({
   react,
   from,
   idempotencyKey,
-}: SendEmailOptions) {
+  resendApiKey,
+}: SendEmailOptions & { resendApiKey: string }) {
   const { Resend } = await import("resend");
-  const resend = new Resend(process.env.RESEND_API_KEY);
+  const resend = new Resend(resendApiKey);
   const fromAddress = from || getStoreEmailFrom();
 
   if (!from && isStoreEmailFromFallback()) {

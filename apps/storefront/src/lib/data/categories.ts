@@ -5,6 +5,11 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getAccessToken, getClient, getLocaleOptions } from "@/lib/spree";
 
 const TOP_LEVEL_CATEGORY_LIMIT = 100;
+type CatalogOptions = { locale?: string; country?: string };
+
+function withCatalogToken(options: CatalogOptions, token?: string) {
+  return token ? { ...options, token } : options;
+}
 
 function isUnconfiguredSpreeClient(error: unknown): boolean {
   return (
@@ -16,12 +21,17 @@ function isUnconfiguredSpreeClient(error: unknown): boolean {
 async function cachedGetCategory(
   idOrPermalink: string,
   params: { expand?: string[] } | undefined,
-  options: { locale?: string; country?: string },
+  options: CatalogOptions,
+  userToken?: string,
 ) {
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("category");
-  return getClient().categories.get(idOrPermalink, params, options);
+  return getClient().categories.get(
+    idOrPermalink,
+    params,
+    withCatalogToken(options, userToken),
+  );
 }
 
 export async function getCategory(
@@ -29,7 +39,8 @@ export async function getCategory(
   params?: { expand?: string[] },
 ) {
   const options = await getLocaleOptions();
-  return cachedGetCategory(idOrPermalink, params, options);
+  const userToken = await getAccessToken();
+  return cachedGetCategory(idOrPermalink, params, options, userToken);
 }
 
 export async function getCategoryOrNull(
@@ -51,7 +62,8 @@ export async function getCategoryOrNull(
 
 async function cachedListTopLevelCategories(
   page: number,
-  options: { locale?: string; country?: string },
+  options: CatalogOptions,
+  userToken?: string,
 ) {
   "use cache: remote";
   cacheLife("tenMinutes");
@@ -63,19 +75,24 @@ async function cachedListTopLevelCategories(
       limit: TOP_LEVEL_CATEGORY_LIMIT,
       page,
     },
-    options,
+    withCatalogToken(options, userToken),
   );
 }
 
 export async function getTopLevelCategories(): Promise<Category[]> {
   try {
     const options = await getLocaleOptions();
+    const userToken = await getAccessToken();
     const categories: Category[] = [];
     let page = 1;
     let totalPages = 1;
 
     do {
-      const response = await cachedListTopLevelCategories(page, options);
+      const response = await cachedListTopLevelCategories(
+        page,
+        options,
+        userToken,
+      );
       categories.push(...response.data);
       totalPages = response.meta.pages;
       page++;
@@ -93,20 +110,21 @@ export async function getTopLevelCategories(): Promise<Category[]> {
 /**
  * Persistent cached category products fetch. Cache key is derived from
  * all function arguments (categoryId, params, locale, country, userToken).
- * Guest users pass undefined so the cache entry is shared.
+ * The user token also authenticates the request; guests pass undefined and
+ * therefore share a cache entry.
  */
 async function cachedListCategoryProducts(
   categoryId: string,
   params: ProductListParams | undefined,
-  options: { locale?: string; country?: string },
-  _userToken?: string,
+  options: CatalogOptions,
+  userToken?: string,
 ) {
   "use cache: remote";
   cacheLife("tenMinutes");
   cacheTag("products", `category-products:${categoryId}`);
   return getClient().products.list(
     { ...params, in_category: categoryId },
-    options,
+    withCatalogToken(options, userToken),
   );
 }
 

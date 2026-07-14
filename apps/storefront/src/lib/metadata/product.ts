@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PRODUCT_METADATA_EXPAND } from "@/lib/data/cached";
 import { getProductOrNull } from "@/lib/data/products";
+import { getLocaleMessage } from "@/lib/i18n/messages";
 import { buildCanonicalUrl, stripHtml } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 
@@ -17,7 +18,7 @@ export async function generateProductMetadata({
 }: ProductMetadataParams): Promise<Metadata> {
   const product = await getProductOrNull(slug, PRODUCT_METADATA_EXPAND);
   if (!product) {
-    return { title: "Product Not Found" };
+    return { title: getLocaleMessage(locale, "metadata.productNotFound") };
   }
 
   const title = product.meta_title || product.name;
@@ -25,7 +26,9 @@ export async function generateProductMetadata({
     ? product.meta_description
     : product.description
       ? stripHtml(product.description).slice(0, 160)
-      : `Shop ${product.name}`;
+      : getLocaleMessage(locale, "metadata.productDescription", {
+          name: product.name,
+        });
 
   const storeUrl = getStoreUrl();
   const canonicalUrl = storeUrl

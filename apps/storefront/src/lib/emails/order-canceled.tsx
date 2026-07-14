@@ -13,6 +13,10 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import {
+  type EmailTranslations,
+  getEmailTranslations,
+} from "@/lib/emails/translations";
 import { getStoreName, getStoreUrl } from "@/lib/store";
 
 interface LineItem {
@@ -31,6 +35,7 @@ interface OrderCanceledEmailProps {
   storeUrl?: string;
   items: LineItem[];
   displayTotal: string;
+  translations?: EmailTranslations;
 }
 
 export function OrderCanceledEmail({
@@ -40,28 +45,28 @@ export function OrderCanceledEmail({
   storeUrl = getStoreUrl(),
   items,
   displayTotal,
+  translations = getEmailTranslations(),
 }: OrderCanceledEmailProps) {
-  const firstName = customerName.split(" ")[0] || "there";
+  const t = translations;
+  const firstName = customerName.split(" ")[0] || t("common.customer");
 
   return (
     <Html>
       <Head />
       <Preview>
-        Order {orderNumber} has been canceled - {storeName}
+        {t("orderCanceled.preview", { orderNumber, storeName })}
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={heading}>Order Canceled</Heading>
+          <Heading style={heading}>{t("orderCanceled.heading")}</Heading>
           <Text style={paragraph}>
-            Hi {firstName}, your order <strong>{orderNumber}</strong> has been
-            canceled. If you paid for this order, a refund will be issued to
-            your original payment method.
+            {t("orderCanceled.body", { firstName, orderNumber })}
           </Text>
 
           <Hr style={hr} />
 
           <Heading as="h2" style={subheading}>
-            Canceled Items
+            {t("orderCanceled.canceledItems")}
           </Heading>
           <Section>
             {items.map((item, index) => (
@@ -87,7 +92,9 @@ export function OrderCanceledEmail({
                   {item.options_text && (
                     <Text style={itemOptions}>{item.options_text}</Text>
                   )}
-                  <Text style={itemOptions}>Qty: {item.quantity}</Text>
+                  <Text style={itemOptions}>
+                    {t("common.quantity", { quantity: item.quantity })}
+                  </Text>
                 </Column>
                 <Column style={itemPriceCol}>
                   <Text style={itemPrice}>{item.display_total}</Text>
@@ -99,21 +106,19 @@ export function OrderCanceledEmail({
           <Hr style={hr} />
 
           <Row>
-            <Column style={totalLabel}>Order Total</Column>
+            <Column style={totalLabel}>{t("orderCanceled.orderTotal")}</Column>
             <Column style={totalValue}>{displayTotal}</Column>
           </Row>
 
           <Hr style={hr} />
 
-          <Text style={paragraph}>
-            If you have any questions, please don't hesitate to contact us.
-          </Text>
+          <Text style={paragraph}>{t("orderCanceled.support")}</Text>
 
           <Text style={footer}>
             {storeName}
             {storeUrl && (
               <>
-                {" - "}
+                {t("common.footerSeparator")}
                 <Link href={storeUrl} style={footerLink}>
                   {storeUrl.replace(/^https?:\/\//, "")}
                 </Link>

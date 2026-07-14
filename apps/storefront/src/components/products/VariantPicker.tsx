@@ -70,28 +70,49 @@ export function VariantPicker({
     return { variantOptionMaps: maps, optionValueDetailsMap: detailsMap };
   }, [variants]);
 
-  const findVariant = (newOptions: Record<string, string>): Variant | null => {
-    const optionCount = Object.keys(newOptions).length;
-    return (
-      variantOptionMaps.find(
-        ({ variant, optionsMap }) =>
-          variant.option_values.length === optionCount &&
-          Object.entries(newOptions).every(
-            ([typeId, value]) => optionsMap[typeId] === value,
-          ),
-      )?.variant || null
+  const findReachableVariant = (
+    optionTypeId: string,
+    optionValue: string,
+  ): Variant | null => {
+    const remainingSelections = Object.entries(selectedOptions).filter(
+      ([typeId]) => typeId !== optionTypeId,
     );
+    const candidates = variantOptionMaps.filter(
+      ({ optionsMap }) => optionsMap[optionTypeId] === optionValue,
+    );
+
+    if (candidates.length === 0) return null;
+
+    // Preserve as many existing selections as possible. A sparse variant
+    // matrix can require changing one or more other options to reach a valid
+    // variant, so never require the current full combination to exist.
+    return candidates.reduce((best, candidate) => {
+      const matchingSelections = remainingSelections.filter(
+        ([typeId, value]) => candidate.optionsMap[typeId] === value,
+      ).length;
+      const bestMatchingSelections = remainingSelections.filter(
+        ([typeId, value]) => best.optionsMap[typeId] === value,
+      ).length;
+
+      if (matchingSelections > bestMatchingSelections) return candidate;
+      if (
+        matchingSelections === bestMatchingSelections &&
+        candidate.variant.purchasable &&
+        !best.variant.purchasable
+      ) {
+        return candidate;
+      }
+
+      return best;
+    }).variant;
   };
 
   const isOptionAvailable = (
     optionTypeId: string,
     optionValue: string,
   ): boolean => {
-    const testOptions = { ...selectedOptions, [optionTypeId]: optionValue };
-    return variantOptionMaps.some(({ optionsMap }) =>
-      Object.entries(testOptions).every(
-        ([typeId, value]) => optionsMap[typeId] === value,
-      ),
+    return variantOptionMaps.some(
+      ({ optionsMap }) => optionsMap[optionTypeId] === optionValue,
     );
   };
 
@@ -99,20 +120,15 @@ export function VariantPicker({
     optionTypeId: string,
     optionValue: string,
   ): boolean => {
-    const testOptions = { ...selectedOptions, [optionTypeId]: optionValue };
     return variantOptionMaps.some(
       ({ variant, optionsMap }) =>
-        variant.purchasable &&
-        Object.entries(testOptions).every(
-          ([typeId, value]) => optionsMap[typeId] === value,
-        ),
+        variant.purchasable && optionsMap[optionTypeId] === optionValue,
     );
   };
 
   const handleOptionSelect = (optionTypeId: string, optionValue: string) => {
-    const newOptions = { ...selectedOptions, [optionTypeId]: optionValue };
-    const newVariant = findVariant(newOptions);
-    onVariantChange(newVariant);
+    const newVariant = findReachableVariant(optionTypeId, optionValue);
+    if (newVariant) onVariantChange(newVariant);
   };
 
   const getOptionValueDetails = (
@@ -178,9 +194,9 @@ export function VariantPicker({
                       aria-label={optionValue?.label || value}
                       aria-pressed={isSelected}
                       className={cn(
-                        "relative size-8 overflow-hidden rounded-full border border-black/10 transition-shadow duration-200",
+                        "relative size-8 overflow-hidden rounded-full border border-border transition-shadow duration-200",
                         isSelected
-                          ? "ring-2 ring-[#0071e3] ring-offset-2"
+                          ? "ring-2 ring-primary ring-offset-2"
                           : "hover:ring-2 hover:ring-border hover:ring-offset-2",
                         !isAvailable && "cursor-not-allowed opacity-40",
                         !isPurchasable && isAvailable && "opacity-40",
@@ -228,9 +244,9 @@ export function VariantPicker({
                       disabled={!isAvailable}
                       aria-pressed={isSelected}
                       className={cn(
-                        "rounded-xl border bg-white px-4 py-3 text-left text-sm font-medium text-foreground transition-colors duration-200",
+                        "rounded-xl border bg-background px-4 py-3 text-left text-sm font-medium text-foreground transition-colors duration-200",
                         isSelected
-                          ? "border-2 border-[#0071e3] bg-[#0071e3]/[0.04]"
+                          ? "border-2 border-primary bg-primary/[0.04]"
                           : "border-border hover:border-muted-foreground",
                         (!isAvailable || !isPurchasable) &&
                           "opacity-40 hover:border-border",

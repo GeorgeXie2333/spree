@@ -95,7 +95,7 @@ export function FilterChips({
           <button
             type="button"
             onClick={chip.onRemove}
-            className="rounded-full p-0.5 text-muted-foreground transition-colors duration-200 hover:bg-[#e8e8ed] hover:text-foreground"
+            className="rounded-full p-0.5 text-muted-foreground transition-colors duration-200 hover:bg-secondary-hover hover:text-foreground"
             aria-label={t("clearFilter", { label: chip.label })}
           >
             <X className="size-3" />

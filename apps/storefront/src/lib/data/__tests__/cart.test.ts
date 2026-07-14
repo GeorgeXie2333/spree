@@ -68,6 +68,77 @@ describe("cart server actions", () => {
       });
       expect(result).toBe(mockCart);
     });
+
+    it("clears stale cookies when the cart is already complete", async () => {
+      mockClient.carts.get.mockResolvedValue({
+        ...mockCart,
+        current_step: "complete",
+      });
+
+      const result = await getCart();
+
+      expect(result).toBeNull();
+      const { clearCartCookies } = await import("@/lib/spree");
+      expect(clearCartCookies).toHaveBeenCalledOnce();
+    });
+
+    it("clears stale cookies when the API confirms the cart is missing", async () => {
+      const { SpreeError } = await import("@spree/sdk");
+      mockClient.carts.get.mockRejectedValue(
+        new SpreeError(
+          { error: { code: "not_found", message: "Cart not found" } },
+          404,
+        ),
+      );
+
+      const result = await getCart();
+
+      expect(result).toBeNull();
+      const { clearCartCookies } = await import("@/lib/spree");
+      expect(clearCartCookies).toHaveBeenCalledOnce();
+    });
+
+    it("keeps cookies when an explicit missing cart ID is used for order lookup", async () => {
+      const { SpreeError } = await import("@spree/sdk");
+      mockClient.carts.get.mockRejectedValue(
+        new SpreeError(
+          { error: { code: "not_found", message: "Cart not found" } },
+          404,
+        ),
+      );
+
+      const result = await getCart("cart-1");
+
+      expect(result).toBeNull();
+      const { clearCartCookies } = await import("@/lib/spree");
+      expect(clearCartCookies).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      401, 500,
+    ])("preserves cart cookies and reports an HTTP %i failure as retryable", async (status) => {
+      const { SpreeError } = await import("@spree/sdk");
+      mockClient.carts.get.mockRejectedValue(
+        new SpreeError(
+          { error: { code: "request_failed", message: `HTTP ${status}` } },
+          status,
+        ),
+      );
+
+      await expect(getCart()).rejects.toThrow(`HTTP ${status}`);
+      const { clearCartCookies } = await import("@/lib/spree");
+      expect(clearCartCookies).not.toHaveBeenCalled();
+    });
+
+    it("preserves cart cookies and reports a network failure as retryable", async () => {
+      mockClient.carts.get.mockRejectedValue(
+        new TypeError("Network unavailable"),
+      );
+
+      await expect(getCart()).rejects.toThrow("Network unavailable");
+      const { clearCartCookies } = await import("@/lib/spree");
+      expect(clearCartCookies).not.toHaveBeenCalled();
+    });
   });
 
   describe("getOrCreateCart", () => {

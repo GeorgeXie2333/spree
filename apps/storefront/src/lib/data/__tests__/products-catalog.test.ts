@@ -21,10 +21,14 @@ vi.mock("next/cache", () => ({
 
 import {
   getCategoryProductFilters,
+  getProduct,
   getProductFilters,
   getProductOrNull,
   getProducts,
 } from "@/lib/data/products";
+import { getAccessToken } from "@/lib/spree";
+
+const mockGetAccessToken = vi.mocked(getAccessToken);
 
 describe("storefront product data", () => {
   beforeEach(() => {
@@ -110,6 +114,36 @@ describe("storefront product data", () => {
       "air",
       { expand: ["media"] },
       { locale: "en", country: "us" },
+    );
+  });
+
+  it("passes the customer token to list, detail, and filter requests", async () => {
+    mockGetAccessToken.mockResolvedValue("customer-jwt");
+    mockClient.products.get.mockResolvedValue({ id: "product-air" });
+
+    await getProducts({ search: "air" });
+    await getProduct("air", { expand: ["media"] });
+    await getProductFilters({ q: { in_stock: true } });
+    await getCategoryProductFilters("category-models");
+
+    expect(mockClient.products.list).toHaveBeenCalledWith(
+      { search: "air" },
+      { locale: "en", country: "us", token: "customer-jwt" },
+    );
+    expect(mockClient.products.get).toHaveBeenCalledWith(
+      "air",
+      { expand: ["media"] },
+      { locale: "en", country: "us", token: "customer-jwt" },
+    );
+    expect(mockClient.products.filters).toHaveBeenNthCalledWith(
+      1,
+      { q: { in_stock: true } },
+      { locale: "en", country: "us", token: "customer-jwt" },
+    );
+    expect(mockClient.products.filters).toHaveBeenNthCalledWith(
+      2,
+      { category_id: "category-models" },
+      { locale: "en", country: "us", token: "customer-jwt" },
     );
   });
 

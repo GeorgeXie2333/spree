@@ -15,6 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useCart } from "@/contexts/CartContext";
 import { trackRemoveFromCart, trackViewCart } from "@/lib/analytics/gtm";
 import { extractBasePath } from "@/lib/utils/path";
@@ -111,13 +112,13 @@ export function CartDrawer() {
         </SheetHeader>
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="p-5 space-y-4">
+            <div className="flex flex-col gap-4 p-5">
               {[1, 2].map((i) => (
-                <div key={i} className="flex gap-4 animate-pulse">
-                  <div className="size-20 bg-card rounded-xl" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-card rounded w-3/4" />
-                    <div className="h-4 bg-card rounded w-1/2" />
+                <div key={i} className="flex gap-4">
+                  <Skeleton className="size-20 rounded-xl" />
+                  <div className="flex flex-1 flex-col gap-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
                   </div>
                 </div>
               ))}
@@ -327,7 +328,7 @@ export function CartDrawer() {
 
         {/* Loading overlay */}
         {updating && (
-          <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-background/50">
             <div className="w-8 h-8 border-4 border-muted-foreground border-t-transparent rounded-full animate-spin" />
           </div>
         )}

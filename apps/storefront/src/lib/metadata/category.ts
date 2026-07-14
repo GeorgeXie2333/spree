@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getCategoryOrNull } from "@/lib/data/categories";
+import { getLocaleMessage } from "@/lib/i18n/messages";
 import { buildCanonicalUrl } from "@/lib/seo";
 import { getStoreUrl } from "@/lib/store";
 
@@ -20,14 +21,16 @@ export async function generateCategoryMetadata({
     expand: ["ancestors", "children"],
   });
   if (!category) {
-    return { title: "Category Not Found" };
+    return { title: getLocaleMessage(locale, "metadata.categoryNotFound") };
   }
 
   const title = category.meta_title || category.name;
   const description =
     category.meta_description ||
     category.description ||
-    `Browse ${category.name} products.`;
+    getLocaleMessage(locale, "metadata.categoryDescription", {
+      name: category.name,
+    });
 
   const storeUrl = getStoreUrl();
   const canonicalUrl = storeUrl

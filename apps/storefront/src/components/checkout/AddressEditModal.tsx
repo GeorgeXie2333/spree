@@ -7,6 +7,8 @@ import { useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { FieldGroup } from "@/components/ui/field";
+import { Separator } from "@/components/ui/separator";
 import type { User } from "@/contexts/AuthContext";
 import { useCountryStates } from "@/hooks/useCountryStates";
 import {
@@ -101,7 +103,7 @@ export function AddressEditModal({
     >
       <DialogContent className="sm:max-w-lg p-0 gap-0" showCloseButton={false}>
         <form onSubmit={handleSubmit}>
-          <div className="px-4 pt-5 pb-4 sm:p-6">
+          <FieldGroup className="px-4 pt-5 pb-4 sm:p-6">
             <DialogTitle className="text-lg font-semibold tracking-tight text-foreground mb-4">
               {modalTitle}
             </DialogTitle>
@@ -121,9 +123,10 @@ export function AddressEditModal({
               onChange={handleChange}
               idPrefix="modal"
             />
-          </div>
+          </FieldGroup>
 
-          <div className="border-t border-border px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+          <Separator />
+          <div className="flex flex-col-reverse gap-3 px-4 py-3 sm:flex-row-reverse sm:px-6">
             <Button type="submit" disabled={saving}>
               {saving ? tc("saving") : t("saveAddress")}
             </Button>

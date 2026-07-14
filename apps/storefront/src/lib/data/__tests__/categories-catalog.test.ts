@@ -22,10 +22,14 @@ vi.mock("next/cache", () => ({
 }));
 
 import {
+  getCategory,
   getCategoryOrNull,
   getCategoryProducts,
   getTopLevelCategories,
 } from "@/lib/data/categories";
+import { getAccessToken } from "@/lib/spree";
+
+const mockGetAccessToken = vi.mocked(getAccessToken);
 
 describe("storefront category data", () => {
   beforeEach(() => {
@@ -91,6 +95,33 @@ describe("storefront category data", () => {
       2,
       { depth_eq: 1, expand: ["children.children"], limit: 100, page: 2 },
       { locale: "en", country: "us" },
+    );
+  });
+
+  it("passes the customer token to category and category-product requests", async () => {
+    mockGetAccessToken.mockResolvedValue("customer-jwt");
+    mockClient.categories.get.mockResolvedValue({ id: "category-models" });
+    mockClient.categories.list.mockResolvedValue({
+      data: [],
+      meta: { pages: 0 },
+    });
+
+    await getCategory("models", { expand: ["children"] });
+    await getTopLevelCategories();
+    await getCategoryProducts("category-models");
+
+    expect(mockClient.categories.get).toHaveBeenCalledWith(
+      "models",
+      { expand: ["children"] },
+      { locale: "en", country: "us", token: "customer-jwt" },
+    );
+    expect(mockClient.categories.list).toHaveBeenCalledWith(
+      { depth_eq: 1, expand: ["children.children"], limit: 100, page: 1 },
+      { locale: "en", country: "us", token: "customer-jwt" },
+    );
+    expect(mockClient.products.list).toHaveBeenCalledWith(
+      { in_category: "category-models" },
+      { locale: "en", country: "us", token: "customer-jwt" },
     );
   });
 });

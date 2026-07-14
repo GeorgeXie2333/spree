@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const SWIPE_THRESHOLD_PX = 50;
 const SWIPE_MAX_VERTICAL_PX = 75;
@@ -22,10 +24,8 @@ interface MediaLightboxProps {
  * keyboard handlers, navigation UI, and next/image full-size render
  * don't ship in the initial product page bundle.
  *
- * Exposed as a real modal dialog (role="dialog", aria-modal="true") with
- * focus moved to the close button on open and restored on close so
- * screen-reader and keyboard users can't get stuck in the page behind
- * the overlay.
+ * Rendered through the shared Dialog primitive so modal focus trapping,
+ * page isolation, Escape handling, and focus restoration stay consistent.
  */
 export function MediaLightbox({
   images,
@@ -38,13 +38,7 @@ export function MediaLightbox({
   const current = images[activeIndex];
   const src =
     current?.xlarge_url || current?.large_url || current?.original_url || null;
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  // Tracks whether a pointerdown happened on the backdrop itself (vs.
-  // bubbled up from a child). Without this, the synthetic click fired
-  // by the opening tap on the parent <button> in MediaGallery lands on
-  // the freshly-mounted backdrop and immediately closes the lightbox
-  // on mobile.
   const pressedOnBackdropRef = useRef(false);
 
   const goPrev = useCallback(() => {
@@ -76,8 +70,6 @@ export function MediaLightbox({
       ) {
         return;
       }
-      // Swallow the synthetic backdrop click that follows touchend so a
-      // swipe navigates without also dismissing the lightbox.
       pressedOnBackdropRef.current = false;
       if (dx < 0) {
         goNext();
@@ -90,100 +82,100 @@ export function MediaLightbox({
 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft") goPrev();
       if (e.key === "ArrowRight") goNext();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose, goPrev, goNext]);
-
-  // Focus management: capture the previously focused element when the
-  // lightbox mounts, move focus into the dialog, then restore it on
-  // unmount so keyboard users return to the element that opened it.
-  useEffect(() => {
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    closeButtonRef.current?.focus();
-    return () => {
-      previouslyFocused?.focus?.();
-    };
-  }, []);
+  }, [goPrev, goNext]);
 
   if (!src) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={t("openImageZoom")}
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center touch-pan-y"
-      onPointerDown={(e) => {
-        pressedOnBackdropRef.current = e.target === e.currentTarget;
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
       }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && pressedOnBackdropRef.current) {
-          onClose();
-        }
-        pressedOnBackdropRef.current = false;
-      }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
     >
-      <button
-        ref={closeButtonRef}
-        type="button"
-        className="absolute top-4 right-4 z-10 rounded-full p-3 text-white transition-colors duration-200 hover:bg-white/10"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        aria-label={t("lightboxClose")}
+      <DialogContent
+        showCloseButton={false}
+        overlayClassName="bg-media-backdrop/90"
+        className="h-full w-full max-w-none border-0 bg-transparent p-0 shadow-none"
+        aria-modal="true"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
-        <X className="w-8 h-8" />
-      </button>
+        <DialogTitle className="sr-only">{t("openImageZoom")}</DialogTitle>
+        <div
+          data-testid="media-lightbox-backdrop"
+          className="relative flex size-full touch-pan-y items-center justify-center"
+          onPointerDown={(event) => {
+            pressedOnBackdropRef.current = event.target === event.currentTarget;
+          }}
+          onClick={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              pressedOnBackdropRef.current
+            ) {
+              onClose();
+            }
+            pressedOnBackdropRef.current = false;
+          }}
+        >
+          <div className="relative m-4 h-[calc(100%-2rem)] max-h-[90vh] w-[calc(100%-2rem)] max-w-4xl">
+            <Image
+              src={src}
+              alt={current?.alt || productName}
+              fill
+              className="pointer-events-none object-contain"
+              sizes="100vw"
+            />
+          </div>
 
-      {images.length > 1 && (
-        <>
-          <button
+          <Button
             type="button"
-            className="absolute top-1/2 left-4 z-10 -translate-y-1/2 rounded-full p-3 text-white transition-colors duration-200 hover:bg-white/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              goPrev();
-            }}
-            aria-label={t("lightboxPrev")}
+            variant="ghost"
+            size="icon-lg"
+            className="absolute top-4 right-4 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            onClick={onClose}
+            aria-label={t("lightboxClose")}
           >
-            <ChevronLeft className="w-8 h-8" />
-          </button>
-          <button
-            type="button"
-            className="absolute top-1/2 right-4 z-10 -translate-y-1/2 rounded-full p-3 text-white transition-colors duration-200 hover:bg-white/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              goNext();
-            }}
-            aria-label={t("lightboxNext")}
-          >
-            <ChevronRight className="w-8 h-8" />
-          </button>
-        </>
-      )}
+            <X />
+          </Button>
 
-      <div className="relative max-w-4xl max-h-[90vh] w-full h-full m-4">
-        <Image
-          src={src}
-          alt={current?.alt || productName}
-          fill
-          className="object-contain pointer-events-none"
-          sizes="100vw"
-        />
-      </div>
+          {images.length > 1 && (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="absolute top-1/2 left-4 -translate-y-1/2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                onClick={goPrev}
+                aria-label={t("lightboxPrev")}
+              >
+                <ChevronLeft />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="absolute top-1/2 right-4 -translate-y-1/2 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                onClick={goNext}
+                aria-label={t("lightboxNext")}
+              >
+                <ChevronRight />
+              </Button>
+            </>
+          )}
 
-      {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
-          {activeIndex + 1} / {images.length}
+          {images.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-foreground/50 px-3 py-1 text-sm text-primary-foreground">
+              {activeIndex + 1} / {images.length}
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

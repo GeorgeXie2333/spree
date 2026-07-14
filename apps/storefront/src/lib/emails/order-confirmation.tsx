@@ -13,6 +13,10 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import {
+  type EmailTranslations,
+  getEmailTranslations,
+} from "@/lib/emails/translations";
 import { getStoreName, getStoreUrl } from "@/lib/store";
 
 interface LineItem {
@@ -52,6 +56,7 @@ interface OrderConfirmationEmailProps {
   shippingAddress?: Address;
   billingAddress?: Address;
   deliveryMethodName?: string;
+  translations?: EmailTranslations;
 }
 
 export function OrderConfirmationEmail({
@@ -68,28 +73,31 @@ export function OrderConfirmationEmail({
   shippingAddress,
   billingAddress,
   deliveryMethodName,
+  translations = getEmailTranslations(),
 }: OrderConfirmationEmailProps) {
-  const firstName = customerName.split(" ")[0] || "there";
+  const t = translations;
+  const firstName = customerName.split(" ")[0] || t("common.customer");
 
   return (
     <Html>
       <Head />
       <Preview>
-        Order {orderNumber} confirmed - {storeName}
+        {t("orderConfirmation.preview", { orderNumber, storeName })}
       </Preview>
       <Body style={main}>
         <Container style={container}>
-          <Heading style={heading}>Thanks for your order, {firstName}!</Heading>
+          <Heading style={heading}>
+            {t("orderConfirmation.heading", { firstName })}
+          </Heading>
           <Text style={paragraph}>
-            Your order <strong>{orderNumber}</strong> has been confirmed. We'll
-            send you another email when it ships.
+            {t("orderConfirmation.body", { orderNumber })}
           </Text>
 
           <Hr style={hr} />
 
           {/* Order Items */}
           <Heading as="h2" style={subheading}>
-            Order Summary
+            {t("orderConfirmation.orderSummary")}
           </Heading>
           <Section>
             {items.map((item, index) => (
@@ -128,7 +136,9 @@ export function OrderConfirmationEmail({
                   {item.options_text && (
                     <Text style={itemOptions}>{item.options_text}</Text>
                   )}
-                  <Text style={itemOptions}>Qty: {item.quantity}</Text>
+                  <Text style={itemOptions}>
+                    {t("common.quantity", { quantity: item.quantity })}
+                  </Text>
                 </Column>
                 <Column style={itemPriceCol}>
                   <Text style={itemPrice}>{item.display_total}</Text>
@@ -142,11 +152,11 @@ export function OrderConfirmationEmail({
           {/* Totals */}
           <Section style={totalsSection}>
             <Row>
-              <Column style={totalsLabel}>Subtotal</Column>
+              <Column style={totalsLabel}>{t("common.subtotal")}</Column>
               <Column style={totalsValue}>{displayItemTotal}</Column>
             </Row>
             <Row>
-              <Column style={totalsLabel}>Shipping</Column>
+              <Column style={totalsLabel}>{t("common.shipping")}</Column>
               <Column style={totalsValue}>{displayDeliveryTotal}</Column>
             </Row>
             {displayDiscountTotal &&
@@ -154,7 +164,7 @@ export function OrderConfirmationEmail({
                 displayDiscountTotal.replace(/[^0-9.-]/g, ""),
               ) !== 0 && (
                 <Row>
-                  <Column style={totalsLabel}>Discount</Column>
+                  <Column style={totalsLabel}>{t("common.discount")}</Column>
                   <Column style={{ ...totalsValue, color: "#16a34a" }}>
                     {displayDiscountTotal}
                   </Column>
@@ -163,12 +173,12 @@ export function OrderConfirmationEmail({
             {Number.parseFloat(displayTaxTotal.replace(/[^0-9.-]/g, "")) >
               0 && (
               <Row>
-                <Column style={totalsLabel}>Tax</Column>
+                <Column style={totalsLabel}>{t("common.tax")}</Column>
                 <Column style={totalsValue}>{displayTaxTotal}</Column>
               </Row>
             )}
             <Row style={totalRow}>
-              <Column style={totalLabel}>Total</Column>
+              <Column style={totalLabel}>{t("common.total")}</Column>
               <Column style={totalValue}>{displayTotal}</Column>
             </Row>
           </Section>
@@ -180,13 +190,17 @@ export function OrderConfirmationEmail({
             <Row>
               {shippingAddress && (
                 <Column style={addressCol}>
-                  <Text style={addressHeading}>Shipping Address</Text>
+                  <Text style={addressHeading}>
+                    {t("orderConfirmation.shippingAddress")}
+                  </Text>
                   <AddressBlock address={shippingAddress} />
                 </Column>
               )}
               {billingAddress && (
                 <Column style={addressCol}>
-                  <Text style={addressHeading}>Billing Address</Text>
+                  <Text style={addressHeading}>
+                    {t("orderConfirmation.billingAddress")}
+                  </Text>
                   <AddressBlock address={billingAddress} />
                 </Column>
               )}
@@ -195,7 +209,9 @@ export function OrderConfirmationEmail({
 
           {deliveryMethodName && (
             <Section>
-              <Text style={addressHeading}>Delivery Method</Text>
+              <Text style={addressHeading}>
+                {t("orderConfirmation.deliveryMethod")}
+              </Text>
               <Text style={addressText}>{deliveryMethodName}</Text>
             </Section>
           )}
@@ -206,7 +222,7 @@ export function OrderConfirmationEmail({
             {storeName}
             {storeUrl && (
               <>
-                {" - "}
+                {t("common.footerSeparator")}
                 <Link href={storeUrl} style={footerLink}>
                   {storeUrl.replace(/^https?:\/\//, "")}
                 </Link>

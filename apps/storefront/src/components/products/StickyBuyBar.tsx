@@ -39,7 +39,7 @@ export function StickyBuyBar({
     <div
       aria-hidden={!visible}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-border/40 bg-white/80 backdrop-blur-xl transition-transform duration-200 lg:top-[84px] lg:bottom-auto lg:border-t-0 lg:border-b",
+        "fixed inset-x-0 bottom-0 z-40 border-t border-border/40 bg-background/80 backdrop-blur-xl transition-transform duration-200 lg:top-[84px] lg:bottom-auto lg:border-t-0 lg:border-b",
         visible
           ? "translate-y-0"
           : "pointer-events-none translate-y-full lg:-translate-y-full",
