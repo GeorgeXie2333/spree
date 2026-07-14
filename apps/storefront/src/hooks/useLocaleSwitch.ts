@@ -43,17 +43,26 @@ export function useLocaleSwitch({
     const newPath = `/${country}/${nextLocale}${pathRest}`;
 
     if (cart && (cart.currency !== currency || cart.locale !== nextLocale)) {
-      const result = await updateCartMarket(cart.id, {
-        currency,
-        locale: nextLocale,
-      });
+      try {
+        const result = await updateCartMarket(cart.id, {
+          currency,
+          locale: nextLocale,
+        });
 
-      if (!result.success) {
-        setIsLocaleNavigating(false);
-        return;
+        if (result.success) {
+          await refreshCart();
+        } else {
+          console.warn(
+            "useLocaleSwitch: failed to update the cart locale",
+            result.error,
+          );
+        }
+      } catch (error) {
+        console.warn(
+          "useLocaleSwitch: failed to update the cart locale",
+          error,
+        );
       }
-
-      await refreshCart();
     }
 
     setStoreCookies(country, nextLocale);
