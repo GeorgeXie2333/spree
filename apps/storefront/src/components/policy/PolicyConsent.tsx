@@ -44,7 +44,7 @@ export function PolicyConsent({
         aria-invalid={error}
         className="mt-0.5"
       />
-      <FieldLabel htmlFor={id} className="text-sm">
+      <FieldLabel htmlFor={id} className="block text-sm">
         {t("iAgreeToThe")}{" "}
         {CONSENT_POLICIES.map((policy, index) => (
           <span key={policy.slug}>
